@@ -1,0 +1,26 @@
+{
+    "name": "techluster",
+    "version-string": "0.1.0-dev",
+    "maintainers": [
+        "Particle_G <particle_g@outlook.com>"
+    ],
+    "description": "The new distributed backends for the block stacking game <Techmino>",
+    "homepage": "https://github.com/26F-Studio/Techluster",
+    "documentation": "https://github.com/26F-Studio/Techmino-Docs",
+    "license": "LGPL-3.0",
+    "dependencies": [
+        {
+            "name": "drogon",
+            "default-features": false,
+            "features": [
+                "ctl",
+                "orm",
+                "mysql",
+                "postgres",
+                "redis",
+                "sqlite3"
+            ],
+            "platform": "windows | linux"
+        }
+    ]
+}
