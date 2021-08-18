@@ -19,8 +19,7 @@
                 "postgres",
                 "redis",
                 "sqlite3"
-            ],
-            "platform": "windows | linux"
+            ]
         }
     ]
 }
