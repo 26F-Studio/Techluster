@@ -11,7 +11,8 @@ aux_source_directory(services SVC_SRC)
 aux_source_directory(utils UTIL_SRC)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-        Drogon::Drogon)
+        Drogon::Drogon
+        Shared::Shared)
 
 drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
         ${CMAKE_CURRENT_BINARY_DIR})
