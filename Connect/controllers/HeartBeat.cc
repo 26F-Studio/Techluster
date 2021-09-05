@@ -9,7 +9,7 @@ using namespace std;
 using namespace tech::api::v2;
 using namespace tech::utils;
 
-void HeartBeat::logon(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
+void HeartBeat::report(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     HttpStatusCode code = HttpStatusCode::k200OK;
     Json::Value request, response;
     string parseError = http::toJson(req, request);

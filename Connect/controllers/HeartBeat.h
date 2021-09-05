@@ -11,10 +11,10 @@ namespace tech::api::v2 {
     class HeartBeat : public drogon::HttpController<HeartBeat> {
     public:
         METHOD_LIST_BEGIN
-            METHOD_ADD(HeartBeat::logon, "/logon", drogon::Post);
+            METHOD_ADD(HeartBeat::report, "/report", drogon::Post);
         METHOD_LIST_END
 
-        void logon(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
+        void report(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
 
     private:
         services::HeartBeat _service;
