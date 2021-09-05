@@ -15,13 +15,13 @@ echo -e "${InfoColor}---------- Update Packages ----------${NoColor}"
 
 if which yum >/dev/null 2>&1;
 then
-    yum install -y git gcc g++ pkg-config || InterruptProgress
+    yum install -y git gcc g++ pkg-config net-tools || InterruptProgress
 elif which apt >/dev/null 2>&1;
 then
-    apt install -y git gcc g++ pkg-config || InterruptProgress
+    apt install -y git gcc g++ pkg-config net-tools || InterruptProgress
 elif which pacman >/dev/null 2>&1;
 then
-    pacman -S git gcc g++ pkg-config || InterruptProgress
+    pacman -S git gcc g++ pkg-config net-tools || InterruptProgress
 fi
 
 echo -e "${InfoColor}--------- Downloading CMake ---------${NoColor}"

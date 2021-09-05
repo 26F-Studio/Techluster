@@ -30,7 +30,7 @@ CheckCommandResult
 
 # Write-Host "------ Installing Dependencies ------" -ForegroundColor 'Cyan'
 #
-# ./vcpkg.exe --triplet="x64-windows-static" install
+# ./vcpkg.exe --triplet="x64-windows" install
 # CheckCommandResult
 
 Write-Host "------ Initialization Succeeded -----" -ForegroundColor 'Green'
