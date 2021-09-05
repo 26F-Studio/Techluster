@@ -18,34 +18,48 @@ namespace tech::structures {
         };
 
         NodeServer(
-                std::string host,
-                Type type,
+                const std::string &ip,
+                const uint16_t &port,
+                const Type &type,
+                const double &taskInterval,
                 std::string description
         );
 
         NodeServer(NodeServer &&nodeServer) noexcept;
 
-        std::string getHost() const;
+        std::string getIpPort() const;
 
-        std::string getDescription() const;
+        uint64_t getNetEndian() const;
 
         Type getType() const;
+
+        double getInterval() const;
+
+        std::string getDescription() const;
 
         Json::Value getInfo() const;
 
         void setInfo(Json::Value info);
 
-        uint64_t getFailureCount() const;
+        uint64_t getTimerId() const;
 
-        void incrementFailureCount();
+        void setTimerId(const uint64_t &timerId);
 
-        void clearFailureCount();
+        int64_t getLastSeen() const;
+
+        void updateLastSeen();
+
+        Json::Value parseNode() const;
 
     private:
         mutable std::shared_mutex _sharedMutex;
-        const std::string _host, _description;
+
+        const trantor::InetAddress _inetAddress;
         const Type _type;
+        const double _taskInterval;
+        const std::string _description;
+        std::atomic<uint64_t> _deactivateTimerId;
+        trantor::Date _lastSeen;
         Json::Value _info;
-        std::atomic<uint64_t> _failureCount{};
     };
 }
