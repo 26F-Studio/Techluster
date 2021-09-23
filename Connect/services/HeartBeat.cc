@@ -2,7 +2,7 @@
 // Created by Particle_G on 2021/8/19.
 //
 
-#include <plugins/Configurator.h>
+#include <plugins/Authorizer.h>
 #include <services/HeartBeat.h>
 
 using namespace drogon;
@@ -14,7 +14,7 @@ using namespace tech::utils;
 
 HeartBeat::HeartBeat() : _nodeManager(app().getPlugin<NodeManager>()) {}
 
-Json::Value HeartBeat::logon(drogon::HttpStatusCode &code, const Json::Value &request) {
+Json::Value HeartBeat::report(drogon::HttpStatusCode &code, const Json::Value &request) {
     Json::Value response;
     if (!(
             request.isMember("ip") && request["ip"].isString() &&
@@ -23,7 +23,7 @@ Json::Value HeartBeat::logon(drogon::HttpStatusCode &code, const Json::Value &re
             request.isMember("taskInterval") && request["taskInterval"].isDouble() &&
             request.isMember("description") && request["description"].isString() &&
             request.isMember("credential") && request["credential"].isString() &&
-            app().getPlugin<Configurator>()->checkCredential(request["credential"].asString())
+            app().getPlugin<Authorizer>()->checkCredential(request["credential"].asString())
     )) {
         response["type"] = "Error";
         response["reason"] = "Invalid request";

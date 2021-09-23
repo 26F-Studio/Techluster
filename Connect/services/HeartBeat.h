@@ -12,7 +12,7 @@ namespace tech::services {
     public:
         HeartBeat();
 
-        Json::Value logon(drogon::HttpStatusCode &code, const Json::Value &request);
+        Json::Value report(drogon::HttpStatusCode &code, const Json::Value &request);
 
     private:
         tech::plugins::NodeManager *_nodeManager;

@@ -20,5 +20,5 @@ void HeartBeat::report(const HttpRequestPtr &req, function<void(const HttpRespon
         http::fromJson(code, response, callback);
         return;
     }
-    http::fromJson(code, _service.logon(code, request), callback);
+    http::fromJson(code, _service.report(code, request), callback);
 }
