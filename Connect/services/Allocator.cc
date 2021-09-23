@@ -2,7 +2,6 @@
 // Created by Particle_G on 2021/8/19.
 //
 
-#include <plugins/Configurator.h>
 #include <services/Allocator.h>
 
 using namespace drogon;
