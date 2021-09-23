@@ -21,12 +21,24 @@ void http::fromJson(
 void http::fromJson(
         const HttpStatusCode &code,
         const Json::Value &body,
+        const string &cors,
+        const function<void(const HttpResponsePtr &)> &callback
+) {
+    auto httpJsonResponse = HttpResponse::newHttpJsonResponse(body);
+    httpJsonResponse->setStatusCode(code);
+    httpJsonResponse->addHeader("Access-Control-Allow-Origin", cors);
+    callback(httpJsonResponse);
+}
+
+void http::fromJson(
+        const HttpStatusCode &code,
+        const Json::Value &body,
         const vector<Cookie> &cookies,
         const function<void(const HttpResponsePtr &)> &callback
 ) {
     auto httpJsonResponse = HttpResponse::newHttpJsonResponse(body);
     httpJsonResponse->setStatusCode(code);
-    for (const auto &cookie : cookies) {
+    for (const auto &cookie: cookies) {
         httpJsonResponse->addCookie(cookie);
     }
     callback(httpJsonResponse);
@@ -71,7 +83,7 @@ string http::toJson(
 string http::toJson(
         const HttpResponsePtr &req,
         Json::Value &result
-        ) {
+) {
     auto object = req->getJsonObject();
     if (object) {
         result = *object;

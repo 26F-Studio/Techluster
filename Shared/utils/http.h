@@ -17,6 +17,13 @@ namespace tech::utils::http {
     void fromJson(
             const drogon::HttpStatusCode &code,
             const Json::Value &body,
+            const std::string &cors,
+            const std::function<void(const drogon::HttpResponsePtr &)> &callback
+    );
+
+    void fromJson(
+            const drogon::HttpStatusCode &code,
+            const Json::Value &body,
             const std::vector<drogon::Cookie> &cookies,
             const std::function<void(const drogon::HttpResponsePtr &)> &callback
     );
