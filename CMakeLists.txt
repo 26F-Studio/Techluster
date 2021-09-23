@@ -33,4 +33,7 @@ find_package(Drogon CONFIG REQUIRED)
 
 add_subdirectory(Shared)
 add_subdirectory(Connect)
+add_subdirectory(Gaming)
+add_subdirectory(Message)
+add_subdirectory(Transfer)
 add_subdirectory(User)
