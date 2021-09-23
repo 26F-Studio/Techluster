@@ -22,11 +22,15 @@ namespace tech::plugins {
         [[nodiscard]] Json::Value parseInfo() const;
 
     private:
+        std::string _reportAddress{};
+        Json::Value _heartbeatBody{};
         std::atomic<uint32_t> _cpuInterval{};
         std::atomic<uint64_t> _vMemTotal{}, _vMemAvail{}, _rMemTotal{}, _rMemAvail{},
                 _netConn{}, _diskUser{}, _diskAvail{}, _diskTotal{};
         std::atomic<int64_t> _netDown{}, _netUp{};
         std::atomic<double> _cpuLoad{}, _taskInterval{};
+
+        void report();
 
         void updateInfo();
     };

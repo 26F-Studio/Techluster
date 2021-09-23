@@ -3,7 +3,10 @@
 //
 
 #include <drogon/drogon.h>
+#include <plugins/Authorizer.h>
 #include <plugins/Perfmon.h>
+#include <utils/http.h>
+#include <utils/serializer.h>
 
 #if _WIN32
 
@@ -26,6 +29,7 @@
 using namespace drogon;
 using namespace std;
 using namespace tech::plugins;
+using namespace tech::utils;
 
 void Perfmon::initAndStart(const Json::Value &config) {
     if (!(
@@ -45,6 +49,30 @@ void Perfmon::initAndStart(const Json::Value &config) {
     app().getLoop()->runEvery(_taskInterval, [this] {
         updateInfo();
     });
+
+    if (config.isMember("report") && config["report"].isObject() &&
+        config["report"].isMember("address") && config["report"]["address"].isString() &&
+        config["report"].isMember("localhost") && config["report"]["localhost"].isBool() &&
+        config["report"].isMember("description") && config["report"]["description"].isString()) {
+
+        _reportAddress = config["report"]["address"].asString();
+
+        _heartbeatBody["ip"] = config["report"]["localhost"].asBool() ? "127.0.0.1" :
+                               string(HttpClient::newHttpClient(
+                                       "https://api.ipify.org/"
+                               )->sendRequest(
+                                       HttpRequest::newHttpRequest()
+                               ).second->body());
+        _heartbeatBody["port"] = app().getListeners()[0].toPort();
+        _heartbeatBody["type"] = "transfer";
+        _heartbeatBody["taskInterval"] = app().getPlugin<Perfmon>()->getTaskInterval();
+        _heartbeatBody["description"] = config["report"]["description"].asString();
+        _heartbeatBody["credential"] = app().getPlugin<Authorizer>()->getCredential();
+
+        app().getLoop()->runEvery(_taskInterval, [this]() {
+            report();
+        });
+    }
 
     LOG_INFO << "Perfmon loaded.";
 }
@@ -68,6 +96,29 @@ Json::Value Perfmon::parseInfo() const {
     result["network"]["connections"] = _netConn.load();
 
     return result;
+}
+
+void Perfmon::report() {
+    _heartbeatBody["info"] = parseInfo();
+    auto client = HttpClient::newHttpClient(_reportAddress);
+    auto req = HttpRequest::newHttpJsonRequest(_heartbeatBody);
+    req->setMethod(Post);
+    req->setPath("/tech/api/v2/heartbeat/report");
+    client->sendRequest(req, [](ReqResult result, const HttpResponsePtr &responsePtr) {
+        if (result == ReqResult::Ok) {
+            Json::Value response;
+            string parseError = http::toJson(responsePtr, response);
+            if (!parseError.empty()) {
+                LOG_WARN << "Invalid response body (" << responsePtr->getStatusCode() << "): \n"
+                         << parseError;
+            } else if (responsePtr->getStatusCode() != k200OK) {
+                LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
+                         << serializer::json::stringify(response);
+            }
+        } else {
+            LOG_WARN << "Request failed (" << static_cast<int>(result) << ")";
+        }
+    }, 3);
 }
 
 void Perfmon::updateInfo() {
