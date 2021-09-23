@@ -13,9 +13,9 @@ namespace tech::services {
     public:
         Monitor();
 
-        Json::Value selfInfo(drogon::HttpStatusCode &code, const Json::Value &request);
+        Json::Value selfInfo(drogon::HttpStatusCode &code);
 
-        Json::Value othersInfo(drogon::HttpStatusCode &code, const Json::Value &request);
+        Json::Value othersInfo(drogon::HttpStatusCode &code, const std::string &nodeType);
 
     private:
         tech::plugins::NodeManager *_nodeManager;

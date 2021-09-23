@@ -2,7 +2,6 @@
 // Created by Particle_G on 2021/8/19.
 //
 
-#include <plugins/Configurator.h>
 #include <services/Monitor.h>
 
 using namespace drogon;
@@ -15,34 +14,23 @@ Monitor::Monitor() :
         _nodeManager(app().getPlugin<NodeManager>()),
         _perfmon(app().getPlugin<Perfmon>()) {}
 
-Json::Value Monitor::selfInfo(drogon::HttpStatusCode &code, const Json::Value &request) {
+Json::Value Monitor::selfInfo(HttpStatusCode &code) {
     Json::Value response;
-    if (!(
-            request.isMember("credential") && request["credential"].isString() &&
-            app().getPlugin<Configurator>()->checkCredential(request["credential"].asString())
-    )) {
-        response["type"] = "Error";
-        response["reason"] = "Invalid request";
-        code = HttpStatusCode::k400BadRequest;
-    } else {
-        response["type"] = "Success";
-        response["data"] = _perfmon->parseInfo();
-    }
+    response["type"] = "Success";
+    response["data"] = _perfmon->parseInfo();
     return response;
 }
 
-Json::Value Monitor::othersInfo(drogon::HttpStatusCode &code, const Json::Value &request) {
+Json::Value Monitor::othersInfo(HttpStatusCode &code, const string &nodeType) {
     Json::Value response;
-    if (!(
-            request.isMember("credential") && request["credential"].isString() &&
-            app().getPlugin<Configurator>()->checkCredential(request["credential"].asString())
-    )) {
-        response["type"] = "Error";
-        response["reason"] = "Invalid request";
-        code = HttpStatusCode::k400BadRequest;
-    } else {
+    try {
+        auto type = _nodeManager->toType(nodeType);
         response["type"] = "Success";
-        response["data"] = _nodeManager->parseInfo();
+        response["data"] = _nodeManager->parseInfo(type);
+    } catch (exception &e) {
+        response["type"] = "Error";
+        response["reason"] = "Invalid nodeType";
+        code = HttpStatusCode::k406NotAcceptable;
     }
     return response;
 }
