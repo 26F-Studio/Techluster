@@ -28,6 +28,8 @@ namespace tech::plugins {
 
         Json::Value parseInfo() const;
 
+        Json::Value parseInfo(const structures::NodeServer::Type &nodeType) const;
+
     private:
         mutable std::shared_mutex _sharedMutex;
 

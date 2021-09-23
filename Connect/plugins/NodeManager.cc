@@ -84,6 +84,20 @@ Json::Value NodeManager::parseInfo() const {
     return result;
 }
 
+Json::Value NodeManager::parseInfo(const NodeServer::Type &nodeType) const {
+    Json::Value result(Json::arrayValue);
+    shared_lock<shared_mutex> lock(_sharedMutex);
+    for (const auto&[type, nodeList]: _allNodes) {
+        if (type == nodeType) {
+            for (const auto &[_, node]: nodeList) {
+                result.append(node.parseNode());
+            }
+            break;
+        }
+    }
+    return result;
+}
+
 void NodeManager::updateTimer(NodeServer &nodeServer) {
     if (_waitTimes == 0) {
         // Disable heartbeat timeout
