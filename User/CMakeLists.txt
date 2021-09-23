@@ -26,3 +26,5 @@ target_sources(${PROJECT_NAME} PRIVATE
         ${STRUCT_SRC}
         ${SVC_SRC}
         ${UTIL_SRC})
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/config.json DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME})
