@@ -15,10 +15,13 @@ namespace tech::plugins {
 
         void shutdown() override;
 
+        trantor::InetAddress getAuthAddress() const;
+
     private:
         std::chrono::duration<double> _taskMinutes{};
+        std::atomic<bool> _authNodeDown{};
         std::atomic<trantor::InetAddress> _connectAddress{}, _authAddress{};
 
-        void updateNodeAddress();
+        void updateAuthAddress();
     };
 }

@@ -4,7 +4,7 @@
 
 #include <drogon/drogon.h>
 #include <plugins/AuthMaintainer.h>
-#include <ranges>
+#include <regex>
 #include <utils/http.h>
 #include <utils/serializer.h>
 
@@ -22,7 +22,7 @@ void AuthMaintainer::initAndStart(const Json::Value &config) {
             config["maintainer"].isMember("taskMinutes") && config["maintainer"]["taskMinutes"].isUInt64() &&
             config["maintainer"]["taskMinutes"].asUInt64() >= 10
     )) {
-        LOG_ERROR << R"("Invalid perfmon config")";
+        LOG_ERROR << R"("Invalid AuthMaintainer config")";
         abort();
     } else {
         _connectAddress = InetAddress(
@@ -32,8 +32,10 @@ void AuthMaintainer::initAndStart(const Json::Value &config) {
         _taskMinutes = chrono::minutes(config["maintainer"]["taskMinutes"].asUInt64());
     }
 
+    updateAuthAddress();
+
     app().getLoop()->runEvery(_taskMinutes, [this]() {
-        updateNodeAddress();
+        updateAuthAddress();
     });
 
     LOG_INFO << "AuthMaintainer loaded.";
@@ -41,7 +43,7 @@ void AuthMaintainer::initAndStart(const Json::Value &config) {
 
 void AuthMaintainer::shutdown() { LOG_INFO << "AuthMaintainer shutdown."; }
 
-void AuthMaintainer::updateNodeAddress() {
+void AuthMaintainer::updateAuthAddress() {
     auto client = HttpClient::newHttpClient("http://" + _connectAddress.load().toIpPort());
     auto req = HttpRequest::newHttpRequest();
     req->setPath("/tech/api/v2/allocator/user");
@@ -56,19 +58,27 @@ void AuthMaintainer::updateNodeAddress() {
                 LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
                          << serializer::json::stringify(response);
             } else {
-                auto host = response["data"]["host"].asString();
-                auto splits = views::split(host, ":") |
-                              views::transform([](auto v) {
-                                  auto c = v | views::common;
-                                  return string(c.begin(), c.end());
-                              });
-                _authAddress = InetAddress(
-                        *(splits.begin()),
-                        stoi(*(++splits.begin()))
+                auto parts = drogon::utils::splitString(
+                        response["data"]["host"].asString(),
+                        ":"
                 );
+                if (parts.size() == 2) {
+                    _authAddress = InetAddress(
+                            parts[0],
+                            stoi(parts[1])
+                    );
+                    LOG_INFO << _authAddress.load().toIpPort();
+                } else {
+                    LOG_WARN << "No auth node available right now!";
+                    _authNodeDown = true;
+                }
             }
         } else {
             LOG_WARN << "Request failed (" << static_cast<int>(result) << ")";
         }
     }, 3);
+}
+
+trantor::InetAddress AuthMaintainer::getAuthAddress() const {
+    return _authAddress;
 }
