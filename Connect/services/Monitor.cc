@@ -24,9 +24,14 @@ Json::Value Monitor::selfInfo(HttpStatusCode &code) {
 Json::Value Monitor::othersInfo(HttpStatusCode &code, const string &nodeType) {
     Json::Value response;
     try {
-        auto type = _nodeManager->toType(nodeType);
-        response["type"] = "Success";
-        response["data"] = _nodeManager->parseInfo(type);
+        if (nodeType == "all") {
+            response["type"] = "Success";
+            response["data"] = _nodeManager->parseInfo();
+        } else {
+            auto type = _nodeManager->toType(nodeType);
+            response["type"] = "Success";
+            response["data"] = _nodeManager->parseInfo(type);
+        }
     } catch (exception &e) {
         response["type"] = "Error";
         response["reason"] = "Invalid nodeType";
