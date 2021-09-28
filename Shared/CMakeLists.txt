@@ -1,5 +1,7 @@
 project(Shared CXX)
 
+find_package(cryptopp CONFIG REQUIRED)
+
 add_library(${PROJECT_NAME} STATIC)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
@@ -10,6 +12,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         ${UTIL_SRC})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
+        cryptopp-static
         Drogon::Drogon)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
