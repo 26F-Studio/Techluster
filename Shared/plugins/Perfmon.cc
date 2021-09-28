@@ -2,6 +2,7 @@
 // Created by Parti on 2021/2/4.
 //
 
+#include <algorithm>
 #include <drogon/drogon.h>
 #include <plugins/Authorizer.h>
 #include <plugins/Perfmon.h>
@@ -53,6 +54,7 @@ void Perfmon::initAndStart(const Json::Value &config) {
     if (config.isMember("report") && config["report"].isObject() &&
         config["report"].isMember("address") && config["report"]["address"].isString() &&
         config["report"].isMember("localhost") && config["report"]["localhost"].isBool() &&
+        config["report"].isMember("type") && config["report"]["type"].isString() &&
         config["report"].isMember("description") && config["report"]["description"].isString()) {
 
         _reportAddress = config["report"]["address"].asString();
@@ -64,7 +66,7 @@ void Perfmon::initAndStart(const Json::Value &config) {
                                        HttpRequest::newHttpRequest()
                                ).second->body());
         _heartbeatBody["port"] = app().getListeners()[0].toPort();
-        _heartbeatBody["type"] = "transfer";
+        _heartbeatBody["type"] = config["report"]["type"].asString();
         _heartbeatBody["taskInterval"] = app().getPlugin<Perfmon>()->getTaskInterval();
         _heartbeatBody["description"] = config["report"]["description"].asString();
         _heartbeatBody["credential"] = app().getPlugin<Authorizer>()->getCredential();
@@ -100,7 +102,7 @@ Json::Value Perfmon::parseInfo() const {
 
 void Perfmon::report() {
     _heartbeatBody["info"] = parseInfo();
-    auto client = HttpClient::newHttpClient(_reportAddress);
+    auto client = HttpClient::newHttpClient("http://" + _reportAddress);
     auto req = HttpRequest::newHttpJsonRequest(_heartbeatBody);
     req->setMethod(Post);
     req->setPath("/tech/api/v2/heartbeat/report");
@@ -307,7 +309,7 @@ void Perfmon::updateInfo() {
                 if (!dwAvail)
                     break;
 
-                if (!::ReadFile(hPipeRead, buf, min(sizeof(buf) - 1, dwAvail), &dwRead, nullptr) || !dwRead)
+                if (!::ReadFile(hPipeRead, buf, min<unsigned long>(sizeof(buf) - 1, dwAvail), &dwRead, nullptr) || !dwRead)
                     break;
 
                 buf[dwRead] = 0;
