@@ -11,8 +11,8 @@ namespace tech::structures {
     class NodeServer {
     public:
         enum class Type {
-            message,
             gaming,
+            message,
             transfer,
             user
         };

@@ -21,8 +21,8 @@ void NodeManager::initAndStart(const Json::Value &config) {
         LOG_ERROR << R"(Invalid nodeType config)";
         abort();
     } else {
-        _typeMapper[config["nodeType"]["message"].asString()] = NodeServer::Type::message;
         _typeMapper[config["nodeType"]["gaming"].asString()] = NodeServer::Type::gaming;
+        _typeMapper[config["nodeType"]["message"].asString()] = NodeServer::Type::message;
         _typeMapper[config["nodeType"]["transfer"].asString()] = NodeServer::Type::transfer;
         _typeMapper[config["nodeType"]["user"].asString()] = NodeServer::Type::user;
     }
