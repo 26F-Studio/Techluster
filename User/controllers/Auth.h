@@ -14,7 +14,8 @@ namespace tech::api::v2 {
             METHOD_ADD(Auth::refresh, "/refresh", drogon::Get);
             METHOD_ADD(Auth::verifyEmail, "/verify/email", drogon::Post, "tech::filters::EmailCoolDown", "tech::filters::IpCoolDown");
             METHOD_ADD(Auth::loginEmail, "/login/email", drogon::Post);
-            METHOD_ADD(Auth::loginWeChat, "/login/wechat", drogon::Post);
+            METHOD_ADD(Auth::resetEmail, "/reset/email", drogon::Post);
+            METHOD_ADD(Auth::migrateEmail, "/migrate/email", drogon::Put);
         METHOD_LIST_END
 
         void refresh(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
@@ -23,7 +24,9 @@ namespace tech::api::v2 {
 
         void loginEmail(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
 
-        void loginWeChat(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
+        void resetEmail(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
+
+        void migrateEmail(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
 
     private:
         services::Auth _service;
