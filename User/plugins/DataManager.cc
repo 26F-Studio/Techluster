@@ -5,7 +5,6 @@
 #include <drogon/drogon.h>
 #include <plugins/DataManager.h>
 #include <utils/crypto.h>
-#include <utils/datetime.h>
 
 using namespace drogon;
 using namespace drogon_model;
@@ -13,6 +12,7 @@ using namespace drogon::nosql;
 using namespace std;
 using namespace sw::redis;
 using namespace tech::plugins;
+using namespace tech::structures;
 using namespace tech::utils;
 
 void DataManager::initAndStart(const Json::Value &config) {
@@ -43,10 +43,6 @@ void DataManager::initAndStart(const Json::Value &config) {
     )) {
         LOG_ERROR << R"("Invalid expirations config")";
         abort();
-    } else {
-        refreshExpiration = config["expirations"]["refresh"].asInt64();
-        accessExpiration = config["expirations"]["access"].asInt64();
-        emailExpiration = config["expirations"]["email"].asInt64();
     }
 
     if (!(
@@ -59,72 +55,76 @@ void DataManager::initAndStart(const Json::Value &config) {
     )) {
         LOG_ERROR << R"("Invalid redis config")";
         abort();
-    } else {
-        ConnectionOptions options;
-        options.host = config["redis"]["host"].asString();
-        options.port = config["redis"]["port"].asInt();
-        options.password = config["redis"]["password"].asString();
-        options.db = config["redis"]["db"].asInt();
+    }
+    ConnectionOptions options;
+    options.host = config["redis"]["host"].asString();
+    options.port = config["redis"]["port"].asInt();
+    options.password = config["redis"]["password"].asString();
+    options.db = config["redis"]["db"].asInt();
 
-        if (config["redis"]["connections"].asUInt() == 0) {
-            ConnectionPoolOptions poolOptions;
-            poolOptions.size = thread::hardware_concurrency();
-            _redisClient = make_unique<Redis>(options, poolOptions);
-        } else if (config["redis"]["connections"].asUInt() > 1) {
-            ConnectionPoolOptions poolOptions;
-            poolOptions.size = config["redis"]["connections"].asUInt();
-            _redisClient = make_unique<Redis>(options, poolOptions);
-        } else {
-            _redisClient = make_unique<Redis>(options);
-        }
+    if (config["redis"]["connections"].asUInt() == 0) {
+        ConnectionPoolOptions poolOptions;
+        poolOptions.size = thread::hardware_concurrency();
+        _redisHelper = make_unique<RedisHelper>(move(RedisHelper(
+                options,
+                poolOptions,
+                {
+                        config["expirations"]["refresh"].asInt64(),
+                        config["expirations"]["access"].asInt64(),
+                        config["expirations"]["email"].asInt64()
+                }
+        )));
+    } else if (config["redis"]["connections"].asUInt() > 1) {
+        ConnectionPoolOptions poolOptions;
+        poolOptions.size = config["redis"]["connections"].asUInt();
+        _redisHelper = make_unique<RedisHelper>(move(RedisHelper(
+                options,
+                poolOptions,
+                {
+                        config["expirations"]["refresh"].asInt64(),
+                        config["expirations"]["access"].asInt64(),
+                        config["expirations"]["email"].asInt64()
+                }
+        )));
+    } else {
+        _redisHelper = make_unique<RedisHelper>(move(RedisHelper(
+                options,
+                {
+                        config["expirations"]["refresh"].asInt64(),
+                        config["expirations"]["access"].asInt64(),
+                        config["expirations"]["email"].asInt64()
+                }
+        )));
     }
 
     _pgClient = app().getDbClient();
-    _playerMapper = make_unique<Mapper<Techluster::Player>>(app().getDbClient());
+    _playerMapper = make_unique<
+            Mapper<Techluster::Player>
+    >(app().getDbClient());
 
     LOG_INFO << "DataManager loaded.";
 }
 
 void DataManager::shutdown() { LOG_INFO << "DataManager shutdown."; }
 
-DataManager::Token DataManager::refresh(const string &refreshToken) {
-    auto result = _redisClient->get("player:refresh:" + refreshToken);
-    if (!result) {
-        throw out_of_range("Invalid refreshToken");
-    }
-    _redisClient->expire(
-            "player:refresh:" + refreshToken,
-            chrono::minutes(refreshExpiration)
-    );
-    return {refreshToken, _generateAccessToken(result.value())};
+RedisToken DataManager::refresh(const string &refreshToken) {
+    return move(_redisHelper->refresh(refreshToken));
 }
 
 std::string DataManager::verifyEmail(const string &email) {
-    auto verifyCode = drogon::utils::genRandomString(8);
+    auto code = drogon::utils::genRandomString(8);
     transform(
-            verifyCode.begin(),
-            verifyCode.end(),
-            verifyCode.begin(),
+            code.begin(),
+            code.end(),
+            code.begin(),
             ::toupper
     );
-    if (!_redisClient->set(
-            "player:code:email_" + email,
-            verifyCode,
-            chrono::minutes(emailExpiration)
-    )) {
-        throw range_error("Set player:code:email_" + email + " Failed");
-    }
-    return verifyCode;
+    _redisHelper->setEmailCode(email, code);
+    return code;
 }
 
-DataManager::Token DataManager::loginEmailCode(const string &email, const string &code) {
-    auto result = _redisClient->get("player:code:email_" + email);
-    if (!result) {
-        throw out_of_range("Invalid email");
-    }
-    if (result.value() != code) {
-        throw range_error("Invalid code");
-    }
+RedisToken DataManager::loginEmailCode(const string &email, const string &code) {
+    _redisHelper->checkEmailCode(email, code);
     if (_playerMapper->count(Criteria(
             Techluster::Player::Cols::_email,
             CompareOperator::EQ,
@@ -132,6 +132,7 @@ DataManager::Token DataManager::loginEmailCode(const string &email, const string
     )) == 0) {
         Techluster::Player newPlayer;
         newPlayer.setEmail(email);
+        newPlayer.setPassword("Undefined");
         newPlayer.setUsername("email_" + email);
         _playerMapper->insert(newPlayer);
     }
@@ -140,11 +141,16 @@ DataManager::Token DataManager::loginEmailCode(const string &email, const string
             CompareOperator::EQ,
             email
     ));
-    _redisClient->del("player:code:email_" + email);
-    return generateTokens(to_string(player.getValueOfId()));
+    _redisHelper->deleteEmailCode(email);
+    return move(_redisHelper->generateTokens(
+            to_string(player.getValueOfId())
+    ));
 }
 
-DataManager::Token DataManager::loginEmailPassword(const string &email, const string &password) {
+RedisToken DataManager::loginEmailPassword(
+        const string &email,
+        const string &password
+) {
     auto matchedUsers = _pgClient->execSqlSync(
             "select * from player "
             "where email = $1 "
@@ -152,120 +158,161 @@ DataManager::Token DataManager::loginEmailPassword(const string &email, const st
             email, password
     );
     if (matchedUsers.empty()) {
-        throw orm::RangeError("No users found");
+        throw range_error("No users found");
     }
-    return generateTokens(to_string(matchedUsers[0]["_id"].as<int32_t>()));
+    return move(_redisHelper->generateTokens(
+            to_string(matchedUsers[0]["id"].as<int32_t>())
+    ));
 }
 
-DataManager::Token DataManager::loginWeChat(const string &code) {
-    // TODO: Implement logic
-    return {};
-}
-
-bool DataManager::coolDown(const string &key, const chrono::seconds &interval) {
-    if (_redisClient->exists(key)) {
-        _redisClient->expire(key, interval);
-        return false;
-    }
-    if (!_redisClient->set(key, "", interval)) {
-        throw range_error("Set " + key + " Failed");
-    }
-    return true;
-}
-
-string DataManager::_generateRefreshToken(const string &userId) {
-    auto refreshToken = crypto::keccak(drogon::utils::getUuid());
-    if (!_redisClient->set(
-            "player:refresh:" + refreshToken,
-            userId,
-            chrono::minutes(refreshExpiration)
-    )) {
-        throw range_error("Set player:refresh:" + refreshToken + " Failed");
-    }
-    return refreshToken;
-}
-
-string DataManager::_generateAccessToken(const string &userId) {
-    auto accessToken = crypto::blake2b(drogon::utils::getUuid());
-    if (!_redisClient->set(
-            "player:access:" + userId,
-            accessToken,
-            chrono::minutes(accessExpiration)
-    )) {
-        throw range_error("Set player:access:" + userId + " Failed");
-    }
-    return accessToken;
-}
-
-DataManager::Token DataManager::generateTokens(const std::string &userId) {
-    return {_generateRefreshToken(userId), _generateAccessToken(userId)};
-}
-
-bool DataManager::tokenBucket(
-        const string &key,
-        const chrono::microseconds &restoreInterval,
-        const uint64_t &maxCount
-) const {
-    auto maxTTL = chrono::duration_cast<chrono::seconds>(restoreInterval * maxCount);
-
-    auto setCount = [this, &key](const uint64_t &count) {
-        if (!_redisClient->set(
-                "tokenBucketCount:" + key,
-                to_string(count)
-        )) {
-            throw range_error("Set tokenBucketCount:" + key + " Failed");
-        }
-    };
-
-    auto setDate = [this, &key](const string &dateStr) {
-        if (!_redisClient->set(
-                "tokenBucketUpdated:" + key,
-                dateStr
-        )) {
-            throw range_error("Set tokenBucketUpdated:" + key + " Failed");
-        }
-    };
-
-    auto checkCount = [this, &key](const uint64_t &count) -> bool {
-        if (count > 0) {
-            _redisClient->decr("tokenBucketCount:" + key);
-            return true;
-        }
-        return false;
-    };
-
-    auto bucketCount = _redisClient->get("tokenBucketCount:" + key);
-
-    uint64_t countValue;
-
-    if (!bucketCount) {
-        setCount(maxCount - 1);
-        countValue = maxCount;
+void DataManager::resetEmail(
+        const string &email,
+        const string &code,
+        const string &newPassword
+) {
+    _redisHelper->checkEmailCode(email, code);
+    if (_playerMapper->count(Criteria(
+            Techluster::Player::Cols::_email,
+            CompareOperator::EQ,
+            email
+    )) == 0) {
+        throw out_of_range("No user found");
     } else {
-        countValue = stoull(bucketCount.value());
+        _pgClient->execSqlSync(
+                "update player set "
+                "password = crypt($1, gen_salt('bf', 10)) "
+                "where email = $2",
+                newPassword, email
+        );
     }
+    _redisHelper->deleteEmailCode(email);
+}
 
-    bool hasToken = true;
-    auto lastUpdated = _redisClient->get("tokenBucketUpdated:" + key);
-    if (!lastUpdated) {
-        setDate(datetime::toString());
-        setCount(maxCount - 1);
+void DataManager::migrateEmail(
+        const string &accessToken,
+        const string &newEmail,
+        const string &code
+) {
+    auto player = _playerMapper->findOne(Criteria(
+            Techluster::Player::Cols::_email,
+            CompareOperator::EQ,
+            _redisHelper->getUserId(accessToken)
+    ));
+    _redisHelper->checkEmailCode(newEmail, code);
+    player.setEmail(newEmail);
+    _playerMapper->update(player);
+    _redisHelper->deleteEmailCode(newEmail);
+}
+
+Json::Value DataManager::getUserInfo(
+        const string &accessToken,
+        const int32_t &userId
+) {
+    int32_t id = userId;
+    if (userId < 0) {
+        id = _redisHelper->getUserId(accessToken);
     } else {
-        auto nowMicroseconds = datetime::toDate().microSecondsSinceEpoch();
-        auto generatedCount =
-                (nowMicroseconds -
-                 datetime::toDate(lastUpdated.value()).microSecondsSinceEpoch()
-                ) / restoreInterval.count() - 1;
-
-        if (generatedCount >= 1) {
-            setDate(datetime::toString(nowMicroseconds));
-            _redisClient->incrby("tokenBucketCount:" + key, generatedCount - 1);
-            hasToken = true;
-        } else {
-            hasToken = checkCount(countValue);
-        }
+        _redisHelper->checkAccessToken(accessToken);
     }
-    _redisClient->expire("tokenBucketCount:" + key, maxTTL);
-    _redisClient->expire("tokenBucketUpdated:" + key, maxTTL);
-    return hasToken;
+    auto player = _playerMapper->findOne(Criteria(
+            Techluster::Player::Cols::_id,
+            CompareOperator::EQ,
+            id
+    ));
+    Json::Value result;
+    result["id"] = player.getValueOfId();
+    result["avatar_frame"] = player.getValueOfAvatarFrame();
+    result["avatar_hash"] = player.getValueOfAvatarHash();
+    result["clan"] = player.getValueOfClan();
+    result["motto"] = player.getValueOfMotto();
+    result["region"] = player.getValueOfRegion();
+    result["username"] = player.getValueOfUsername();
+    return result;
+}
+
+void DataManager::updateUserInfo(
+        const string &accessToken,
+        const Json::Value &info
+) {
+    auto player = _playerMapper->findOne(Criteria(
+            Techluster::Player::Cols::_id,
+            CompareOperator::EQ,
+            _redisHelper->getUserId(accessToken)
+    ));
+    bool updated = false;
+    if (info.isMember("username") &&
+        info["username"].isString() &&
+        info["username"].asString() != player.getValueOfUsername()) {
+        updated = true;
+        player.setEmail(info["username"].asString());
+    }
+    if (info.isMember("motto") &&
+        info["motto"].isString() &&
+        info["motto"].asString() != player.getValueOfMotto()) {
+        updated = true;
+        player.setMotto(info["motto"].asString());
+    }
+    if (info.isMember("region") &&
+        info["region"].isInt() &&
+        info["region"].asInt() != player.getValueOfRegion()) {
+        updated = true;
+        player.setRegion(static_cast<short>(info["region"].asInt()));
+    }
+    if (info.isMember("avatar") &&
+        info["avatar"].isString() &&
+        info["avatar"].asString() != player.getValueOfAvatar()) {
+        updated = true;
+        player.setAvatar(info["avatar"].asString());
+        player.setAvatarHash(crypto::blake2b(info["avatar"].asString(), 4));
+    }
+    if (info.isMember("avatar_frame") &&
+        info["avatar_frame"].isInt() &&
+        info["avatar_frame"].asInt() != player.getValueOfAvatarFrame()) {
+        updated = true;
+        player.setAvatarFrame(static_cast<short>(info["avatar_frame"].asInt()));
+    }
+    if (info.isMember("clan") &&
+        info["clan"].isString() &&
+        info["clan"].asString() != player.getValueOfClan()) {
+        updated = true;
+        player.setClan(info["clan"].asString());
+    }
+    if (!updated) {
+        throw invalid_argument("Nothing changed");
+    }
+    _playerMapper->update(player);
+}
+
+string DataManager::getUserAvatar(
+        const string &accessToken,
+        const int32_t &userId
+) {
+    int32_t id = userId;
+    if (userId < 0) {
+        id = _redisHelper->getUserId(accessToken);
+    } else {
+        _redisHelper->checkAccessToken(accessToken);
+    }
+    auto player = _playerMapper->findOne(Criteria(
+            Techluster::Player::Cols::_id,
+            CompareOperator::EQ,
+            id
+    ));
+    return player.getValueOfAvatar();
+}
+
+bool DataManager::ipLimit(const string &ip) const {
+    return _redisHelper->tokenBucket(
+            "ip:" + ip,
+            _ipInterval,
+            _ipMaxCount
+    );
+}
+
+bool DataManager::emailLimit(const string &email) {
+    return _redisHelper->tokenBucket(
+            "email:" + email,
+            _emailInterval,
+            _emailMaxCount
+    );
 }
