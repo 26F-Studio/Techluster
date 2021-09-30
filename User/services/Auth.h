@@ -19,12 +19,14 @@ namespace tech::services {
 
         Json::Value loginMail(drogon::HttpStatusCode &code, const Json::Value &data);
 
-        Json::Value loginWeChat(drogon::HttpStatusCode &code, const Json::Value &data);
+        Json::Value resetEmail(drogon::HttpStatusCode &code, const Json::Value &data);
+
+        Json::Value migrateEmail(drogon::HttpStatusCode &code, const Json::Value &data);
 
     private:
         tech::plugins::Configurator *_configurator;
         tech::plugins::DataManager *_dataManager;
 
-        std::string _getFileContent(std::string_view path);
+        static std::string _getFileContent(std::string_view path);
     };
 }

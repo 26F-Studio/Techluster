@@ -22,8 +22,8 @@ Json::Value Auth::refresh(HttpStatusCode &code, const Json::Value &data) {
     try {
         auto tokens = _dataManager->refresh(data["refreshToken"].asString());
         response["type"] = "Success";
-        response["data"]["refreshToken"] = tokens.refresh;
-        response["data"]["accessToken"] = tokens.access;
+        response["data"]["refreshToken"] = tokens.refresh();
+        response["data"]["accessToken"] = tokens.access();
     } catch (const nosql::RedisException &e) {
         LOG_ERROR << "error:" << e.what();
         code = k500InternalServerError;
@@ -95,13 +95,13 @@ Json::Value Auth::loginMail(HttpStatusCode &code, const Json::Value &data) {
         if (!validCode.empty()) {
             auto tokens = _dataManager->loginEmailCode(email, validCode);
             response["type"] = "Success";
-            response["data"]["refreshToken"] = tokens.refresh;
-            response["data"]["accessToken"] = tokens.access;
+            response["data"]["refreshToken"] = tokens.refresh();
+            response["data"]["accessToken"] = tokens.access();
         } else if (!password.empty()) {
             auto tokens = _dataManager->loginEmailPassword(email, password);
             response["type"] = "Success";
-            response["data"]["refreshToken"] = tokens.refresh;
-            response["data"]["accessToken"] = tokens.access;
+            response["data"]["refreshToken"] = tokens.refresh();
+            response["data"]["accessToken"] = tokens.access();
         } else {
             code = k400BadRequest;
             response["type"] = "Error";
@@ -112,10 +112,10 @@ Json::Value Auth::loginMail(HttpStatusCode &code, const Json::Value &data) {
         code = k500InternalServerError;
         response["type"] = "Error";
         response["reason"] = e.what();
-    } catch (const orm::RangeError &e) {
+    } catch (const range_error &e) {
         LOG_ERROR << "error:" << e.what();
-        code = k500InternalServerError;
-        response["type"] = "Error";
+        code = k404NotFound;
+        response["type"] = "Failed";
         response["reason"] = e.what();
     } catch (const orm::DrogonDbException &e) {
         LOG_ERROR << "error:" << e.base().what();
@@ -126,11 +126,51 @@ Json::Value Auth::loginMail(HttpStatusCode &code, const Json::Value &data) {
     return response;
 }
 
-Json::Value Auth::loginWeChat(HttpStatusCode &code, const Json::Value &data) {
+Json::Value Auth::resetEmail(HttpStatusCode &code, const Json::Value &data) {
+    auto email = data["email"].asString();
+    auto validCode = data["code"].asString();
+    auto newPassword = data["newPassword"].asString();
     Json::Value response;
-    code = k501NotImplemented;
-    response["type"] = "Failed";
-    response["reason"] = "API not implemented";
+    try {
+        _dataManager->resetEmail(email, validCode, newPassword);
+        response["type"] = "Success";
+    } catch (const orm::DrogonDbException &e) {
+        LOG_ERROR << "error:" << e.base().what();
+        code = k500InternalServerError;
+        response["type"] = "Error";
+        response["reason"] = "Database error";
+    } catch (const exception &e) {
+        LOG_ERROR << "error:" << e.what();
+        code = drogon::k503ServiceUnavailable;
+        response["type"] = "Failed";
+        response["reason"] = e.what();
+    }
+    return response;
+}
+
+Json::Value Auth::migrateEmail(HttpStatusCode &code, const Json::Value &data) {
+    auto accessToken = data["accessToken"].asString();
+    auto newEmail = data["newEmail"].asString();
+    auto validCode = data["code"].asString();
+    Json::Value response;
+    try {
+        _dataManager->migrateEmail(
+                accessToken,
+                newEmail,
+                validCode
+        );
+        response["type"] = "Success";
+    } catch (const orm::DrogonDbException &e) {
+        LOG_ERROR << "error:" << e.base().what();
+        code = k500InternalServerError;
+        response["type"] = "Error";
+        response["reason"] = "Database error";
+    } catch (const exception &e) {
+        LOG_ERROR << "error:" << e.what();
+        code = drogon::k503ServiceUnavailable;
+        response["type"] = "Failed";
+        response["reason"] = e.what();
+    }
     return response;
 }
 
