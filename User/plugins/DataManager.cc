@@ -98,6 +98,9 @@ void DataManager::initAndStart(const Json::Value &config) {
     }
 
     _pgClient = app().getDbClient();
+    _dataMapper = make_unique<
+            Mapper<Techluster::Data>
+    >(app().getDbClient());
     _playerMapper = make_unique<
             Mapper<Techluster::Player>
     >(app().getDbClient());
@@ -206,9 +209,9 @@ void DataManager::migrateEmail(
 
 Json::Value DataManager::getUserInfo(
         const string &accessToken,
-        const int32_t &userId
+        const int64_t &userId
 ) {
-    int32_t id = userId;
+    auto id = userId;
     if (userId < 0) {
         id = _redisHelper->getUserId(accessToken);
     } else {
@@ -285,9 +288,9 @@ void DataManager::updateUserInfo(
 
 string DataManager::getUserAvatar(
         const string &accessToken,
-        const int32_t &userId
+        const int64_t &userId
 ) {
-    int32_t id = userId;
+    auto id = userId;
     if (userId < 0) {
         id = _redisHelper->getUserId(accessToken);
     } else {
@@ -315,4 +318,65 @@ bool DataManager::emailLimit(const string &email) {
             _emailInterval,
             _emailMaxCount
     );
+}
+
+string DataManager::getUserData(
+        const string &accessToken,
+        const int64_t &userId,
+        const DataField &field
+) {
+    auto id = userId;
+    if (userId < 0) {
+        id = _redisHelper->getUserId(accessToken);
+    } else {
+        _redisHelper->checkAccessToken(accessToken);
+    }
+    auto data = _dataMapper->findOne(Criteria(
+            Techluster::Player::Cols::_id,
+            CompareOperator::EQ,
+            id
+    ));
+    string result;
+    switch (field) {
+        case DataField::kPublic:
+            result = data.getValueOfPublic();
+            break;
+        case DataField::kProtected:
+            result = data.getValueOfProtected();
+            break;
+        case DataField::kPrivate:
+            result = data.getValueOfPrivate();
+            break;
+    }
+    return result;
+}
+
+void DataManager::updateUserData(
+        const string &accessToken,
+        const int64_t &userId,
+        const DataField &field,
+        const string &info
+) {
+    auto id = userId;
+    if (userId < 0) {
+        id = _redisHelper->getUserId(accessToken);
+    } else {
+        _redisHelper->checkAccessToken(accessToken);
+    }
+    auto data = _dataMapper->findOne(Criteria(
+            Techluster::Player::Cols::_id,
+            CompareOperator::EQ,
+            id
+    ));
+    switch (field) {
+        case DataField::kPublic:
+            data.setPublic(info);
+            break;
+        case DataField::kProtected:
+            data.setProtected(info);
+            break;
+        case DataField::kPrivate:
+            data.setPrivate(info);
+            break;
+    }
 }

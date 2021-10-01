@@ -4,9 +4,11 @@
 
 #pragma once
 
-#include <structures/RedisHelper.h>
 #include <drogon/plugins/Plugin.h>
+#include <models/Data.h>
 #include <models/Player.h>
+#include <structures/DataField.h>
+#include <structures/RedisHelper.h>
 
 namespace tech::plugins {
     class DataManager : public drogon::Plugin<DataManager> {
@@ -47,7 +49,7 @@ namespace tech::plugins {
 
         Json::Value getUserInfo(
                 const std::string &accessToken,
-                const int32_t &userId
+                const int64_t &userId
         );
 
         void updateUserInfo(
@@ -57,7 +59,20 @@ namespace tech::plugins {
 
         std::string getUserAvatar(
                 const std::string &accessToken,
-                const int32_t &userId
+                const int64_t &userId
+        );
+
+        std::string getUserData(
+                const std::string &accessToken,
+                const int64_t &userId,
+                const tech::structures::DataField &field
+        );
+
+        void updateUserData(
+                const std::string &accessToken,
+                const int64_t &userId,
+                const tech::structures::DataField &field,
+                const std::string &info
         );
 
         [[nodiscard]] bool ipLimit(const std::string &ip) const;
@@ -70,6 +85,9 @@ namespace tech::plugins {
 
         drogon::orm::DbClientPtr _pgClient;
         std::unique_ptr<tech::structures::RedisHelper> _redisHelper;
+        std::unique_ptr<drogon::orm::Mapper<
+                drogon_model::Techluster::Data
+        >> _dataMapper;
         std::unique_ptr<drogon::orm::Mapper<
                 drogon_model::Techluster::Player
         >> _playerMapper;
