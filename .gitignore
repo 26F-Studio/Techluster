@@ -563,3 +563,4 @@ FodyWeavers.xsd
 ### Sensitive files ###
 *config.json
 *model.json
+*.rdb
