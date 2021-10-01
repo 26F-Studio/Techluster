@@ -27,7 +27,7 @@ const bool Player::hasPrimaryKey = true;
 const std::string Player::tableName = "player";
 
 const std::vector<typename Player::MetaData> Player::metaData_ = {
-        {"id",           "int32_t",     "integer",  4, 1, 1, 1},
+        {"id",           "int64_t",     "bigint",   8, 1, 1, 1},
         {"email",        "std::string", "text",     0, 0, 0, 1},
         {"password",     "std::string", "text",     0, 0, 0, 0},
         {"username",     "std::string", "text",     0, 0, 0, 1},
@@ -47,7 +47,7 @@ const std::string &Player::getColumnName(size_t index) noexcept(false) {
 Player::Player(const Row &r, const ssize_t indexOffset) noexcept {
     if (indexOffset < 0) {
         if (!r["id"].isNull()) {
-            id_ = std::make_shared<int32_t>(r["id"].as<int32_t>());
+            id_ = std::make_shared<int64_t>(r["id"].as<int64_t>());
         }
         if (!r["email"].isNull()) {
             email_ = std::make_shared<std::string>(r["email"].as<std::string>());
@@ -85,7 +85,7 @@ Player::Player(const Row &r, const ssize_t indexOffset) noexcept {
         size_t index;
         index = offset + 0;
         if (!r[index].isNull()) {
-            id_ = std::make_shared<int32_t>(r[index].as<int32_t>());
+            id_ = std::make_shared<int64_t>(r[index].as<int64_t>());
         }
         index = offset + 1;
         if (!r[index].isNull()) {
@@ -135,7 +135,7 @@ Player::Player(const Json::Value &pJson, const std::vector<std::string> &pMasque
     if (!pMasqueradingVector[0].empty() && pJson.isMember(pMasqueradingVector[0])) {
         dirtyFlag_[0] = true;
         if (!pJson[pMasqueradingVector[0]].isNull()) {
-            id_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[0]].asInt64());
+            id_ = std::make_shared<int64_t>((int64_t) pJson[pMasqueradingVector[0]].asInt64());
         }
     }
     if (!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1])) {
@@ -205,7 +205,7 @@ Player::Player(const Json::Value &pJson) noexcept(false) {
     if (pJson.isMember("id")) {
         dirtyFlag_[0] = true;
         if (!pJson["id"].isNull()) {
-            id_ = std::make_shared<int32_t>((int32_t) pJson["id"].asInt64());
+            id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
         }
     }
     if (pJson.isMember("email")) {
@@ -272,7 +272,7 @@ void Player::updateByMasqueradedJson(const Json::Value &pJson,
     }
     if (!pMasqueradingVector[0].empty() && pJson.isMember(pMasqueradingVector[0])) {
         if (!pJson[pMasqueradingVector[0]].isNull()) {
-            id_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[0]].asInt64());
+            id_ = std::make_shared<int64_t>((int64_t) pJson[pMasqueradingVector[0]].asInt64());
         }
     }
     if (!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1])) {
@@ -334,7 +334,7 @@ void Player::updateByMasqueradedJson(const Json::Value &pJson,
 void Player::updateByJson(const Json::Value &pJson) noexcept(false) {
     if (pJson.isMember("id")) {
         if (!pJson["id"].isNull()) {
-            id_ = std::make_shared<int32_t>((int32_t) pJson["id"].asInt64());
+            id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
         }
     }
     if (pJson.isMember("email")) {
@@ -393,19 +393,19 @@ void Player::updateByJson(const Json::Value &pJson) noexcept(false) {
     }
 }
 
-const int32_t &Player::getValueOfId() const noexcept {
-    const static int32_t defaultValue = int32_t();
+const int64_t &Player::getValueOfId() const noexcept {
+    const static int64_t defaultValue = int64_t();
     if (id_)
         return *id_;
     return defaultValue;
 }
 
-const std::shared_ptr<int32_t> &Player::getId() const noexcept {
+const std::shared_ptr<int64_t> &Player::getId() const noexcept {
     return id_;
 }
 
-void Player::setId(const int32_t &pId) noexcept {
-    id_ = std::make_shared<int32_t>(pId);
+void Player::setId(const int64_t &pId) noexcept {
+    id_ = std::make_shared<int64_t>(pId);
     dirtyFlag_[0] = true;
 }
 
@@ -818,7 +818,7 @@ void Player::updateArgs(drogon::orm::internal::SqlBinder &binder) const {
 Json::Value Player::toJson() const {
     Json::Value ret;
     if (getId()) {
-        ret["id"] = getValueOfId();
+        ret["id"] = (Json::Int64) getValueOfId();
     } else {
         ret["id"] = Json::Value();
     }
@@ -876,7 +876,7 @@ Json::Value Player::toMasqueradedJson(
     if (pMasqueradingVector.size() == 10) {
         if (!pMasqueradingVector[0].empty()) {
             if (getId()) {
-                ret[pMasqueradingVector[0]] = getValueOfId();
+                ret[pMasqueradingVector[0]] = (Json::Int64) getValueOfId();
             } else {
                 ret[pMasqueradingVector[0]] = Json::Value();
             }
@@ -948,7 +948,7 @@ Json::Value Player::toMasqueradedJson(
     }
     LOG_ERROR << "Masquerade failed";
     if (getId()) {
-        ret["id"] = getValueOfId();
+        ret["id"] = (Json::Int64) getValueOfId();
     } else {
         ret["id"] = Json::Value();
     }
@@ -1253,7 +1253,7 @@ bool Player::validJsonOfField(size_t index,
                 err = "The automatic primary key cannot be set";
                 return false;
             }
-            if (!pJson.isInt()) {
+            if (!pJson.isInt64()) {
                 err = "Type error in the " + fieldName + " field";
                 return false;
             }

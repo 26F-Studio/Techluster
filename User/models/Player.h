@@ -6,17 +6,14 @@
  */
 
 #pragma once
-
 #include <drogon/orm/Result.h>
 #include <drogon/orm/Row.h>
 #include <drogon/orm/Field.h>
 #include <drogon/orm/SqlBinder.h>
 #include <drogon/orm/Mapper.h>
-
 #ifdef __cpp_impl_coroutine
 #include <drogon/orm/CoroMapper.h>
 #endif
-
 #include <trantor/utils/Date.h>
 #include <trantor/utils/Logger.h>
 #include <json/json.h>
@@ -57,7 +54,7 @@ namespace drogon_model {
             const static std::string tableName;
             const static bool hasPrimaryKey;
             const static std::string primaryKeyName;
-            using PrimaryKeyType = int32_t;
+            using PrimaryKeyType = int64_t;
 
             const PrimaryKeyType &getPrimaryKey() const;
 
@@ -111,13 +108,13 @@ namespace drogon_model {
 
             /**  For column id  */
             ///Get the value of the column id, returns the default value if the column is null
-            const int32_t &getValueOfId() const noexcept;
+            const int64_t &getValueOfId() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr<int32_t> &getId() const noexcept;
+            const std::shared_ptr<int64_t> &getId() const noexcept;
 
             ///Set the value of the column id
-            void setId(const int32_t &pId) noexcept;
+            void setId(const int64_t &pId) noexcept;
 
 
             /**  For column email  */
@@ -268,7 +265,7 @@ namespace drogon_model {
             ///For mysql or sqlite3
             void updateId(const uint64_t id);
 
-            std::shared_ptr<int32_t> id_;
+            std::shared_ptr<int64_t> id_;
             std::shared_ptr<std::string> email_;
             std::shared_ptr<std::string> password_;
             std::shared_ptr<std::string> username_;
