@@ -14,6 +14,8 @@ namespace tech::api::v2 {
             METHOD_ADD(User::getInfo, "/info", drogon::Get);
             METHOD_ADD(User::updateInfo, "/info", drogon::Put);
             METHOD_ADD(User::getAvatar, "/avatar", drogon::Get);
+            METHOD_ADD(User::getData, "/data", drogon::Get, "tech::filters::ValidateField");
+            METHOD_ADD(User::updateData, "/data", drogon::Put, "tech::filters::ValidateField");
         METHOD_LIST_END
 
         void getInfo(
@@ -27,6 +29,16 @@ namespace tech::api::v2 {
         );
 
         void getAvatar(
+                const drogon::HttpRequestPtr &req,
+                std::function<void(const drogon::HttpResponsePtr &)> &&callback
+        );
+
+        void getData(
+                const drogon::HttpRequestPtr &req,
+                std::function<void(const drogon::HttpResponsePtr &)> &&callback
+        );
+
+        void updateData(
                 const drogon::HttpRequestPtr &req,
                 std::function<void(const drogon::HttpResponsePtr &)> &&callback
         );

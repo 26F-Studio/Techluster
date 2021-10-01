@@ -4,28 +4,31 @@
 
 #include <services/User.h>
 #include <utils/crypto.h>
+#include <utils/serializer.h>
 
 using namespace drogon;
 using namespace std;
 using namespace tech::plugins;
 using namespace tech::services;
+using namespace tech::structures;
 using namespace tech::utils;
 
 User::User() : _dataManager(app().getPlugin<DataManager>()) {}
 
-Json::Value User::getInfo(HttpStatusCode &code, const Json::Value &data) {
+Json::Value User::getInfo(
+        HttpStatusCode &code,
+        const string &accessToken,
+        const int64_t &id
+) {
     Json::Value response;
     try {
-        auto info = _dataManager->getUserInfo(
-                data["accessToken"].asString(),
-                data["id"].asInt()
-        );
+        auto info = _dataManager->getUserInfo(accessToken, id);
         response["type"] = "Success";
         response["data"] = info;
     } catch (const orm::UnexpectedRows &e) {
         code = k500InternalServerError;
         response["type"] = "Error";
-        response["reason"] = "No user's id = " + to_string(data["id"].asInt());
+        response["reason"] = "No user's id = " + to_string(id);
     } catch (const orm::DrogonDbException &e) {
         LOG_ERROR << "error:" << e.base().what();
         code = k500InternalServerError;
@@ -39,13 +42,14 @@ Json::Value User::getInfo(HttpStatusCode &code, const Json::Value &data) {
     return response;
 }
 
-Json::Value User::updateInfo(HttpStatusCode &code, const Json::Value &data) {
+Json::Value User::updateInfo(
+        HttpStatusCode &code,
+        const string &accessToken,
+        const Json::Value &data
+) {
     Json::Value response;
     try {
-        _dataManager->updateUserInfo(
-                data["accessToken"].asString(),
-                data
-        );
+        _dataManager->updateUserInfo(accessToken, data);
         response["type"] = "Success";
     } catch (const orm::DrogonDbException &e) {
         LOG_WARN << e.base().what();
@@ -66,19 +70,85 @@ Json::Value User::updateInfo(HttpStatusCode &code, const Json::Value &data) {
     return response;
 }
 
-Json::Value User::getAvatar(HttpStatusCode &code, const Json::Value &data) {
+Json::Value User::getAvatar(
+        HttpStatusCode &code,
+        const string &accessToken,
+        const int64_t &id
+) {
     Json::Value response;
     try {
-        auto avatar = _dataManager->getUserAvatar(
-                data["accessToken"].asString(),
-                data["id"].asInt()
-        );
+        auto avatar = _dataManager->getUserAvatar(accessToken, id);
         response["type"] = "Success";
         response["data"] = avatar;
     } catch (const orm::UnexpectedRows &e) {
         code = k500InternalServerError;
         response["type"] = "Error";
-        response["reason"] = "No user's id = " + to_string(data["id"].asInt());
+        response["reason"] = "No user's id = " + to_string(id);
+    } catch (const orm::DrogonDbException &e) {
+        LOG_ERROR << "error:" << e.base().what();
+        code = k500InternalServerError;
+        response["type"] = "Error";
+        response["reason"] = "ORM error";
+    } catch (const exception &e) {
+        code = k401Unauthorized;
+        response["type"] = "Failed";
+        response["reason"] = e.what();
+    }
+    return response;
+}
+
+Json::Value User::getData(
+        HttpStatusCode &code,
+        const string &accessToken,
+        const int64_t &id,
+        const DataField &field
+) {
+    Json::Value response;
+    try {
+        auto data = _dataManager->getUserData(
+                accessToken,
+                id,
+                field
+        );
+        response["type"] = "Success";
+        response["data"] = data;
+    } catch (const orm::UnexpectedRows &e) {
+        code = k500InternalServerError;
+        response["type"] = "Error";
+        response["reason"] = "No user's id = " + to_string(id);
+    } catch (const orm::DrogonDbException &e) {
+        LOG_ERROR << "error:" << e.base().what();
+        code = k500InternalServerError;
+        response["type"] = "Error";
+        response["reason"] = "ORM error";
+    } catch (const exception &e) {
+        code = k401Unauthorized;
+        response["type"] = "Failed";
+        response["reason"] = e.what();
+    }
+    return response;
+}
+
+Json::Value User::updateData(
+        HttpStatusCode &code,
+        const string &accessToken,
+        const int64_t &id,
+        const DataField &field,
+        const Json::Value &data
+) {
+    Json::Value response;
+    try {
+        _dataManager->updateUserData(
+                accessToken,
+                id,
+                field,
+                serializer::json::stringify(data)
+        );
+        response["type"] = "Success";
+    } catch (const orm::UnexpectedRows &e) {
+        code = k500InternalServerError;
+        response["type"] = "Error";
+        response["reason"] = "No user's id = " + to_string(id);
     } catch (const orm::DrogonDbException &e) {
         LOG_ERROR << "error:" << e.base().what();
         code = k500InternalServerError;
