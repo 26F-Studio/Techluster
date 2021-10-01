@@ -74,8 +74,8 @@ void RedisHelper::setEmailCode(
     }
 }
 
-int32_t RedisHelper::getUserId(const string &accessToken) {
-    return stoi(_get("player:id:" + accessToken));
+int64_t RedisHelper::getUserId(const string &accessToken) {
+    return stoll(_get("player:id:" + accessToken));
 }
 
 bool RedisHelper::tokenBucket(

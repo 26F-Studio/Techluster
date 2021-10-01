@@ -44,7 +44,7 @@ namespace tech::structures {
                 const std::string &code
         );
 
-        [[nodiscard]] int32_t getUserId(const std::string &accessToken);
+        [[nodiscard]] int64_t getUserId(const std::string &accessToken);
 
         [[nodiscard]] bool tokenBucket(
                 const std::string &key,
