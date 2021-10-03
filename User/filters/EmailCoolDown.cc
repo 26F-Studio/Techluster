@@ -4,12 +4,14 @@
 
 #include <filters/EmailCoolDown.h>
 #include <plugins/DataManager.h>
+#include <structures/Exceptions.h>
 #include <utils/http.h>
 
 using namespace drogon;
 using namespace std;
 using namespace tech::filters;
 using namespace tech::plugins;
+using namespace tech::structures;
 using namespace tech::utils;
 
 void tech::filters::EmailCoolDown::doFilter(
@@ -34,9 +36,16 @@ void tech::filters::EmailCoolDown::doFilter(
         return;
     }
     auto dataManager = app().getPlugin<DataManager>();
-    if (!dataManager->emailLimit(request["email"].asString())) {
-        response["type"] = "Failed";
-        response["reason"] = "Too many requests";
+    try {
+        if (!dataManager->emailLimit(request["email"].asString())) {
+            response["type"] = "Failed";
+            response["reason"] = "Too many requests";
+            http::fromJson(k429TooManyRequests, response, filterCallback);
+            return;
+        }
+    } catch (const internal::BaseException &e) {
+        response["type"] = "Error";
+        response["reason"] = e.what();
         http::fromJson(k429TooManyRequests, response, filterCallback);
         return;
     }
