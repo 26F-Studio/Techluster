@@ -4,11 +4,12 @@
 
 #include <drogon/drogon.h>
 #include <plugins/DataManager.h>
+#include <structures/Exceptions.h>
 #include <utils/crypto.h>
+#include <utils/serializer.h>
 
 using namespace drogon;
 using namespace drogon_model;
-using namespace drogon::nosql;
 using namespace std;
 using namespace sw::redis;
 using namespace tech::plugins;
@@ -110,11 +111,15 @@ void DataManager::initAndStart(const Json::Value &config) {
 
 void DataManager::shutdown() { LOG_INFO << "DataManager shutdown."; }
 
-RedisToken DataManager::refresh(const string &refreshToken) {
+inline void DataManager::checkAccessToken(const string &accessToken) {
+    _redisHelper->checkAccessToken(accessToken);
+}
+
+inline RedisToken DataManager::refresh(const string &refreshToken) {
     return move(_redisHelper->refresh(refreshToken));
 }
 
-std::string DataManager::verifyEmail(const string &email) {
+inline std::string DataManager::verifyEmail(const string &email) {
     auto code = drogon::utils::genRandomString(8);
     transform(
             code.begin(),
@@ -296,6 +301,7 @@ string DataManager::getUserAvatar(
     } else {
         _redisHelper->checkAccessToken(accessToken);
     }
+
     auto player = _playerMapper->findOne(Criteria(
             Techluster::Player::Cols::_id,
             CompareOperator::EQ,
@@ -304,7 +310,99 @@ string DataManager::getUserAvatar(
     return player.getValueOfAvatar();
 }
 
-bool DataManager::ipLimit(const string &ip) const {
+Json::Value DataManager::getUserData(
+        const string &accessToken,
+        const int64_t &userId,
+        const DataField &field,
+        const Json::Value &list
+) {
+    auto id = userId;
+    if (userId < 0) {
+        id = _redisHelper->getUserId(accessToken);
+    } else {
+        _redisHelper->checkAccessToken(accessToken);
+    }
+    auto data = _dataMapper->findOne(Criteria(
+            Techluster::Player::Cols::_id,
+            CompareOperator::EQ,
+            id
+    ));
+    string rawString;
+    switch (field) {
+        case DataField::kPublic:
+            rawString = data.getValueOfPublic();
+            break;
+        case DataField::kProtected:
+            rawString = data.getValueOfProtected();
+            break;
+        case DataField::kPrivate:
+            rawString = data.getValueOfPrivate();
+            break;
+    }
+    Json::Value output, input = serializer::json::parse(rawString);
+    for (const auto &item: list) {
+        Json::Value &tempInput = input;
+        for (const auto &path: item) {
+            if (path.isUInt()) {
+                tempInput = tempInput[path.asUInt()];
+            } else if (path.isString()) {
+                tempInput = tempInput[path.asString()];
+            } else {
+                throw range_error("Invalid requirements list");
+            }
+        }
+        output.append(tempInput);
+    }
+    return output;
+}
+
+void DataManager::updateUserData(
+        const string &accessToken,
+        const int64_t &userId,
+        const DataField &field,
+        const Json::Value &list
+) {
+    auto id = userId;
+    if (userId < 0) {
+        id = _redisHelper->getUserId(accessToken);
+    } else {
+        _redisHelper->checkAccessToken(accessToken);
+    }
+    auto data = _dataMapper->findOne(Criteria(
+            Techluster::Player::Cols::_id,
+            CompareOperator::EQ,
+            id
+    ));
+    string rawString;
+    switch (field) {
+        case DataField::kPublic:
+            rawString = data.getValueOfPublic();
+            break;
+        case DataField::kProtected:
+            rawString = data.getValueOfProtected();
+            break;
+        case DataField::kPrivate:
+            rawString = data.getValueOfPrivate();
+            break;
+    }
+    Json::Value input = serializer::json::parse(rawString);
+    for (const auto &item: list) {
+        Json::Value &tempInput = input;
+        for (const auto &path: item) {
+            if (path.isUInt()) {
+                tempInput = tempInput[path.asUInt()];
+            } else if (path.isString()) {
+                tempInput = tempInput[path.asString()];
+            } else if (path.isObject()) {
+                tempInput = path;
+            } else {
+                throw range_error("Invalid requirements list");
+            }
+        }
+    }
+}
+
+inline bool DataManager::ipLimit(const string &ip) const {
     return _redisHelper->tokenBucket(
             "ip:" + ip,
             _ipInterval,
@@ -312,71 +410,10 @@ bool DataManager::ipLimit(const string &ip) const {
     );
 }
 
-bool DataManager::emailLimit(const string &email) {
+inline bool DataManager::emailLimit(const string &email) const {
     return _redisHelper->tokenBucket(
             "email:" + email,
             _emailInterval,
             _emailMaxCount
     );
-}
-
-string DataManager::getUserData(
-        const string &accessToken,
-        const int64_t &userId,
-        const DataField &field
-) {
-    auto id = userId;
-    if (userId < 0) {
-        id = _redisHelper->getUserId(accessToken);
-    } else {
-        _redisHelper->checkAccessToken(accessToken);
-    }
-    auto data = _dataMapper->findOne(Criteria(
-            Techluster::Player::Cols::_id,
-            CompareOperator::EQ,
-            id
-    ));
-    string result;
-    switch (field) {
-        case DataField::kPublic:
-            result = data.getValueOfPublic();
-            break;
-        case DataField::kProtected:
-            result = data.getValueOfProtected();
-            break;
-        case DataField::kPrivate:
-            result = data.getValueOfPrivate();
-            break;
-    }
-    return result;
-}
-
-void DataManager::updateUserData(
-        const string &accessToken,
-        const int64_t &userId,
-        const DataField &field,
-        const string &info
-) {
-    auto id = userId;
-    if (userId < 0) {
-        id = _redisHelper->getUserId(accessToken);
-    } else {
-        _redisHelper->checkAccessToken(accessToken);
-    }
-    auto data = _dataMapper->findOne(Criteria(
-            Techluster::Player::Cols::_id,
-            CompareOperator::EQ,
-            id
-    ));
-    switch (field) {
-        case DataField::kPublic:
-            data.setPublic(info);
-            break;
-        case DataField::kProtected:
-            data.setProtected(info);
-            break;
-        case DataField::kPrivate:
-            data.setPrivate(info);
-            break;
-    }
 }

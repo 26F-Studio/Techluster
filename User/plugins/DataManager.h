@@ -19,11 +19,15 @@ namespace tech::plugins {
 
         void shutdown() override;
 
-        tech::structures::RedisToken refresh(
+        inline void checkAccessToken(
+                const std::string &accessToken
+        );
+
+        inline tech::structures::RedisToken refresh(
                 const std::string &refreshToken
         );
 
-        std::string verifyEmail(const std::string &email);
+        inline std::string verifyEmail(const std::string &email);
 
         tech::structures::RedisToken loginEmailCode(
                 const std::string &email,
@@ -62,22 +66,23 @@ namespace tech::plugins {
                 const int64_t &userId
         );
 
-        std::string getUserData(
+        Json::Value getUserData(
                 const std::string &accessToken,
                 const int64_t &userId,
-                const tech::structures::DataField &field
+                const tech::structures::DataField &field,
+                const Json::Value &list
         );
 
         void updateUserData(
                 const std::string &accessToken,
                 const int64_t &userId,
                 const tech::structures::DataField &field,
-                const std::string &info
+                const Json::Value &list
         );
 
-        [[nodiscard]] bool ipLimit(const std::string &ip) const;
+        [[nodiscard]] inline bool ipLimit(const std::string &ip) const;
 
-        [[nodiscard]] bool emailLimit(const std::string &email);
+        [[nodiscard]] inline bool emailLimit(const std::string &email) const;
 
     private:
         std::chrono::seconds _ipInterval{}, _emailInterval{};
