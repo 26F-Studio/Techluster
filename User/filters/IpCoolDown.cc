@@ -4,12 +4,14 @@
 
 #include <filters/IpCoolDown.h>
 #include <plugins/DataManager.h>
+#include <structures/Exceptions.h>
 #include <utils/http.h>
 
 using namespace drogon;
 using namespace std;
 using namespace tech::filters;
 using namespace tech::plugins;
+using namespace tech::structures;
 using namespace tech::utils;
 
 void IpCoolDown::doFilter(
@@ -17,11 +19,18 @@ void IpCoolDown::doFilter(
         FilterCallback &&filterCallback,
         FilterChainCallback &&filterChainCallback
 ) {
+    Json::Value response;
     auto dataManager = app().getPlugin<DataManager>();
-    if (!dataManager->ipLimit(req->getPeerAddr().toIp())) {
-        Json::Value response;
-        response["type"] = "Failed";
-        response["reason"] = "Too many requests";
+    try {
+        if (!dataManager->ipLimit(req->getPeerAddr().toIp())) {
+            response["type"] = "Failed";
+            response["reason"] = "Too many requests";
+            http::fromJson(k429TooManyRequests, response, filterCallback);
+            return;
+        }
+    } catch (const internal::BaseException &e) {
+        response["type"] = "Error";
+        response["reason"] = e.what();
         http::fromJson(k429TooManyRequests, response, filterCallback);
         return;
     }
