@@ -7,7 +7,12 @@
 #include <json/json.h>
 
 namespace tech::utils::serializer {
-    namespace json{
-        std::string stringify(const Json::Value &value, const std::string &indentation = "");
+    namespace json {
+        std::string stringify(
+                const Json::Value &value,
+                const std::string &indentation = ""
+        );
+
+        Json::Value parse(const std::string &raw);
     }
 }
