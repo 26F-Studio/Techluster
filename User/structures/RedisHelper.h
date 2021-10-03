@@ -30,21 +30,21 @@ namespace tech::structures {
 
         [[nodiscard]] RedisToken generateTokens(const std::string &userId);
 
-        void checkAccessToken(const std::string &accessToken);
+        inline void checkAccessToken(const std::string &accessToken);
 
-        void checkEmailCode(
+        inline void checkEmailCode(
                 const std::string &email,
                 const std::string &code
         );
 
         void deleteEmailCode(const std::string &email);
 
-        void setEmailCode(
+        inline void setEmailCode(
                 const std::string &email,
                 const std::string &code
         );
 
-        [[nodiscard]] int64_t getUserId(const std::string &accessToken);
+        [[nodiscard]] inline int64_t getUserId(const std::string &accessToken);
 
         [[nodiscard]] bool tokenBucket(
                 const std::string &key,
@@ -57,26 +57,31 @@ namespace tech::structures {
 
         sw::redis::Redis _redisClient;
 
-        void _del(const std::string &key);
+        inline void _compare(
+                const std::string &key,
+                const std::string &value
+        );
 
-        void _expire(
+        inline void _del(const std::string &key);
+
+        inline void _expire(
                 const std::string &key,
                 const std::chrono::duration<uint64_t> &ttl
         );
 
-        std::string _get(const std::string &key);
+        inline std::string _get(const std::string &key);
 
-        void _set(
+        inline void _set(
                 const std::string &key,
                 const std::string &value,
                 const std::chrono::milliseconds &ttl = std::chrono::milliseconds(0),
                 const sw::redis::UpdateType &updateType = sw::redis::UpdateType::ALWAYS
         );
 
-        void _extendRefreshToken(const std::string &refreshToken);
+        inline void _extendRefreshToken(const std::string &refreshToken);
 
-        std::string _generateRefreshToken(const std::string &userId);
+        inline std::string _generateRefreshToken(const std::string &userId);
 
-        std::string _generateAccessToken(const std::string &userId);
+        inline std::string _generateAccessToken(const std::string &userId);
     };
 }
