@@ -76,12 +76,29 @@ void User::getAvatar(const HttpRequestPtr &req, function<void(const HttpResponse
 
 void User::getData(const HttpRequestPtr &req, function<void(const drogon::HttpResponsePtr &)> &&callback) {
     HttpStatusCode code = HttpStatusCode::k200OK;
-    Json::Value data, response;
+    Json::Value request, response;
+    string parseError = http::toJson(req, request);
+    if (!parseError.empty()) {
+        code = drogon::k400BadRequest;
+        response["type"] = "Error";
+        response["reason"] = "Wrong format: " + parseError;
+        http::fromJson(code, response, callback);
+        return;
+    }
     auto accessToken = req->getHeader("x-access-token");
     if (accessToken.empty()) {
         code = drogon::k400BadRequest;
         response["type"] = "Error";
         response["reason"] = "Invalid x-access-token header";
+        http::fromJson(code, response, callback);
+        return;
+    }
+    if (!(
+            request.isMember("requirements") && request["requirements"].isArray()
+    )) {
+        code = drogon::k400BadRequest;
+        response["type"] = "Error";
+        response["reason"] = "Invalid parameters";
         http::fromJson(code, response, callback);
         return;
     }
@@ -91,7 +108,8 @@ void User::getData(const HttpRequestPtr &req, function<void(const drogon::HttpRe
             code,
             accessToken,
             id.empty() ? -1 : stoll(id),
-            field
+            field,
+            request
     ), callback);
 }
 
@@ -111,6 +129,15 @@ void User::updateData(const HttpRequestPtr &req, function<void(const drogon::Htt
         code = drogon::k400BadRequest;
         response["type"] = "Error";
         response["reason"] = "Invalid x-access-token header";
+        http::fromJson(code, response, callback);
+        return;
+    }
+    if (!(
+            request.isMember("requirements") && request["requirements"].isArray()
+    )) {
+        code = drogon::k400BadRequest;
+        response["type"] = "Error";
+        response["reason"] = "Invalid parameters";
         http::fromJson(code, response, callback);
         return;
     }

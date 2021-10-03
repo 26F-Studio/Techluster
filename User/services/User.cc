@@ -3,8 +3,7 @@
 //
 
 #include <services/User.h>
-#include <utils/crypto.h>
-#include <utils/serializer.h>
+#include <structures/Exceptions.h>
 
 using namespace drogon;
 using namespace std;
@@ -29,6 +28,10 @@ Json::Value User::getInfo(
         code = k500InternalServerError;
         response["type"] = "Error";
         response["reason"] = "No user's id = " + to_string(id);
+    } catch (const RedisException::KeyNotFound &e) {
+        code = k401Unauthorized;
+        response["type"] = "Failed";
+        response["reason"] = "Invalid access token";
     } catch (const orm::DrogonDbException &e) {
         LOG_ERROR << "error:" << e.base().what();
         code = k500InternalServerError;
@@ -56,8 +59,7 @@ Json::Value User::updateInfo(
         code = k500InternalServerError;
         response["type"] = "Error";
         response["reason"] = "ORM error";
-    } catch (const out_of_range &e) {
-        LOG_DEBUG << e.what();
+    } catch (const RedisException::KeyNotFound &e) {
         code = k401Unauthorized;
         response["type"] = "Failed";
         response["reason"] = "Invalid access token";
@@ -84,6 +86,10 @@ Json::Value User::getAvatar(
         code = k500InternalServerError;
         response["type"] = "Error";
         response["reason"] = "No user's id = " + to_string(id);
+    } catch (const RedisException::KeyNotFound &e) {
+        code = k401Unauthorized;
+        response["type"] = "Failed";
+        response["reason"] = "Invalid access token";
     } catch (const orm::DrogonDbException &e) {
         LOG_ERROR << "error:" << e.base().what();
         code = k500InternalServerError;
@@ -101,21 +107,26 @@ Json::Value User::getData(
         HttpStatusCode &code,
         const string &accessToken,
         const int64_t &id,
-        const DataField &field
+        const DataField &field,
+        const Json::Value &data
 ) {
     Json::Value response;
     try {
-        auto data = _dataManager->getUserData(
+        response["type"] = "Success";
+        response["data"] = _dataManager->getUserData(
                 accessToken,
                 id,
-                field
+                field,
+                data["requirements"]
         );
-        response["type"] = "Success";
-        response["data"] = data;
     } catch (const orm::UnexpectedRows &e) {
         code = k500InternalServerError;
         response["type"] = "Error";
         response["reason"] = "No user's id = " + to_string(id);
+    } catch (const RedisException::KeyNotFound &e) {
+        code = k401Unauthorized;
+        response["type"] = "Failed";
+        response["reason"] = "Invalid access token";
     } catch (const orm::DrogonDbException &e) {
         LOG_ERROR << "error:" << e.base().what();
         code = k500InternalServerError;
@@ -142,13 +153,17 @@ Json::Value User::updateData(
                 accessToken,
                 id,
                 field,
-                serializer::json::stringify(data)
+                data["requirements"]
         );
         response["type"] = "Success";
     } catch (const orm::UnexpectedRows &e) {
         code = k500InternalServerError;
         response["type"] = "Error";
         response["reason"] = "No user's id = " + to_string(id);
+    } catch (const RedisException::KeyNotFound &e) {
+        code = k401Unauthorized;
+        response["type"] = "Failed";
+        response["reason"] = "Invalid access token";
     } catch (const orm::DrogonDbException &e) {
         LOG_ERROR << "error:" << e.base().what();
         code = k500InternalServerError;

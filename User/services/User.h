@@ -35,7 +35,8 @@ namespace tech::services {
                 drogon::HttpStatusCode &code,
                 const std::string &accessToken,
                 const int64_t &id,
-                const tech::structures::DataField &field
+                const tech::structures::DataField &field,
+                const Json::Value &data
         );
 
         Json::Value updateData(
