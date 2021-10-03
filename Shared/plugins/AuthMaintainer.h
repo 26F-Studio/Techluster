@@ -15,11 +15,10 @@ namespace tech::plugins {
 
         void shutdown() override;
 
-        trantor::InetAddress getAuthAddress() const;
+        drogon::HttpStatusCode checkAccessToken(const std::string &accessToken);
 
     private:
         std::chrono::duration<double> _taskMinutes{};
-        std::atomic<bool> _authNodeDown{};
         std::atomic<trantor::InetAddress> _connectAddress{}, _authAddress{};
 
         void updateAuthAddress();

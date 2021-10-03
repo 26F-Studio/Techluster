@@ -4,7 +4,7 @@
 
 #include <drogon/drogon.h>
 #include <plugins/AuthMaintainer.h>
-#include <regex>
+#include <structures/Exceptions.h>
 #include <utils/http.h>
 #include <utils/serializer.h>
 
@@ -12,6 +12,7 @@ using namespace drogon;
 using namespace std;
 using namespace trantor;
 using namespace tech::plugins;
+using namespace tech::structures;
 using namespace tech::utils;
 
 void AuthMaintainer::initAndStart(const Json::Value &config) {
@@ -69,16 +70,24 @@ void AuthMaintainer::updateAuthAddress() {
                     );
                     LOG_INFO << _authAddress.load().toIpPort();
                 } else {
-                    LOG_WARN << "No auth node available right now!";
-                    _authNodeDown = true;
+                    // TODO: Send an email if failed too many times.
+                    LOG_WARN << "No user node available right now!";
                 }
             }
         } else {
-            LOG_WARN << "Request failed (" << static_cast<int>(result) << ")";
+            LOG_ERROR << "Request failed (" << static_cast<int>(result) << ")";
         }
     }, 3);
 }
 
-trantor::InetAddress AuthMaintainer::getAuthAddress() const {
-    return _authAddress;
+HttpStatusCode AuthMaintainer::checkAccessToken(const string &accessToken) {
+    auto client = HttpClient::newHttpClient("http://" + _authAddress.load().toIpPort());
+    auto req = HttpRequest::newHttpRequest();
+    req->setPath("/tech/api/v2/auth/check");
+    auto[result, responsePtr] = client->sendRequest(req, 3);
+    if (result != ReqResult::Ok) {
+        updateAuthAddress();
+        throw NetworkException("Node Down", result);
+    }
+    return responsePtr->statusCode();
 }
