@@ -5,6 +5,7 @@
 #include <mailio/message.hpp>
 #include <mailio/smtp.hpp>
 #include <services/Auth.h>
+#include <structures/Exceptions.h>
 #include <utils/crypto.h>
 
 using namespace drogon;
@@ -12,23 +13,41 @@ using namespace mailio;
 using namespace std;
 using namespace tech::plugins;
 using namespace tech::services;
+using namespace tech::structures;
 using namespace tech::utils;
 
 Auth::Auth() : _configurator(app().getPlugin<Configurator>()),
                _dataManager(app().getPlugin<DataManager>()) {}
 
-Json::Value Auth::refresh(HttpStatusCode &code, const Json::Value &data) {
+Json::Value Auth::check(HttpStatusCode &code, const string &accessToken) {
     Json::Value response;
     try {
-        auto tokens = _dataManager->refresh(data["refreshToken"].asString());
+        _dataManager->checkAccessToken(accessToken);
+        response["type"] = "Success";
+    } catch (const RedisException::KeyNotFound &e) {
+        code = k401Unauthorized;
+        response["type"] = "Failed";
+        response["reason"] = "Invalid access token";
+    } catch (const exception &e) {
+        LOG_ERROR << "error:" << e.what();
+        code = k401Unauthorized;
+        response["type"] = "Failed";
+        response["reason"] = e.what();
+    }
+    return response;
+}
+
+Json::Value Auth::refresh(HttpStatusCode &code, const string &refreshToken) {
+    Json::Value response;
+    try {
+        auto tokens = _dataManager->refresh(refreshToken);
         response["type"] = "Success";
         response["data"]["refreshToken"] = tokens.refresh();
         response["data"]["accessToken"] = tokens.access();
-    } catch (const nosql::RedisException &e) {
-        LOG_ERROR << "error:" << e.what();
-        code = k500InternalServerError;
-        response["type"] = "Error";
-        response["reason"] = e.what();
+    } catch (const RedisException::KeyNotFound &e) {
+        code = k401Unauthorized;
+        response["type"] = "Failed";
+        response["reason"] = "Invalid access token";
     } catch (const exception &e) {
         LOG_ERROR << "error:" << e.what();
         code = k401Unauthorized;
@@ -107,21 +126,20 @@ Json::Value Auth::loginMail(HttpStatusCode &code, const Json::Value &data) {
             response["type"] = "Error";
             response["reason"] = "Invalid parameters";
         }
-    } catch (const nosql::RedisException &e) {
-        LOG_ERROR << "error:" << e.what();
+    } catch (const RedisException::KeyNotFound &e) {
+        code = k403Forbidden;
+        response["type"] = "Failed";
+        response["reason"] = "Invalid verify code";
+    } catch (const orm::DrogonDbException &e) {
+        LOG_ERROR << e.base().what();
         code = k500InternalServerError;
         response["type"] = "Error";
-        response["reason"] = e.what();
-    } catch (const range_error &e) {
-        LOG_ERROR << "error:" << e.what();
-        code = k404NotFound;
+        response["reason"] = "ORM error";
+    } catch (const exception &e) {
+        LOG_ERROR << e.what();
+        code = drogon::k503ServiceUnavailable;
         response["type"] = "Failed";
         response["reason"] = e.what();
-    } catch (const orm::DrogonDbException &e) {
-        LOG_ERROR << "error:" << e.base().what();
-        code = k500InternalServerError;
-        response["type"] = "Error";
-        response["reason"] = "Database error";
     }
     return response;
 }
@@ -134,13 +152,17 @@ Json::Value Auth::resetEmail(HttpStatusCode &code, const Json::Value &data) {
     try {
         _dataManager->resetEmail(email, validCode, newPassword);
         response["type"] = "Success";
+    } catch (const RedisException::KeyNotFound &e) {
+        code = k403Forbidden;
+        response["type"] = "Failed";
+        response["reason"] = "Invalid verify code";
     } catch (const orm::DrogonDbException &e) {
-        LOG_ERROR << "error:" << e.base().what();
+        LOG_ERROR << e.base().what();
         code = k500InternalServerError;
         response["type"] = "Error";
-        response["reason"] = "Database error";
+        response["reason"] = "ORM error";
     } catch (const exception &e) {
-        LOG_ERROR << "error:" << e.what();
+        LOG_ERROR << e.what();
         code = drogon::k503ServiceUnavailable;
         response["type"] = "Failed";
         response["reason"] = e.what();
@@ -160,14 +182,22 @@ Json::Value Auth::migrateEmail(HttpStatusCode &code, const Json::Value &data) {
                 validCode
         );
         response["type"] = "Success";
+    } catch (const RedisException::KeyNotFound &e) {
+        code = k401Unauthorized;
+        response["type"] = "Failed";
+        response["reason"] = "Invalid access token";
+    } catch (const RedisException::NotEqual &e) {
+        code = k403Forbidden;
+        response["type"] = "Failed";
+        response["reason"] = "Invalid verify code";
     } catch (const orm::DrogonDbException &e) {
-        LOG_ERROR << "error:" << e.base().what();
+        LOG_ERROR << e.base().what();
         code = k500InternalServerError;
         response["type"] = "Error";
         response["reason"] = "Database error";
     } catch (const exception &e) {
-        LOG_ERROR << "error:" << e.what();
-        code = drogon::k503ServiceUnavailable;
+        LOG_ERROR << e.what();
+        code = k503ServiceUnavailable;
         response["type"] = "Failed";
         response["reason"] = e.what();
     }

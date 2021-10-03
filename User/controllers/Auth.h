@@ -11,12 +11,15 @@ namespace tech::api::v2 {
     class Auth : public drogon::HttpController<Auth> {
     public:
         METHOD_LIST_BEGIN
+            METHOD_ADD(Auth::check, "/check", drogon::Get);
             METHOD_ADD(Auth::refresh, "/refresh", drogon::Get);
             METHOD_ADD(Auth::verifyEmail, "/verify/email", drogon::Post, "tech::filters::EmailCoolDown", "tech::filters::IpCoolDown");
             METHOD_ADD(Auth::loginEmail, "/login/email", drogon::Post);
             METHOD_ADD(Auth::resetEmail, "/reset/email", drogon::Post);
             METHOD_ADD(Auth::migrateEmail, "/migrate/email", drogon::Put);
         METHOD_LIST_END
+
+        void check(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
 
         void refresh(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
 

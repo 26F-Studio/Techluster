@@ -9,9 +9,23 @@ using namespace std;
 using namespace tech::api::v2;
 using namespace tech::utils;
 
+void Auth::check(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
+    HttpStatusCode code = HttpStatusCode::k200OK;
+    Json::Value response;
+    auto accessToken = req->getHeader("x-access-token");
+    if (accessToken.empty()) {
+        code = drogon::k400BadRequest;
+        response["type"] = "Error";
+        response["reason"] = "Invalid x-access-token header";
+        http::fromJson(code, response, callback);
+        return;
+    }
+    http::fromJson(code, _service.check(code, accessToken), callback);
+}
+
 void Auth::refresh(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     HttpStatusCode code = HttpStatusCode::k200OK;
-    Json::Value data, response;
+    Json::Value response;
     auto refreshToken = req->getHeader("x-refresh-token");
     if (refreshToken.empty()) {
         code = drogon::k400BadRequest;
@@ -20,11 +34,10 @@ void Auth::refresh(const HttpRequestPtr &req, function<void(const HttpResponsePt
         http::fromJson(code, response, callback);
         return;
     }
-    data["refreshToken"] = refreshToken;
-    http::fromJson(code, _service.refresh(code, data), callback);
+    http::fromJson(code, _service.refresh(code, refreshToken), callback);
 }
 
-void Auth::verifyEmail(const HttpRequestPtr &req, function<void(const drogon::HttpResponsePtr &)> &&callback) {
+void Auth::verifyEmail(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     HttpStatusCode code = HttpStatusCode::k200OK;
     Json::Value response;
     http::fromJson(code, _service.verifyEmail(
@@ -85,10 +98,7 @@ void Auth::resetEmail(const HttpRequestPtr &req, function<void(const HttpRespons
     http::fromJson(code, _service.resetEmail(code, request), callback);
 }
 
-void Auth::migrateEmail(
-        const HttpRequestPtr &req,
-        function<void(const drogon::HttpResponsePtr &)> &&callback
-) {
+void Auth::migrateEmail(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     HttpStatusCode code = HttpStatusCode::k200OK;
     Json::Value request, response;
     auto accessToken = req->getHeader("x-access-token");

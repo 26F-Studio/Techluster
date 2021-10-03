@@ -13,7 +13,15 @@ namespace tech::services {
     public:
         Auth();
 
-        Json::Value refresh(drogon::HttpStatusCode &code, const Json::Value &data);
+        Json::Value check(
+                drogon::HttpStatusCode &code,
+                const std::string &accessToken
+        );
+
+        Json::Value refresh(
+                drogon::HttpStatusCode &code,
+                const std::string &refreshToken
+        );
 
         Json::Value verifyEmail(drogon::HttpStatusCode &code, const Json::Value &data);
 
