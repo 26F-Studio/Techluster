@@ -54,6 +54,11 @@ namespace tech::structures {
             explicit KeyNotFound(std::string message);
         };
 
+        class FieldNotFound : public internal::BaseException {
+        public:
+            explicit FieldNotFound(std::string message);
+        };
+
         class NotEqual : public internal::BaseException {
         public:
             explicit NotEqual(std::string message);

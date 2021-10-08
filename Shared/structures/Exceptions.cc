@@ -26,5 +26,8 @@ NetworkException::NetworkException(
 RedisException::KeyNotFound::KeyNotFound(std::string message) :
         BaseException(move(message)) {}
 
+RedisException::FieldNotFound::FieldNotFound(std::string message) :
+        BaseException(move(message)) {}
+
 RedisException::NotEqual::NotEqual(std::string message) :
         BaseException(move(message)) {}
