@@ -31,6 +31,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif ()
 
 find_package(Drogon CONFIG REQUIRED)
+find_package(hiredis CONFIG REQUIRED)
+find_package(redis++ CONFIG REQUIRED)
 
 add_subdirectory(Shared)
 add_subdirectory(Connect)

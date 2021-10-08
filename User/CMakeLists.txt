@@ -33,9 +33,6 @@ aux_source_directory(structures STRUCT_SRC)
 aux_source_directory(services SVC_SRC)
 aux_source_directory(utils UTIL_SRC)
 
-find_package(hiredis CONFIG REQUIRED)
-find_package(redis++ CONFIG REQUIRED)
-
 target_link_libraries(${PROJECT_NAME} PRIVATE
         ${MAILIO_LIB}
         Drogon::Drogon
