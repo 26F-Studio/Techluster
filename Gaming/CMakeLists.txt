@@ -12,6 +12,8 @@ aux_source_directory(utils UTIL_SRC)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         Drogon::Drogon
+        hiredis::hiredis
+        redis++::redis++
         Shared::Shared)
 
 drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
