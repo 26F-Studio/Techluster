@@ -4,7 +4,6 @@
 
 #include <drogon/drogon.h>
 #include <plugins/DataManager.h>
-#include <structures/Exceptions.h>
 #include <utils/crypto.h>
 #include <utils/serializer.h>
 
@@ -52,7 +51,8 @@ void DataManager::initAndStart(const Json::Value &config) {
             config["redis"].isMember("port") && config["redis"]["port"].isInt() &&
             config["redis"].isMember("password") && config["redis"]["password"].isString() &&
             config["redis"].isMember("db") && config["redis"]["db"].isInt() &&
-            config["redis"].isMember("connections") && config["redis"]["connections"].isUInt()
+            config["redis"].isMember("connections") && config["redis"]["connections"].isUInt() &&
+            config["redis"].isMember("timeout") && config["redis"]["timeout"].isUInt64()
     )) {
         LOG_ERROR << R"("Invalid redis config")";
         abort();
@@ -62,10 +62,12 @@ void DataManager::initAndStart(const Json::Value &config) {
     options.port = config["redis"]["port"].asInt();
     options.password = config["redis"]["password"].asString();
     options.db = config["redis"]["db"].asInt();
+    options.socket_timeout = chrono::milliseconds(config["redis"]["timeout"].asUInt64());
 
     if (config["redis"]["connections"].asUInt() == 0) {
         ConnectionPoolOptions poolOptions;
         poolOptions.size = thread::hardware_concurrency();
+        poolOptions.wait_timeout = chrono::milliseconds(config["redis"]["timeout"].asUInt64());
         _redisHelper = make_unique<RedisHelper>(move(RedisHelper(
                 options,
                 poolOptions,
