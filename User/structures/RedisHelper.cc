@@ -55,14 +55,14 @@ inline void RedisHelper::checkEmailCode(
 }
 
 void RedisHelper::deleteEmailCode(const string &email) {
-    _del("player:code:email_" + email);
+    _redisClient.del("player:code:email_" + email);
 }
 
 inline void RedisHelper::setEmailCode(
         const string &email,
         const string &code
 ) {
-    _set(
+    _redisClient.set(
             "player:code:email_" + email,
             code,
             chrono::minutes(_expiration.email)
@@ -81,14 +81,14 @@ bool RedisHelper::tokenBucket(
     auto maxTTL = chrono::duration_cast<chrono::seconds>(restoreInterval * maxCount);
 
     auto setCount = [this, &key](const uint64_t &count) {
-        _set(
+        _redisClient.set(
                 "tokenBucketCount:" + key,
                 to_string(count)
         );
     };
 
     auto setDate = [this, &key](const string &dateStr) {
-        _set(
+        _redisClient.set(
                 "tokenBucketUpdated:" + key,
                 dateStr
         );
@@ -146,10 +146,6 @@ inline void RedisHelper::_compare(
     }
 }
 
-inline void RedisHelper::_del(const string &key) {
-    _redisClient.del(key);
-}
-
 inline void RedisHelper::_expire(
         const string &key,
         const chrono::duration<uint64_t> &ttl
@@ -167,15 +163,6 @@ inline string RedisHelper::_get(const string &key) {
     return result.value();
 }
 
-inline void RedisHelper::_set(
-        const string &key,
-        const string &value,
-        const chrono::milliseconds &ttl,
-        const UpdateType &updateType
-) {
-    _redisClient.set(key, value, ttl, updateType);
-}
-
 inline void RedisHelper::_extendRefreshToken(const string &refreshToken) {
     _expire(
             "player:refresh:" + refreshToken,
@@ -185,7 +172,7 @@ inline void RedisHelper::_extendRefreshToken(const string &refreshToken) {
 
 inline string RedisHelper::_generateRefreshToken(const string &userId) {
     auto refreshToken = crypto::keccak(drogon::utils::getUuid());
-    _set(
+    _redisClient.set(
             "player:refresh:" + refreshToken,
             userId,
             chrono::minutes(_expiration.refresh)
@@ -195,12 +182,12 @@ inline string RedisHelper::_generateRefreshToken(const string &userId) {
 
 inline string RedisHelper::_generateAccessToken(const string &userId) {
     auto accessToken = crypto::blake2b(drogon::utils::getUuid());
-    _set(
+    _redisClient.set(
             "player:access:" + userId,
             accessToken,
             chrono::minutes(_expiration.access)
     );
-    _set(
+    _redisClient.set(
             "player:id:" + accessToken,
             userId,
             chrono::minutes(_expiration.access)
