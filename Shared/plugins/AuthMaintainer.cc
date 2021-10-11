@@ -2,6 +2,7 @@
 // Created by Particle_G on 2021/9/10.
 //
 
+#include <charconv>
 #include <drogon/drogon.h>
 #include <plugins/AuthMaintainer.h>
 #include <structures/Exceptions.h>
@@ -80,7 +81,7 @@ void AuthMaintainer::updateAuthAddress() {
     }, 3);
 }
 
-HttpStatusCode AuthMaintainer::checkAccessToken(const string &accessToken) {
+HttpStatusCode AuthMaintainer::checkAccessToken(const string &accessToken, int64_t &id) {
     auto client = HttpClient::newHttpClient("http://" + _authAddress.load().toIpPort());
     auto req = HttpRequest::newHttpRequest();
     req->setPath("/tech/api/v2/auth/check");
@@ -89,5 +90,19 @@ HttpStatusCode AuthMaintainer::checkAccessToken(const string &accessToken) {
         updateAuthAddress();
         throw NetworkException("Node Down", result);
     }
+    Json::Value response;
+    string parseError = http::toJson(responsePtr, response);
+    if (!parseError.empty()) {
+        throw NetworkException("Invalid Json: " + parseError, ReqResult::BadResponse);
+    }
+    if (!(
+            response.isMember("data") && response["data"].isInt64()
+    )) {
+        throw NetworkException(
+                "Invalid Response: " + serializer::json::stringify(response),
+                ReqResult::BadResponse
+        );
+    }
+    id = response["data"].asInt64();
     return responsePtr->statusCode();
 }

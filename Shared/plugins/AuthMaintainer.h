@@ -15,7 +15,7 @@ namespace tech::plugins {
 
         void shutdown() override;
 
-        drogon::HttpStatusCode checkAccessToken(const std::string &accessToken);
+        drogon::HttpStatusCode checkAccessToken(const std::string &accessToken, int64_t &id);
 
     private:
         std::chrono::duration<double> _taskMinutes{};
