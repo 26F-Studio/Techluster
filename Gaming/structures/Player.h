@@ -10,12 +10,61 @@
 namespace tech::structures {
     class Player {
     public:
-        [[nodiscard]] bool isInRoom() const;
+        enum class Role {
+            normal,
+            super,
+        };
 
-        void setInRoom(const bool &inRoom);
+        enum class Type {
+            gamer,
+            spectator,
+        };
+
+        enum class State {
+            dead,
+            finish,
+            playing,
+            ready,
+            standby,
+        };
+
+        explicit Player(const int64_t &id);
+
+        [[nodiscard]] const int64_t &userId() const;
+
+        [[nodiscard]] uint32_t getGroup() const;
+
+        void setGroup(const uint32_t &group);
+
+        [[nodiscard]] Role getRole() const;
+
+        void setRole(const Role &role);
+
+        [[nodiscard]] Type getType() const;
+
+        void setType(const Type &type);
+
+        [[nodiscard]] State getState() const;
+
+        void setState(const State &state);
+
+        [[nodiscard]] std::string getConfig() const;
+
+        void setConfig(std::string &&config);
+
+        [[nodiscard]] std::string getJoinedId() const;
+
+        void setJoinedId(const std::string &joinedId = "");
+
+        [[nodiscard]] Json::Value info() const;
 
     private:
         mutable std::shared_mutex _sharedMutex;
-        std::atomic<bool> _inRoom;
+        const int64_t _id;
+        std::atomic<uint32_t> _group;
+        std::atomic<Role> _role;
+        std::atomic<Type> _type;
+        std::atomic<State> _state;
+        std::string _config, _joinedId;
     };
 }
