@@ -12,46 +12,78 @@ namespace tech::structures {
     class Room {
     public:
         enum class State {
-            waiting,
+            pending,
             starting,
             started,
         };
 
         explicit Room(
-                std::string roomId,
                 const std::string &password,
                 const uint64_t &capacity,
                 Json::Value info,
                 Json::Value data
         );
 
-        void subscribe(drogon::WebSocketConnectionPtr connection);
+        Room(Room &&room) noexcept;
 
-        void unsubscribe(const drogon::WebSocketConnectionPtr &connection);
+        [[nodiscard]] const std::string &roomId() const;
 
-        bool isEmpty() const;
+        [[nodiscard]] bool checkPassword(const std::string &password) const;
 
-        bool isFull() const;
+        [[nodiscard]] Json::Value getInfo(const Json::Value &list = _defaultList());
 
-        std::string getRoomId() const;
+        void setInfo(const Json::Value &list);
 
-        uint64_t getCount() const;
+        [[nodiscard]] Json::Value getData(const Json::Value &list = _defaultList());
 
-        uint64_t getCapacity() const;
+        void setData(const Json::Value &list);
 
-        Json::Value getInfo(const std::string &key = "") const;
+        [[nodiscard]] State getState() const;
 
-        void setInfo(const std::string &key, Json::Value value);
+        void setState(const State &state);
 
-        Json::Value getData(const std::string &key = "") const;
+        void subscribe(const drogon::WebSocketConnectionPtr &connection);
 
-        void setData(const std::string &key, Json::Value value);
+        uint64_t unsubscribe(const drogon::WebSocketConnectionPtr &connection);
+
+        [[nodiscard]] bool empty() const;
+
+        [[nodiscard]] Json::Value parse() const;
+
+        void publish(
+                std::string &&message,
+                const int64_t &excludedId = -1
+        );
+
+        void checkReady();
 
     private:
         mutable std::shared_mutex _sharedMutex;
         const std::string _roomId, _passwordHash;
-        uint64_t _capacity;
+        std::atomic<uint64_t> _capacity, _timerId;
         Json::Value _info, _data;
-        std::unordered_map<uint64_t, drogon::WebSocketConnectionPtr> _connectionsMap;
+        std::atomic<State> _state;
+        std::unordered_map<int64_t, drogon::WebSocketConnectionPtr> _connectionsMap;
+        std::atomic<trantor::InetAddress> _transferNode;
+
+        static Json::Value _defaultList() {
+            Json::Value result(Json::arrayValue);
+            result.append(Json::arrayValue);
+            return result;
+        }
+
+        [[nodiscard]] bool _full() const;
+
+        [[nodiscard]] uint64_t _size() const;
+
+        void _insert(const drogon::WebSocketConnectionPtr &connection);
+
+        void _remove(const drogon::WebSocketConnectionPtr &connection);
+
+        void _startingGame();
+
+        void _cancelStarting();
+
+        void _checkFinished();
     };
 }
