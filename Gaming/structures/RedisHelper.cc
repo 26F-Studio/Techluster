@@ -87,30 +87,6 @@ bool RedisHelper::tokenBucket(
     return hasToken;
 }
 
-inline string RedisHelper::createRoom(
-        const uint32_t &capacity,
-        const string &passwordHash,
-        const Json::Value &info,
-        const Json::Value &config
-) {
-    unordered_map<string, string> insertions;
-    insertions["capacity"] = to_string(capacity);
-    insertions["passwordHash"] = passwordHash;
-    insertions["info"] = serializer::json::stringify(info);
-    insertions["config"] = serializer::json::stringify(config);
-    auto roomId = drogon::utils::getUuid();
-    _redisClient.hset("gaming:room:" + roomId + ":info", insertions.begin(), insertions.end());
-    return roomId;
-}
-
-inline void RedisHelper::joinRoom(
-        const string &roomId,
-        const int64_t &userId
-) {
-    _checkRoom(roomId);
-    _redisClient.sadd("gaming:room:" + roomId + ":members", to_string(userId));
-}
-
 inline void RedisHelper::_compare(
         const string &key,
         const string &value
@@ -143,11 +119,4 @@ inline string RedisHelper::_hget(const string &key, const string &field) {
         throw RedisException::FieldNotFound("Key = " + key + ", Field = " + field);
     }
     return result.value();
-}
-
-inline void RedisHelper::_checkRoom(const string &roomId) {
-    if (!_redisClient.exists("gaming:room:" + roomId + ":info")) {
-        throw RedisException::KeyNotFound("Invalid roomId");
-    }
-    auto result = _hget("gaming:room:" + roomId + ":info", "capacity");
 }

@@ -25,18 +25,6 @@ namespace tech::structures {
                 const uint64_t &maxCount
         );
 
-        inline std::string createRoom(
-                const uint32_t &capacity,
-                const std::string &passwordHash,
-                const Json::Value &info,
-                const Json::Value &config
-        );
-
-        inline void joinRoom(
-                const std::string &roomId,
-                const int64_t &userId
-        );
-
     private:
         sw::redis::Redis _redisClient;
 
@@ -53,7 +41,5 @@ namespace tech::structures {
         inline std::string _get(const std::string &key);
 
         inline std::string _hget(const std::string &key, const std::string &field);
-
-        inline void _checkRoom(const std::string &roomId);
     };
 }
