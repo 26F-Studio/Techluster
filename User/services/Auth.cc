@@ -22,8 +22,8 @@ Auth::Auth() : _configurator(app().getPlugin<Configurator>()),
 Json::Value Auth::check(HttpStatusCode &code, const string &accessToken) {
     Json::Value response;
     try {
-        _dataManager->checkAccessToken(accessToken);
         response["type"] = "Success";
+        response["data"] = _dataManager->getUserId(accessToken);
     } catch (const RedisException::KeyNotFound &e) {
         code = k401Unauthorized;
         response["type"] = "Failed";

@@ -19,7 +19,7 @@ namespace tech::plugins {
 
         void shutdown() override;
 
-        inline void checkAccessToken(
+        [[nodiscard]] inline int64_t getUserId(
                 const std::string &accessToken
         );
 
@@ -27,14 +27,16 @@ namespace tech::plugins {
                 const std::string &refreshToken
         );
 
-        inline std::string verifyEmail(const std::string &email);
+        [[nodiscard]] inline std::string verifyEmail(
+                const std::string &email
+        );
 
-        tech::structures::RedisToken loginEmailCode(
+        [[nodiscard]] tech::structures::RedisToken loginEmailCode(
                 const std::string &email,
                 const std::string &code
         );
 
-        tech::structures::RedisToken loginEmailPassword(
+        [[nodiscard]] tech::structures::RedisToken loginEmailPassword(
                 const std::string &email,
                 const std::string &password
         );
@@ -51,7 +53,7 @@ namespace tech::plugins {
                 const std::string &code
         );
 
-        Json::Value getUserInfo(
+        [[nodiscard]] Json::Value getUserInfo(
                 const std::string &accessToken,
                 const int64_t &userId
         );
@@ -61,12 +63,12 @@ namespace tech::plugins {
                 const Json::Value &info
         );
 
-        std::string getUserAvatar(
+        [[nodiscard]] std::string getUserAvatar(
                 const std::string &accessToken,
                 const int64_t &userId
         );
 
-        Json::Value getUserData(
+        [[nodiscard]] Json::Value getUserData(
                 const std::string &accessToken,
                 const int64_t &userId,
                 const tech::structures::DataField &field,

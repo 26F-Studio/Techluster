@@ -113,8 +113,8 @@ void DataManager::initAndStart(const Json::Value &config) {
 
 void DataManager::shutdown() { LOG_INFO << "DataManager shutdown."; }
 
-inline void DataManager::checkAccessToken(const string &accessToken) {
-    _redisHelper->checkAccessToken(accessToken);
+inline int64_t DataManager::getUserId(const string &accessToken) {
+    return _redisHelper->getUserId(accessToken);
 }
 
 inline RedisToken DataManager::refresh(const string &refreshToken) {
