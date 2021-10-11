@@ -64,4 +64,38 @@ namespace tech::structures {
             explicit NotEqual(std::string message);
         };
     }
+
+    namespace RoomException {
+        class PlayerOverFlow : public internal::BaseException {
+        public:
+            explicit PlayerOverFlow(std::string message);
+        };
+
+        class PlayerNotFound : public internal::BaseException {
+        public:
+            explicit PlayerNotFound(std::string message);
+        };
+
+        class RoomOverFlow : public internal::BaseException {
+        public:
+            explicit RoomOverFlow(std::string message);
+        };
+
+        class RoomNotFound : public internal::BaseException {
+        public:
+            explicit RoomNotFound(std::string message);
+        };
+
+        class InvalidPassword : public internal::BaseException {
+        public:
+            explicit InvalidPassword(std::string message);
+        };
+    }
+
+    namespace ActionException {
+        class ActionNotFound : public internal::BaseException {
+        public:
+            explicit ActionNotFound(std::string message);
+        };
+    }
 }

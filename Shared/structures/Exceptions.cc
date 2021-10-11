@@ -31,3 +31,23 @@ RedisException::FieldNotFound::FieldNotFound(std::string message) :
 
 RedisException::NotEqual::NotEqual(std::string message) :
         BaseException(move(message)) {}
+
+RoomException::PlayerOverFlow::PlayerOverFlow(std::string message) :
+        BaseException(move(message)) {}
+
+RoomException::PlayerNotFound::PlayerNotFound(std::string message) :
+        BaseException(move(message)) {}
+
+RoomException::RoomOverFlow::RoomOverFlow(std::string message) :
+        BaseException(move(message)) {}
+
+RoomException::RoomNotFound::RoomNotFound(std::string message) :
+        BaseException(move(message)) {}
+
+RoomException::InvalidPassword::InvalidPassword(std::string message) :
+        BaseException(move(message)) {}
+
+ActionException::ActionNotFound::ActionNotFound(std::string message) :
+        BaseException(move(message)) {}
+
+
