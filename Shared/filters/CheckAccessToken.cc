@@ -28,12 +28,14 @@ void CheckAccessToken::doFilter(
         return;
     }
     try {
-        if (app().getPlugin<AuthMaintainer>()->checkAccessToken(accessToken) != k200OK) {
+        int64_t id{};
+        if (app().getPlugin<AuthMaintainer>()->checkAccessToken(accessToken, id) != k200OK) {
             response["type"] = "Failed";
             response["reason"] = "Invalid accessToken";
             http::fromJson(k401Unauthorized, response, filterCallback);
             return;
         }
+        req->attributes()->insert("id", id);
     } catch (const NetworkException &e) {
         response["type"] = "Error";
         response["reason"] = "Invalid accessToken";
