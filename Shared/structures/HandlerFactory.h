@@ -33,7 +33,7 @@ namespace tech::structures {
             if (iter != _handlerRegistrarsMap.end()) {
                 return *iter->second;
             }
-            throw tech::structures::ActionException::ActionNotFound("Invalid action");
+            throw tech::structures::action_exception::ActionNotFound("Invalid action");
         }
 
     private:
