@@ -53,10 +53,16 @@ namespace tech::plugins {
 
         UniqueRoom getUniqueRoom(const std::string &roomId);
 
+        Json::Value roomList(
+                const std::string &search,
+                const uint64_t &begin,
+                const uint64_t &count
+        ) const;
+
         void joinRoom(
+                const drogon::WebSocketConnectionPtr &connection,
                 const std::string &roomId,
-                const std::string &password,
-                const drogon::WebSocketConnectionPtr &connection
+                const std::string &password
         );
 
         void leaveRoom(
@@ -69,8 +75,8 @@ namespace tech::plugins {
 
             RoomWithMutex(RoomWithMutex &&moved) noexcept;
 
-            structures::Room _room;
-            mutable std::unique_ptr<std::shared_mutex> _sharedMutex; // TODO: Try not using unique_ptr
+            structures::Room room;
+            mutable std::unique_ptr<std::shared_mutex> sharedMutex; // TODO: Try not using unique_ptr
         };
 
         mutable std::shared_mutex _sharedMutex;
