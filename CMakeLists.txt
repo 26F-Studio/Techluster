@@ -30,9 +30,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS NOMINMAX)
 endif ()
 
-find_package(Drogon CONFIG REQUIRED)
 find_package(hiredis CONFIG REQUIRED)
 find_package(redis++ CONFIG REQUIRED)
+find_package(Drogon CONFIG REQUIRED)
 
 add_subdirectory(Shared)
 add_subdirectory(Connect)
