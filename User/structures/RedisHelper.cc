@@ -181,7 +181,7 @@ string RedisHelper::_generateRefreshToken(const string &userId) {
 }
 
 string RedisHelper::_generateAccessToken(const string &userId) {
-    auto accessToken = crypto::blake2b(drogon::utils::getUuid());
+    auto accessToken = crypto::blake2B(drogon::utils::getUuid());
     _redisClient.set(
             "player:access:" + userId,
             accessToken,

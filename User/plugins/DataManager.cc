@@ -273,7 +273,7 @@ void DataManager::updateUserInfo(
         info["avatar"].asString() != player.getValueOfAvatar()) {
         updated = true;
         player.setAvatar(info["avatar"].asString());
-        player.setAvatarHash(crypto::blake2b(info["avatar"].asString(), 4));
+        player.setAvatarHash(crypto::blake2B(info["avatar"].asString(), 4));
     }
     if (info.isMember("avatar_frame") &&
         info["avatar_frame"].isInt() &&

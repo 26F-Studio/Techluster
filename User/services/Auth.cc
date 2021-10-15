@@ -75,7 +75,7 @@ Json::Value Auth::verifyEmail(HttpStatusCode &code, const Json::Value &data) {
                 _configurator->getEmailAddress()
         ));
         msg.add_recipient(mail_address(
-                "email_" + crypto::blake2b(email, 4),
+                "email_" + crypto::blake2B(email, 4),
                 email
         ));
         msg.subject("[Techmino] Verify Code");
@@ -205,13 +205,13 @@ Json::Value Auth::migrateEmail(HttpStatusCode &code, const Json::Value &data) {
 }
 
 string Auth::_getFileContent(string_view path) {
-    constexpr auto read_size = size_t{4096};
+    constexpr auto readSize = size_t{4096};
     auto stream = ifstream{path.data()};
     stream.exceptions(ios_base::badbit);
 
     auto out = string{};
-    auto buf = string(read_size, '\0');
-    while (stream.read(&buf[0], read_size)) {
+    auto buf = string(readSize, '\0');
+    while (stream.read(&buf[0], readSize)) {
         out.append(buf, 0, stream.gcount());
     }
     out.append(buf, 0, stream.gcount());

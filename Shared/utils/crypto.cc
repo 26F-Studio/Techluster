@@ -15,7 +15,7 @@ using namespace tech::utils;
 using namespace CryptoPP;
 using namespace std;
 
-std::string crypto::panama::generateKey() {
+[[maybe_unused]] string crypto::panama::generateKey() {
     string encodedKey;
     SecByteBlock key(32);
     AutoSeededRandomPool().GenerateBlock(key, key.size());
@@ -27,35 +27,35 @@ std::string crypto::panama::generateKey() {
     return encodedKey;
 }
 
-std::string crypto::panama::generateIV() {
-    string encodedIV;
+[[maybe_unused]] std::string crypto::panama::generateIv() {
+    string encodedIv;
     SecByteBlock iv(32);
     AutoSeededRandomPool().GenerateBlock(iv, iv.size());
 
     HexEncoder encoder;
-    encoder.Attach(new StringSink(encodedIV));
+    encoder.Attach(new StringSink(encodedIv));
     encoder.Put(reinterpret_cast<const CryptoPP::byte *> (iv.data()), iv.size());
     encoder.MessageEnd();
-    return encodedIV;
+    return encodedIv;
 }
 
-std::string crypto::panama::encrypt(const std::string &source, std::string key, std::string iv) {
-    string decodedKey, decodedIV, cipher, encodedCipher;
+[[maybe_unused]] string crypto::panama::encrypt(const std::string &source, std::string key, std::string iv) {
+    string decodedKey, decodedIv, cipher, encodedCipher;
 
     HexDecoder decoder;
     decoder.Attach(new StringSink(decodedKey));
     decoder.Put(reinterpret_cast<CryptoPP::byte *> (key.data()), key.size());
     decoder.MessageEnd();
 
-    decoder.Attach(new StringSink(decodedIV));
+    decoder.Attach(new StringSink(decodedIv));
     decoder.Put(reinterpret_cast<CryptoPP::byte *> (iv.data()), iv.size());
     decoder.MessageEnd();
 
     PanamaCipher<LittleEndian>::Encryption enc;
     enc.SetKeyWithIV(reinterpret_cast<const CryptoPP::byte *> (decodedKey.data()),
                      decodedKey.size(),
-                     reinterpret_cast<const CryptoPP::byte *> (decodedIV.data()),
-                     decodedIV.size());
+                     reinterpret_cast<const CryptoPP::byte *> (decodedIv.data()),
+                     decodedIv.size());
     cipher.resize(source.size());
     enc.ProcessData(reinterpret_cast<CryptoPP::byte *> (&cipher[0]),
                     reinterpret_cast<const CryptoPP::byte *> (source.data()),
@@ -68,8 +68,8 @@ std::string crypto::panama::encrypt(const std::string &source, std::string key, 
     return encodedCipher;
 }
 
-std::string crypto::panama::decrypt(std::string source, std::string key, std::string iv) {
-    string decodedCipher, decodedKey, decodedIV, recover;
+[[maybe_unused]] string crypto::panama::decrypt(std::string source, std::string key, std::string iv) {
+    string decodedCipher, decodedKey, decodedIv, recover;
 
     HexDecoder decoder;
     decoder.Attach(new StringSink(decodedCipher));
@@ -80,15 +80,15 @@ std::string crypto::panama::decrypt(std::string source, std::string key, std::st
     decoder.Put(reinterpret_cast<CryptoPP::byte *> (key.data()), key.size());
     decoder.MessageEnd();
 
-    decoder.Attach(new StringSink(decodedIV));
+    decoder.Attach(new StringSink(decodedIv));
     decoder.Put(reinterpret_cast<CryptoPP::byte *> (iv.data()), iv.size());
     decoder.MessageEnd();
 
     PanamaCipher<LittleEndian>::Decryption dec;
     dec.SetKeyWithIV(reinterpret_cast<const CryptoPP::byte *> (decodedKey.data()),
                      decodedKey.size(),
-                     reinterpret_cast<const CryptoPP::byte *> (decodedIV.data()),
-                     decodedIV.size());
+                     reinterpret_cast<const CryptoPP::byte *> (decodedIv.data()),
+                     decodedIv.size());
     recover.resize(source.size());
     dec.ProcessData(reinterpret_cast<CryptoPP::byte *> (&recover[0]),
                     reinterpret_cast<const CryptoPP::byte *> (decodedCipher.data()),
@@ -97,7 +97,7 @@ std::string crypto::panama::decrypt(std::string source, std::string key, std::st
 }
 
 
-string crypto::blake2b(const string &source, const unsigned int &divider) {
+string crypto::blake2B(const string &source, const unsigned int &divider) {
     stringstream tempStringStream;
     HexEncoder encoder(new FileSink(tempStringStream));
     string digest;
@@ -105,7 +105,7 @@ string crypto::blake2b(const string &source, const unsigned int &divider) {
     hash.Update(reinterpret_cast<const CryptoPP::byte *>(source.data()), source.size());
     digest.resize(hash.DigestSize() / divider);
     hash.TruncatedFinal(reinterpret_cast<CryptoPP::byte *>(&digest[0]), digest.size());
-    StringSource tempSource(digest, true, new Redirector(encoder));
+    [[maybe_unused]] StringSource tempSource(digest, true, new Redirector(encoder));
     return tempStringStream.str();
 }
 
@@ -117,6 +117,6 @@ string crypto::keccak(const string &source, const unsigned int &divider) {
     hash.Update(reinterpret_cast<const CryptoPP::byte *>(source.data()), source.size());
     digest.resize(hash.DigestSize() / divider);
     hash.TruncatedFinal(reinterpret_cast<CryptoPP::byte *>(&digest[0]), digest.size());
-    StringSource tempSource(digest, true, new Redirector(encoder));
+    [[maybe_unused]] StringSource tempSource(digest, true, new Redirector(encoder));
     return tempStringStream.str();
 }

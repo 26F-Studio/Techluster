@@ -20,7 +20,7 @@ Room::Room(
         Json::Value info,
         Json::Value data
 ) : _roomId(drogon::utils::getUuid()),
-    _passwordHash(crypto::blake2b(password)),
+    _passwordHash(crypto::blake2B(password)),
     _capacity(capacity),
     _info(move(info)),
     _data(move(data)) {
@@ -39,7 +39,7 @@ Room::Room(Room &&room) noexcept:
 const string &Room::roomId() const { return _roomId; }
 
 bool Room::checkPassword(const string &password) const {
-    return crypto::blake2b(password) == _passwordHash;
+    return crypto::blake2B(password) == _passwordHash;
 }
 
 Json::Value Room::getInfo(const Json::Value &list) {
