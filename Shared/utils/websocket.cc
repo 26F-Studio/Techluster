@@ -2,6 +2,7 @@
 // Created by Parti on 2021/2/5.
 //
 
+#include <utils/serializer.h>
 #include <utils/websocket.h>
 
 using namespace tech::utils;
@@ -13,14 +14,6 @@ void websocket::initPing(
         const Json::Value &initMessage,
         const chrono::duration<long double> &interval
 ) {
-    wsConnPtr->send(websocket::fromJson(initMessage));
+    wsConnPtr->send(serializer::json::stringify(initMessage));
     wsConnPtr->setPingMessage("", interval);
-}
-
-void websocket::close(
-        const WebSocketConnectionPtr &webSocketConnectionPtr,
-        CloseCode _code,
-        const string &_reason
-) {
-    webSocketConnectionPtr->shutdown(_code, _reason);
 }

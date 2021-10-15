@@ -12,10 +12,4 @@ namespace tech::utils::websocket {
             const Json::Value &initMessage,
             const std::chrono::duration<long double> &interval
     );
-
-    void close(
-            const drogon::WebSocketConnectionPtr &webSocketConnectionPtr,
-            drogon::CloseCode _code,
-            const std::string &_reason
-    );
 }
