@@ -5,6 +5,7 @@
 #pragma once
 
 #include <drogon/drogon.h>
+#include <structures/Exceptions.h>
 #include <shared_mutex>
 
 namespace tech::structures {
@@ -28,7 +29,35 @@ namespace tech::structures {
             standby,
         };
 
-        explicit Player(const int64_t &id);
+        static constexpr Type toType(const int &type) {
+            switch (type) {
+                case 0:
+                    return Type::gamer;
+                case 1:
+                    return Type::spectator;
+                default:
+                    throw action_exception::InvalidArgument("Invalid type number");
+            }
+        }
+
+        static constexpr State toState(const int &state) {
+            switch (state) {
+                case 0:
+                    return State::dead;
+                case 1:
+                    return State::finish;
+                case 2:
+                    return State::playing;
+                case 3:
+                    return State::ready;
+                case 4:
+                    return State::standby;
+                default:
+                    throw action_exception::InvalidArgument("Invalid state number");
+            }
+        }
+
+        explicit Player(const int64_t &userId);
 
         [[nodiscard]] const int64_t &userId() const;
 
@@ -58,9 +87,11 @@ namespace tech::structures {
 
         [[nodiscard]] Json::Value info() const;
 
+        void reset();
+
     private:
         mutable std::shared_mutex _sharedMutex;
-        const int64_t _id;
+        const int64_t _userId;
         std::atomic<uint32_t> _group;
         std::atomic<Role> _role;
         std::atomic<Type> _type;

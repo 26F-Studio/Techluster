@@ -44,18 +44,32 @@ namespace tech::structures {
 
         void subscribe(const drogon::WebSocketConnectionPtr &connection);
 
-        uint64_t unsubscribe(const drogon::WebSocketConnectionPtr &connection);
+        void unsubscribe(const drogon::WebSocketConnectionPtr &connection);
+
+        void unsubscribe(const int64_t &userId);
 
         [[nodiscard]] bool empty() const;
 
-        [[nodiscard]] Json::Value parse() const;
+        [[nodiscard]] Json::Value parse(const bool &inner = false) const;
 
         void publish(
                 std::string &&message,
                 const int64_t &excludedId = -1
         );
 
+        void tell(
+                std::string &&message,
+                const int64_t &target
+        );
+
+        void changeAdmin(
+                const drogon::WebSocketConnectionPtr &connection,
+                const int64_t &userId
+        );
+
         void checkReady();
+
+        ~Room();
 
     private:
         mutable std::shared_mutex _sharedMutex;

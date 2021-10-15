@@ -2,13 +2,15 @@
 // Created by particleg on 2021/10/8.
 //
 
-#include <structures/Exceptions.h>
+#include <strategies/Action.h>
+#include <structures/MessageHandler.h>
 #include <structures/Player.h>
 #include <structures/Room.h>
 #include <utils/crypto.h>
 
 using namespace drogon;
 using namespace std;
+using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::utils;
 
@@ -36,7 +38,7 @@ Room::Room(Room &&room) noexcept:
 
 inline const string &Room::roomId() const { return _roomId; }
 
-inline bool Room::checkPassword(const string &password) const {
+bool Room::checkPassword(const string &password) const {
     return crypto::blake2b(password) == _passwordHash;
 }
 
@@ -131,11 +133,55 @@ void Room::subscribe(const WebSocketConnectionPtr &connection) {
             _cancelStarting();
         }
     }
+
+    Json::Value response;
+    response["type"] = static_cast<int>(Type::self);
+    response["action"] = static_cast<int>(Action::roomJoin);
+    response["data"] = parse(true);
+    connection->send(serializer::json::stringify(response));
+
+    if (_size() > 1) {
+        Json::Value message;
+        message["type"] = static_cast<int>(Type::other);
+        message["action"] = static_cast<int>(Action::roomJoin);
+        message["data"] = player->info();
+        publish(
+                move(serializer::json::stringify(message)),
+                player->userId()
+        );
+    }
 }
 
-inline uint64_t Room::unsubscribe(const WebSocketConnectionPtr &connection) {
+inline void Room::unsubscribe(const WebSocketConnectionPtr &connection) {
     _remove(connection);
-    return _size();
+
+    const auto &player = connection->getContext<Player>();
+
+    if (connection->connected()) {
+        player->reset();
+    }
+
+    if (!empty()) {
+        Json::Value message;
+        message["type"] = static_cast<int>(Type::other);
+        message["action"] = static_cast<int>(Action::roomLeave);
+        message["data"] = player->userId();
+        publish(move(serializer::json::stringify(message)));
+    }
+}
+
+void Room::unsubscribe(const int64_t &userId) {
+    WebSocketConnectionPtr connection;
+    {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        auto iter = _connectionsMap.find(userId);
+        if (iter != _connectionsMap.end()) {
+            connection = iter->second;
+        } else {
+            throw room_exception::PlayerNotFound("Invalid userId");
+        }
+    }
+    unsubscribe(connection);
 }
 
 inline bool Room::empty() const {
@@ -143,33 +189,60 @@ inline bool Room::empty() const {
     return _connectionsMap.empty();
 }
 
-inline Json::Value Room::parse() const {
+inline Json::Value Room::parse(const bool &inner) const {
     Json::Value result;
     result["roomId"] = _roomId;
     result["capacity"] = _capacity.load();
     result["state"] = static_cast<int>(_state.load());
-    result["players"] = Json::arrayValue;
+
     shared_lock<shared_mutex> lock(_sharedMutex);
     result["info"] = _info;
-    result["data"] = _data;
     result["count"] = _connectionsMap.size();
-    for (const auto &[_, connection]: _connectionsMap) {
-        result["players"].append(connection->getContext<Player>()->info());
+    if (inner) {
+        result["data"] = _data;
+        result["players"] = Json::arrayValue;
+        for (const auto &[_, connection]: _connectionsMap) {
+            result["players"].append(connection->getContext<Player>()->info());
+        }
     }
+
     return result;
 }
 
-void Room::publish(
-        string &&message,
-        const int64_t &excludedId
-) {
+void Room::publish(string &&message, const int64_t &excludedId) {
     shared_lock<shared_mutex> lock(_sharedMutex);
-    for (auto &pair: _connectionsMap) {
-        if (excludedId < 0 ||
-            excludedId != pair.second->getContext<Player>()->userId()) {
-            pair.second->send(message);
+    for (const auto &[userId, connection]: _connectionsMap) {
+        if (excludedId < 0 || excludedId != userId) {
+            connection->send(message);
         }
     }
+}
+
+void Room::tell(
+        string &&message,
+        const int64_t &userId
+) {
+    shared_lock<shared_mutex> lock(_sharedMutex);
+    auto iter = _connectionsMap.find(userId);
+    if (iter != _connectionsMap.end()) {
+        iter->second->send(message);
+        return;
+    }
+    throw room_exception::PlayerNotFound("Invalid userId");
+}
+
+void Room::changeAdmin(
+        const WebSocketConnectionPtr &connection,
+        const int64_t &userId
+) {
+    shared_lock<shared_mutex> lock(_sharedMutex);
+    auto iter = _connectionsMap.find(userId);
+    if (iter != _connectionsMap.end()) {
+        iter->second->getContext<Player>()->setRole(Player::Role::super);
+        connection->getContext<Player>()->setRole(Player::Role::normal);
+        return;
+    }
+    throw room_exception::PlayerNotFound("Invalid userId");
 }
 
 void Room::checkReady() {
@@ -200,7 +273,7 @@ inline uint64_t Room::_size() const {
 void Room::_insert(const WebSocketConnectionPtr &connection) {
     const auto &player = connection->getContext<Player>();
     if (!player->getJoinedId().empty()) {
-        throw RoomException::PlayerOverFlow("Already in a room");
+        throw room_exception::PlayerOverFlow("Already in a room");
     }
     player->setJoinedId(roomId());
     unique_lock<shared_mutex> lock(_sharedMutex);
@@ -210,9 +283,8 @@ void Room::_insert(const WebSocketConnectionPtr &connection) {
 inline void Room::_remove(const WebSocketConnectionPtr &connection) {
     const auto &player = connection->getContext<Player>();
     if (player->getJoinedId() != roomId()) {
-        throw RoomException::PlayerNotFound("Not in this room");
+        throw room_exception::PlayerNotFound("Not in this room");
     }
-    player->setJoinedId();
     unique_lock<shared_mutex> lock(_sharedMutex);
     _connectionsMap.erase(player->userId());
 }
@@ -230,4 +302,12 @@ inline void Room::_cancelStarting() {
 
 void Room::_checkFinished() {
 
+}
+
+Room::~Room() {
+    for (const auto &[_, connection]: _connectionsMap) {
+        if (connection->connected() && connection->hasContext()) {
+            connection->getContext<Player>()->reset();
+        }
+    }
 }

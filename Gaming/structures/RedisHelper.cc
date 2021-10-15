@@ -92,7 +92,7 @@ inline void RedisHelper::_compare(
         const string &value
 ) {
     if (_get(key) != value) {
-        throw RedisException::NotEqual("key = " + key);
+        throw redis_exception::NotEqual("key = " + key);
     }
 }
 
@@ -101,14 +101,14 @@ inline void RedisHelper::_expire(
         const chrono::duration<uint64_t> &ttl
 ) {
     if (!_redisClient.expire(key, ttl)) {
-        throw RedisException::KeyNotFound("Key = " + key);
+        throw redis_exception::KeyNotFound("Key = " + key);
     }
 }
 
 inline string RedisHelper::_get(const string &key) {
     auto result = _redisClient.get(key);
     if (!result) {
-        throw RedisException::KeyNotFound("Key = " + key);
+        throw redis_exception::KeyNotFound("Key = " + key);
     }
     return result.value();
 }
@@ -116,7 +116,7 @@ inline string RedisHelper::_get(const string &key) {
 inline string RedisHelper::_hget(const string &key, const string &field) {
     auto result = _redisClient.hget(key, field);
     if (!result) {
-        throw RedisException::FieldNotFound("Key = " + key + ", Field = " + field);
+        throw redis_exception::FieldNotFound("Key = " + key + ", Field = " + field);
     }
     return result.value();
 }
