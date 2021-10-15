@@ -39,7 +39,6 @@ void Auth::refresh(const HttpRequestPtr &req, function<void(const HttpResponsePt
 
 void Auth::verifyEmail(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     HttpStatusCode code = HttpStatusCode::k200OK;
-    Json::Value response;
     http::fromJson(code, _service.verifyEmail(
             code,
             req->attributes()->get<Json::Value>("data")

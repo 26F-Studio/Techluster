@@ -12,7 +12,7 @@ using namespace tech::utils;
 
 void User::getInfo(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     HttpStatusCode code = HttpStatusCode::k200OK;
-    Json::Value data, response;
+    Json::Value response;
     auto accessToken = req->getHeader("x-access-token");
     if (accessToken.empty()) {
         code = drogon::k400BadRequest;
@@ -57,7 +57,7 @@ void User::updateInfo(const HttpRequestPtr &req, function<void(const HttpRespons
 
 void User::getAvatar(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     HttpStatusCode code = HttpStatusCode::k200OK;
-    Json::Value data, response;
+    Json::Value response;
     auto accessToken = req->getHeader("x-access-token");
     if (accessToken.empty()) {
         code = drogon::k400BadRequest;
