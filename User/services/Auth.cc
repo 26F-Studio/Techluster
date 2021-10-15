@@ -24,7 +24,7 @@ Json::Value Auth::check(HttpStatusCode &code, const string &accessToken) {
     try {
         response["type"] = "Success";
         response["data"] = _dataManager->getUserId(accessToken);
-    } catch (const RedisException::KeyNotFound &e) {
+    } catch (const redis_exception::KeyNotFound &e) {
         code = k401Unauthorized;
         response["type"] = "Failed";
         response["reason"] = "Invalid access token";
@@ -44,7 +44,7 @@ Json::Value Auth::refresh(HttpStatusCode &code, const string &refreshToken) {
         response["type"] = "Success";
         response["data"]["refreshToken"] = tokens.refresh();
         response["data"]["accessToken"] = tokens.access();
-    } catch (const RedisException::KeyNotFound &e) {
+    } catch (const redis_exception::KeyNotFound &e) {
         code = k401Unauthorized;
         response["type"] = "Failed";
         response["reason"] = "Invalid access token";
@@ -126,7 +126,7 @@ Json::Value Auth::loginMail(HttpStatusCode &code, const Json::Value &data) {
             response["type"] = "Error";
             response["reason"] = "Invalid parameters";
         }
-    } catch (const RedisException::KeyNotFound &e) {
+    } catch (const redis_exception::KeyNotFound &e) {
         code = k403Forbidden;
         response["type"] = "Failed";
         response["reason"] = "Invalid verify code";
@@ -152,7 +152,7 @@ Json::Value Auth::resetEmail(HttpStatusCode &code, const Json::Value &data) {
     try {
         _dataManager->resetEmail(email, validCode, newPassword);
         response["type"] = "Success";
-    } catch (const RedisException::KeyNotFound &e) {
+    } catch (const redis_exception::KeyNotFound &e) {
         code = k403Forbidden;
         response["type"] = "Failed";
         response["reason"] = "Invalid verify code";
@@ -182,11 +182,11 @@ Json::Value Auth::migrateEmail(HttpStatusCode &code, const Json::Value &data) {
                 validCode
         );
         response["type"] = "Success";
-    } catch (const RedisException::KeyNotFound &e) {
+    } catch (const redis_exception::KeyNotFound &e) {
         code = k401Unauthorized;
         response["type"] = "Failed";
         response["reason"] = "Invalid access token";
-    } catch (const RedisException::NotEqual &e) {
+    } catch (const redis_exception::NotEqual &e) {
         code = k403Forbidden;
         response["type"] = "Failed";
         response["reason"] = "Invalid verify code";

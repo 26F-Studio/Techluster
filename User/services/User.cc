@@ -28,7 +28,7 @@ Json::Value User::getInfo(
         code = k500InternalServerError;
         response["type"] = "Error";
         response["reason"] = "No user's id = " + to_string(id);
-    } catch (const RedisException::KeyNotFound &e) {
+    } catch (const redis_exception::KeyNotFound &e) {
         code = k401Unauthorized;
         response["type"] = "Failed";
         response["reason"] = "Invalid access token";
@@ -59,7 +59,7 @@ Json::Value User::updateInfo(
         code = k500InternalServerError;
         response["type"] = "Error";
         response["reason"] = "ORM error";
-    } catch (const RedisException::KeyNotFound &e) {
+    } catch (const redis_exception::KeyNotFound &e) {
         code = k401Unauthorized;
         response["type"] = "Failed";
         response["reason"] = "Invalid access token";
@@ -86,7 +86,7 @@ Json::Value User::getAvatar(
         code = k500InternalServerError;
         response["type"] = "Error";
         response["reason"] = "No user's id = " + to_string(id);
-    } catch (const RedisException::KeyNotFound &e) {
+    } catch (const redis_exception::KeyNotFound &e) {
         code = k401Unauthorized;
         response["type"] = "Failed";
         response["reason"] = "Invalid access token";
@@ -123,7 +123,7 @@ Json::Value User::getData(
         code = k500InternalServerError;
         response["type"] = "Error";
         response["reason"] = "No user's id = " + to_string(id);
-    } catch (const RedisException::KeyNotFound &e) {
+    } catch (const redis_exception::KeyNotFound &e) {
         code = k401Unauthorized;
         response["type"] = "Failed";
         response["reason"] = "Invalid access token";
@@ -160,7 +160,7 @@ Json::Value User::updateData(
         code = k500InternalServerError;
         response["type"] = "Error";
         response["reason"] = "No user's id = " + to_string(id);
-    } catch (const RedisException::KeyNotFound &e) {
+    } catch (const redis_exception::KeyNotFound &e) {
         code = k401Unauthorized;
         response["type"] = "Failed";
         response["reason"] = "Invalid access token";
