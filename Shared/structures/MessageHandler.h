@@ -5,6 +5,7 @@
 #pragma once
 
 #include <drogon/WebSocketController.h>
+#include <utils/serializer.h>
 
 namespace tech::structures {
     enum class Result {
@@ -14,7 +15,9 @@ namespace tech::structures {
         success,
     };
 
-    enum class Origin {
+    enum class Type {
+        error,
+        failed,
         other,
         self,
         server,
@@ -22,6 +25,8 @@ namespace tech::structures {
 
     class MessageHandler {
     public:
+        explicit MessageHandler(const int &action) : _action(action) {}
+
         virtual Result fromJson(
                 const drogon::WebSocketConnectionPtr &wsConnPtr,
                 const Json::Value &request,
@@ -30,5 +35,28 @@ namespace tech::structures {
         ) = 0;
 
         virtual ~MessageHandler() = default;
+
+    protected:
+        const int _action;
+
+        [[nodiscard]] std::string _parseMessage(
+                const Type &type
+        ) const {
+            Json::Value message;
+            message["type"] = static_cast<int>(type);
+            message["action"] = _action;
+            return utils::serializer::json::stringify(message);
+        }
+
+        [[nodiscard]] std::string _parseMessage(
+                const Type &type,
+                Json::Value &&data
+        ) const {
+            Json::Value message;
+            message["type"] = static_cast<int>(type);
+            message["action"] = _action;
+            message["data"] = std::move(data);
+            return utils::serializer::json::stringify(message);
+        }
     };
 }
