@@ -113,15 +113,15 @@ void DataManager::initAndStart(const Json::Value &config) {
 
 void DataManager::shutdown() { LOG_INFO << "DataManager shutdown."; }
 
-inline int64_t DataManager::getUserId(const string &accessToken) {
+int64_t DataManager::getUserId(const string &accessToken) {
     return _redisHelper->getUserId(accessToken);
 }
 
-inline RedisToken DataManager::refresh(const string &refreshToken) {
+RedisToken DataManager::refresh(const string &refreshToken) {
     return move(_redisHelper->refresh(refreshToken));
 }
 
-inline std::string DataManager::verifyEmail(const string &email) {
+std::string DataManager::verifyEmail(const string &email) {
     auto code = drogon::utils::genRandomString(8);
     transform(
             code.begin(),
@@ -404,7 +404,7 @@ void DataManager::updateUserData(
     }
 }
 
-inline bool DataManager::ipLimit(const string &ip) const {
+bool DataManager::ipLimit(const string &ip) const {
     return _redisHelper->tokenBucket(
             "ip:" + ip,
             _ipInterval,
@@ -412,7 +412,7 @@ inline bool DataManager::ipLimit(const string &ip) const {
     );
 }
 
-inline bool DataManager::emailLimit(const string &email) const {
+bool DataManager::emailLimit(const string &email) const {
     return _redisHelper->tokenBucket(
             "email:" + email,
             _emailInterval,
