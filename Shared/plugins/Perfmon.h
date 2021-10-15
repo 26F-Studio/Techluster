@@ -30,9 +30,9 @@ namespace tech::plugins {
         std::atomic<int64_t> _netDown{}, _netUp{};
         std::atomic<double> _cpuLoad{}, _taskInterval{};
 
-        void report();
+        void _report();
 
-        void updateInfo();
+        void _updateInfo();
     };
 }
 

@@ -48,7 +48,7 @@ void Perfmon::initAndStart(const Json::Value &config) {
     }
 
     app().getLoop()->runEvery(_taskInterval, [this] {
-        updateInfo();
+        _updateInfo();
     });
 
     if (config.isMember("report") && config["report"].isObject() &&
@@ -72,7 +72,7 @@ void Perfmon::initAndStart(const Json::Value &config) {
         _heartbeatBody["credential"] = app().getPlugin<Authorizer>()->getCredential();
 
         app().getLoop()->runEvery(_taskInterval, [this]() {
-            report();
+            _report();
         });
     }
 
@@ -100,7 +100,7 @@ Json::Value Perfmon::parseInfo() const {
     return result;
 }
 
-void Perfmon::report() {
+void Perfmon::_report() {
     _heartbeatBody["info"] = parseInfo();
     auto client = HttpClient::newHttpClient("http://" + _reportAddress);
     auto req = HttpRequest::newHttpJsonRequest(_heartbeatBody);
@@ -123,7 +123,7 @@ void Perfmon::report() {
     }, 3);
 }
 
-void Perfmon::updateInfo() {
+void Perfmon::_updateInfo() {
 #if _WIN32
     vector<thread> threads;
     threads.emplace_back([this]() {
@@ -179,17 +179,17 @@ void Perfmon::updateInfo() {
         GetModuleFileName(nullptr, buffer, MAX_PATH);
         auto nowPartition = string(buffer).substr(0, 3);
 
-        int DSLength = GetLogicalDriveStrings(0, nullptr);
+        int dsLength = GetLogicalDriveStrings(0, nullptr);
 
-        char *DStr = new char[DSLength];
-        GetLogicalDriveStrings(DSLength, (LPTSTR) DStr);
+        char *dStr = new char[dsLength];
+        GetLogicalDriveStrings(dsLength, (LPTSTR) dStr);
 
         uint64_t i64FreeBytesToCaller,
                 i64TotalBytes,
                 i64FreeBytes;
 
-        for (int i = 0; i < DSLength / 4; ++i) {
-            string partition = string(1, DStr[i * 4]) + R"(:\)";
+        for (int i = 0; i < dsLength / 4; ++i) {
+            string partition = string(1, dStr[i * 4]) + R"(:\)";
             if (partition == nowPartition) {
                 if (GetDiskFreeSpaceEx(
                         partition.c_str(),
