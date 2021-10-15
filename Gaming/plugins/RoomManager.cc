@@ -106,7 +106,8 @@ void RoomManager::joinRoom(
         const string &roomId,
         const string &password
 ) {
-    auto &room = getSharedRoom(roomId).room;
+    auto sharedRoom = getSharedRoom(roomId);
+    auto &room = sharedRoom.room;
     if (!room.checkPassword(password)) {
         throw room_exception::InvalidPassword("Password is incorrect");
     }
@@ -121,7 +122,8 @@ void RoomManager::leaveRoom(
     auto roomId = player->getJoinedId();
     bool isEmpty;
     {
-        auto &room = getSharedRoom(roomId).room;
+        auto sharedRoom = getSharedRoom(roomId);
+        auto &room = sharedRoom.room;
         room.unsubscribe(connection);
         isEmpty = room.empty();
     }
