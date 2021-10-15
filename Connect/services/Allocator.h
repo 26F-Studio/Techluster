@@ -21,6 +21,6 @@ namespace tech::services {
     private:
         tech::plugins::NodeManager *_nodeManager;
 
-        bool getNode(std::string &host, const tech::structures::NodeServer::Type &type);
+        bool _getNode(std::string &host, const tech::structures::NodeServer::Type &type);
     };
 }

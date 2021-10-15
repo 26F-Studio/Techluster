@@ -15,7 +15,7 @@ Allocator::Allocator() : _nodeManager(app().getPlugin<NodeManager>()) {}
 Json::Value Allocator::message(drogon::HttpStatusCode &code) {
     Json::Value response;
     string host;
-    if (getNode(host, NodeServer::Type::message)) {
+    if (_getNode(host, NodeServer::Type::message)) {
         response["type"] = "Success";
         response["data"]["host"] = host;
     } else {
@@ -29,7 +29,7 @@ Json::Value Allocator::message(drogon::HttpStatusCode &code) {
 Json::Value Allocator::gaming(drogon::HttpStatusCode &code) {
     Json::Value response;
     string host;
-    if (getNode(host, NodeServer::Type::gaming)) {
+    if (_getNode(host, NodeServer::Type::gaming)) {
         response["type"] = "Success";
         response["data"]["host"] = host;
     } else {
@@ -43,7 +43,7 @@ Json::Value Allocator::gaming(drogon::HttpStatusCode &code) {
 Json::Value Allocator::user(drogon::HttpStatusCode &code) {
     Json::Value response;
     string host;
-    if (getNode(host, NodeServer::Type::user)) {
+    if (_getNode(host, NodeServer::Type::user)) {
         response["type"] = "Success";
         response["data"]["host"] = host;
     } else {
@@ -54,7 +54,7 @@ Json::Value Allocator::user(drogon::HttpStatusCode &code) {
     return response;
 }
 
-bool Allocator::getNode(string &host, const NodeServer::Type &type) {
+bool Allocator::_getNode(string &host, const NodeServer::Type &type) {
     try {
         host = _nodeManager->getBestNode(type);
         return true;
