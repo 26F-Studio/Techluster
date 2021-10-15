@@ -48,7 +48,7 @@ namespace tech::structures {
         return static_cast<int>(prefix) + static_cast<int>(result);
     }
 
-    namespace RedisException {
+    namespace redis_exception {
         class KeyNotFound : public internal::BaseException {
         public:
             explicit KeyNotFound(std::string message);
@@ -65,7 +65,7 @@ namespace tech::structures {
         };
     }
 
-    namespace RoomException {
+    namespace room_exception {
         class PlayerOverFlow : public internal::BaseException {
         public:
             explicit PlayerOverFlow(std::string message);
@@ -92,10 +92,20 @@ namespace tech::structures {
         };
     }
 
-    namespace ActionException {
+    namespace action_exception {
         class ActionNotFound : public internal::BaseException {
         public:
             explicit ActionNotFound(std::string message);
+        };
+
+        class Unauthorized : public internal::BaseException {
+        public:
+            explicit Unauthorized(std::string message);
+        };
+
+        class InvalidArgument : public internal::BaseException {
+        public:
+            explicit InvalidArgument(std::string message);
         };
     }
 }

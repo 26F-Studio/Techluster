@@ -23,31 +23,35 @@ NetworkException::NetworkException(
         const ReqResult &result
 ) : CodeException(move(message), TypePrefix::request + result) {}
 
-RedisException::KeyNotFound::KeyNotFound(std::string message) :
+redis_exception::KeyNotFound::KeyNotFound(std::string message) :
         BaseException(move(message)) {}
 
-RedisException::FieldNotFound::FieldNotFound(std::string message) :
+redis_exception::FieldNotFound::FieldNotFound(std::string message) :
         BaseException(move(message)) {}
 
-RedisException::NotEqual::NotEqual(std::string message) :
+redis_exception::NotEqual::NotEqual(std::string message) :
         BaseException(move(message)) {}
 
-RoomException::PlayerOverFlow::PlayerOverFlow(std::string message) :
+room_exception::PlayerOverFlow::PlayerOverFlow(std::string message) :
         BaseException(move(message)) {}
 
-RoomException::PlayerNotFound::PlayerNotFound(std::string message) :
+room_exception::PlayerNotFound::PlayerNotFound(std::string message) :
         BaseException(move(message)) {}
 
-RoomException::RoomOverFlow::RoomOverFlow(std::string message) :
+room_exception::RoomOverFlow::RoomOverFlow(std::string message) :
         BaseException(move(message)) {}
 
-RoomException::RoomNotFound::RoomNotFound(std::string message) :
+room_exception::RoomNotFound::RoomNotFound(std::string message) :
         BaseException(move(message)) {}
 
-RoomException::InvalidPassword::InvalidPassword(std::string message) :
+room_exception::InvalidPassword::InvalidPassword(std::string message) :
         BaseException(move(message)) {}
 
-ActionException::ActionNotFound::ActionNotFound(std::string message) :
+action_exception::ActionNotFound::ActionNotFound(std::string message) :
         BaseException(move(message)) {}
 
+action_exception::Unauthorized::Unauthorized(std::string message) :
+        BaseException(move(message)) {}
 
+action_exception::InvalidArgument::InvalidArgument(std::string message) :
+        BaseException(move(message)) {}
