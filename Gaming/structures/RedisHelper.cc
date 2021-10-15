@@ -28,7 +28,7 @@ bool RedisHelper::tokenBucket(
         const chrono::microseconds &restoreInterval,
         const uint64_t &maxCount
 ) {
-    auto maxTTL = chrono::duration_cast<chrono::seconds>(restoreInterval * maxCount);
+    auto maxTtl = chrono::duration_cast<chrono::seconds>(restoreInterval * maxCount);
 
     auto setCount = [this, &key](const uint64_t &count) {
         _redisClient.set(
@@ -82,8 +82,8 @@ bool RedisHelper::tokenBucket(
         setCount(maxCount - 1);
     }
 
-    _expire("tokenBucketCount:" + key, maxTTL);
-    _expire("tokenBucketUpdated:" + key, maxTTL);
+    _expire("tokenBucketCount:" + key, maxTtl);
+    _expire("tokenBucketUpdated:" + key, maxTtl);
     return hasToken;
 }
 
