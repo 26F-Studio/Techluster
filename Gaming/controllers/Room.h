@@ -11,10 +11,7 @@ namespace tech::socket::v2 {
     class Room : public BaseWebsocket<Room, tech::services::Room> {
     public:
         WS_PATH_LIST_BEGIN
-        WS_PATH_ADD(
-
-        "/tech/socket/v2/room", "tech::filters::CheckAccessToken")
-
+            WS_PATH_ADD("/tech/socket/v2/room", "tech::filters::CheckAccessToken")
         WS_PATH_LIST_END
 
         Room();
