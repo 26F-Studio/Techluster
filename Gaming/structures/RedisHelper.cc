@@ -87,7 +87,7 @@ bool RedisHelper::tokenBucket(
     return hasToken;
 }
 
-inline void RedisHelper::_compare(
+void RedisHelper::_compare(
         const string &key,
         const string &value
 ) {
@@ -96,16 +96,16 @@ inline void RedisHelper::_compare(
     }
 }
 
-inline void RedisHelper::_expire(
+void RedisHelper::_expire(
         const string &key,
-        const chrono::duration<uint64_t> &ttl
+        const chrono::duration <uint64_t> &ttl
 ) {
     if (!_redisClient.expire(key, ttl)) {
         throw redis_exception::KeyNotFound("Key = " + key);
     }
 }
 
-inline string RedisHelper::_get(const string &key) {
+string RedisHelper::_get(const string &key) {
     auto result = _redisClient.get(key);
     if (!result) {
         throw redis_exception::KeyNotFound("Key = " + key);
@@ -113,7 +113,7 @@ inline string RedisHelper::_get(const string &key) {
     return result.value();
 }
 
-inline string RedisHelper::_hget(const string &key, const string &field) {
+string RedisHelper::_hget(const string &key, const string &field) {
     auto result = _redisClient.hget(key, field);
     if (!result) {
         throw redis_exception::FieldNotFound("Key = " + key + ", Field = " + field);

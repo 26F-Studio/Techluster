@@ -43,11 +43,11 @@ RedisToken RedisHelper::generateTokens(const string &userId) {
     };
 }
 
-inline void RedisHelper::checkAccessToken(const string &accessToken) {
+void RedisHelper::checkAccessToken(const string &accessToken) {
     _get("player:id:" + accessToken);
 }
 
-inline void RedisHelper::checkEmailCode(
+void RedisHelper::checkEmailCode(
         const string &email,
         const string &code
 ) {
@@ -58,7 +58,7 @@ void RedisHelper::deleteEmailCode(const string &email) {
     _redisClient.del("player:code:email_" + email);
 }
 
-inline void RedisHelper::setEmailCode(
+void RedisHelper::setEmailCode(
         const string &email,
         const string &code
 ) {
@@ -69,7 +69,7 @@ inline void RedisHelper::setEmailCode(
     );
 }
 
-inline int64_t RedisHelper::getUserId(const string &accessToken) {
+int64_t RedisHelper::getUserId(const string &accessToken) {
     return stoll(_get("player:id:" + accessToken));
 }
 
@@ -78,7 +78,7 @@ bool RedisHelper::tokenBucket(
         const chrono::microseconds &restoreInterval,
         const uint64_t &maxCount
 ) {
-    auto maxTTL = chrono::duration_cast<chrono::seconds>(restoreInterval * maxCount);
+    auto maxTtl = chrono::duration_cast<chrono::seconds>(restoreInterval * maxCount);
 
     auto setCount = [this, &key](const uint64_t &count) {
         _redisClient.set(
@@ -132,12 +132,12 @@ bool RedisHelper::tokenBucket(
         setCount(maxCount - 1);
     }
 
-    _expire("tokenBucketCount:" + key, maxTTL);
-    _expire("tokenBucketUpdated:" + key, maxTTL);
+    _expire("tokenBucketCount:" + key, maxTtl);
+    _expire("tokenBucketUpdated:" + key, maxTtl);
     return hasToken;
 }
 
-inline void RedisHelper::_compare(
+void RedisHelper::_compare(
         const string &key,
         const string &value
 ) {
@@ -146,16 +146,16 @@ inline void RedisHelper::_compare(
     }
 }
 
-inline void RedisHelper::_expire(
+void RedisHelper::_expire(
         const string &key,
-        const chrono::duration<uint64_t> &ttl
+        const chrono::duration <uint64_t> &ttl
 ) {
     if (!_redisClient.expire(key, ttl)) {
         throw redis_exception::KeyNotFound("Key = " + key);
     }
 }
 
-inline string RedisHelper::_get(const string &key) {
+string RedisHelper::_get(const string &key) {
     auto result = _redisClient.get(key);
     if (!result) {
         throw redis_exception::KeyNotFound("Key = " + key);
@@ -163,14 +163,14 @@ inline string RedisHelper::_get(const string &key) {
     return result.value();
 }
 
-inline void RedisHelper::_extendRefreshToken(const string &refreshToken) {
+void RedisHelper::_extendRefreshToken(const string &refreshToken) {
     _expire(
             "player:refresh:" + refreshToken,
             chrono::minutes(_expiration.refresh)
     );
 }
 
-inline string RedisHelper::_generateRefreshToken(const string &userId) {
+string RedisHelper::_generateRefreshToken(const string &userId) {
     auto refreshToken = crypto::keccak(drogon::utils::getUuid());
     _redisClient.set(
             "player:refresh:" + refreshToken,
@@ -180,7 +180,7 @@ inline string RedisHelper::_generateRefreshToken(const string &userId) {
     return refreshToken;
 }
 
-inline string RedisHelper::_generateAccessToken(const string &userId) {
+string RedisHelper::_generateAccessToken(const string &userId) {
     auto accessToken = crypto::blake2b(drogon::utils::getUuid());
     _redisClient.set(
             "player:access:" + userId,

@@ -36,7 +36,7 @@ Room::Room(Room &&room) noexcept:
     _state = State::pending;
 }
 
-inline const string &Room::roomId() const { return _roomId; }
+const string &Room::roomId() const { return _roomId; }
 
 bool Room::checkPassword(const string &password) const {
     return crypto::blake2b(password) == _passwordHash;
@@ -152,7 +152,7 @@ void Room::subscribe(const WebSocketConnectionPtr &connection) {
     }
 }
 
-inline void Room::unsubscribe(const WebSocketConnectionPtr &connection) {
+void Room::unsubscribe(const WebSocketConnectionPtr &connection) {
     _remove(connection);
 
     const auto &player = connection->getContext<Player>();
@@ -184,12 +184,12 @@ void Room::unsubscribe(const int64_t &userId) {
     unsubscribe(connection);
 }
 
-inline bool Room::empty() const {
+bool Room::empty() const {
     shared_lock<shared_mutex> lock(_sharedMutex);
     return _connectionsMap.empty();
 }
 
-inline Json::Value Room::parse(const bool &inner) const {
+Json::Value Room::parse(const bool &inner) const {
     Json::Value result;
     result["roomId"] = _roomId;
     result["capacity"] = _capacity.load();
@@ -260,12 +260,12 @@ void Room::checkReady() {
     _startingGame();
 }
 
-inline bool Room::_full() const {
+bool Room::_full() const {
     shared_lock<shared_mutex> lock(_sharedMutex);
     return _connectionsMap.size() == _capacity;
 }
 
-inline uint64_t Room::_size() const {
+uint64_t Room::_size() const {
     shared_lock<shared_mutex> lock(_sharedMutex);
     return _connectionsMap.size();
 }
@@ -280,7 +280,7 @@ void Room::_insert(const WebSocketConnectionPtr &connection) {
     _connectionsMap[player->userId()] = connection;
 }
 
-inline void Room::_remove(const WebSocketConnectionPtr &connection) {
+void Room::_remove(const WebSocketConnectionPtr &connection) {
     const auto &player = connection->getContext<Player>();
     if (player->getJoinedId() != roomId()) {
         throw room_exception::PlayerNotFound("Not in this room");
@@ -296,7 +296,7 @@ void Room::_startingGame() {
     });
 }
 
-inline void Room::_cancelStarting() {
+void Room::_cancelStarting() {
     app().getLoop()->invalidateTimer(_timerId);
 }
 

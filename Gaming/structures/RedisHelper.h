@@ -28,18 +28,18 @@ namespace tech::structures {
     private:
         sw::redis::Redis _redisClient;
 
-        inline void _compare(
+        void _compare(
                 const std::string &key,
                 const std::string &value
         );
 
-        inline void _expire(
+        void _expire(
                 const std::string &key,
-                const std::chrono::duration<uint64_t> &ttl
+                const std::chrono::duration <uint64_t> &ttl
         );
 
-        inline std::string _get(const std::string &key);
+        std::string _get(const std::string &key);
 
-        inline std::string _hget(const std::string &key, const std::string &field);
+        std::string _hget(const std::string &key, const std::string &field);
     };
 }
