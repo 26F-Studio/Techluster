@@ -33,8 +33,7 @@ namespace tech::socket::v2 {
                     result == Result::failed) {
                     wsConnPtr->send(serializer::json::stringify(response));
                 } else if (result == Result::error) {
-                    websocket::close(
-                            wsConnPtr,
+                    wsConnPtr->shutdown(
                             code,
                             serializer::json::stringify(response)
                     );
