@@ -60,7 +60,7 @@ void NodeManager::updateNode(NodeServer &&nodeServer) {
         nodePair->second.setInfo(move(nodeServer.getInfo()));
     }
     nodePair->second.updateLastSeen();
-    updateTimer(nodePair->second);
+    _updateTimer(nodePair->second);
 }
 
 string NodeManager::getBestNode(const NodeServer::Type &type) const {
@@ -98,7 +98,7 @@ Json::Value NodeManager::parseInfo(const NodeServer::Type &nodeType) const {
     return result;
 }
 
-void NodeManager::updateTimer(NodeServer &nodeServer) {
+void NodeManager::_updateTimer(NodeServer &nodeServer) {
     if (_waitTimes == 0) {
         // Disable heartbeat timeout
         return;

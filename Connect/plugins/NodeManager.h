@@ -40,6 +40,6 @@ namespace tech::plugins {
                 std::unordered_map<NetEndian, structures::NodeServer>
         > _allNodes;
 
-        void updateTimer(structures::NodeServer &nodeServer);
+        void _updateTimer(structures::NodeServer &nodeServer);
     };
 }
