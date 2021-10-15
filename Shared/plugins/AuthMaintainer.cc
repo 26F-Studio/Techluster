@@ -34,10 +34,10 @@ void AuthMaintainer::initAndStart(const Json::Value &config) {
         _taskMinutes = chrono::minutes(config["maintainer"]["taskMinutes"].asUInt64());
     }
 
-    updateAuthAddress();
+    _updateAuthAddress();
 
     app().getLoop()->runEvery(_taskMinutes, [this]() {
-        updateAuthAddress();
+        _updateAuthAddress();
     });
 
     LOG_INFO << "AuthMaintainer loaded.";
@@ -45,7 +45,7 @@ void AuthMaintainer::initAndStart(const Json::Value &config) {
 
 void AuthMaintainer::shutdown() { LOG_INFO << "AuthMaintainer shutdown."; }
 
-void AuthMaintainer::updateAuthAddress() {
+void AuthMaintainer::_updateAuthAddress() {
     auto client = HttpClient::newHttpClient("http://" + _connectAddress.load().toIpPort());
     auto req = HttpRequest::newHttpRequest();
     req->setPath("/tech/api/v2/allocator/user");
@@ -87,7 +87,7 @@ HttpStatusCode AuthMaintainer::checkAccessToken(const string &accessToken, int64
     req->setPath("/tech/api/v2/auth/check");
     auto[result, responsePtr] = client->sendRequest(req, 3);
     if (result != ReqResult::Ok) {
-        updateAuthAddress();
+        _updateAuthAddress();
         throw NetworkException("Node Down", result);
     }
     Json::Value response;

@@ -21,6 +21,6 @@ namespace tech::plugins {
         std::chrono::duration<double> _taskMinutes{};
         std::atomic<trantor::InetAddress> _connectAddress{}, _authAddress{};
 
-        void updateAuthAddress();
+        void _updateAuthAddress();
     };
 }
