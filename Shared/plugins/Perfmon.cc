@@ -67,7 +67,7 @@ void Perfmon::initAndStart(const Json::Value &config) {
                                ).second->body());
         _heartbeatBody["port"] = app().getListeners()[0].toPort();
         _heartbeatBody["type"] = config["report"]["type"].asString();
-        _heartbeatBody["taskInterval"] = app().getPlugin<Perfmon>()->getTaskInterval();
+        _heartbeatBody["taskInterval"] = _taskInterval.load();
         _heartbeatBody["description"] = config["report"]["description"].asString();
         _heartbeatBody["credential"] = app().getPlugin<Authorizer>()->getCredential();
 
@@ -80,8 +80,6 @@ void Perfmon::initAndStart(const Json::Value &config) {
 }
 
 void Perfmon::shutdown() { LOG_INFO << "Perfmon shutdown."; }
-
-double Perfmon::getTaskInterval() const { return _taskInterval; }
 
 Json::Value Perfmon::parseInfo() const {
     Json::Value result;

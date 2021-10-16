@@ -17,8 +17,6 @@ namespace tech::plugins {
 
         void shutdown() override;
 
-        [[nodiscard]] double getTaskInterval() const;
-
         [[nodiscard]] Json::Value parseInfo() const;
 
     private:
