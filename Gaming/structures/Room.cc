@@ -2,14 +2,18 @@
 // Created by particleg on 2021/10/8.
 //
 
+#include <plugins/AuthMaintainer.h>
+#include <plugins/Authorizer.h>
 #include <strategies/Action.h>
 #include <structures/MessageHandler.h>
 #include <structures/Player.h>
 #include <structures/Room.h>
 #include <utils/crypto.h>
+#include <utils/http.h>
 
 using namespace drogon;
 using namespace std;
+using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::utils;
@@ -116,10 +120,6 @@ void Room::setData(const Json::Value &list) {
     }
 }
 
-Room::State Room::getState() const { return _state; }
-
-void Room::setState(const Room::State &state) { _state = state; }
-
 void Room::subscribe(const WebSocketConnectionPtr &connection) {
     _insert(connection);
 
@@ -130,7 +130,7 @@ void Room::subscribe(const WebSocketConnectionPtr &connection) {
         player->setType(Player::Type::gamer);
         player->setState(Player::State::standby);
         if (_state == State::starting) {
-            _cancelStarting();
+            cancelStarting();
         }
     }
 
@@ -257,17 +257,51 @@ void Room::checkReady() {
             return;
         }
     }
+    _state = State::starting;
+
+    Json::Value message;
+    message["type"] = static_cast<int>(Type::server);
+    message["action"] = static_cast<int>(Action::gameReady);
+    publish(serializer::json::stringify(message));
+
     _startingGame();
 }
 
+void Room::cancelStarting() {
+    app().getLoop()->invalidateTimer(_timerId);
+
+    _state = State::pending;
+}
+
+void Room::checkFinished() {
+
+}
+
 bool Room::_full() const {
+    uint64_t counter{};
     shared_lock<shared_mutex> lock(_sharedMutex);
-    return _connectionsMap.size() == _capacity;
+    for (const auto&[_, connection]: _connectionsMap) {
+        if (connection->getContext<Player>()->getType() == Player::Type::gamer) {
+            ++counter;
+        }
+    }
+    return counter == _capacity;
 }
 
 uint64_t Room::_size() const {
     shared_lock<shared_mutex> lock(_sharedMutex);
     return _connectionsMap.size();
+}
+
+uint64_t Room::_count() const {
+    uint64_t counter{};
+    shared_lock<shared_mutex> lock(_sharedMutex);
+    for (const auto&[_, connection]: _connectionsMap) {
+        if (connection->getContext<Player>()->getType() == Player::Type::gamer) {
+            ++counter;
+        }
+    }
+    return counter;
 }
 
 void Room::_insert(const WebSocketConnectionPtr &connection) {
@@ -291,17 +325,34 @@ void Room::_remove(const WebSocketConnectionPtr &connection) {
 
 void Room::_startingGame() {
     app().getLoop()->runAfter(3, [this]() {
-        setState(State::started);
+        _state = State::started;
         // TODO: Connect to transfer node
+        auto client = HttpClient::newHttpClient("http://" + app().getPlugin<AuthMaintainer>()->getReportAddress());
+        auto req = HttpRequest::newHttpRequest();
+        req->setPath("/tech/api/v2/allocator/transfer");
+        req->addHeader("x-credential", app().getPlugin<Authorizer>()->getCredential());
+        client->sendRequest(req, [this](ReqResult result, const HttpResponsePtr &responsePtr) {
+            if (result == ReqResult::Ok) {
+                Json::Value response;
+                string parseError = http::toJson(responsePtr, response);
+                if (!parseError.empty()) {
+                    LOG_WARN << "Invalid response body (" << responsePtr->getStatusCode() << "): \n"
+                             << parseError;
+                } else if (responsePtr->getStatusCode() != k200OK) {
+                    LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
+                             << serializer::json::stringify(response);
+                } else {
+                    Json::Value message;
+                    message["type"] = static_cast<int>(Type::server);
+                    message["action"] = static_cast<int>(Action::gameStart);
+                    message["data"] = response["data"];
+                    publish(serializer::json::stringify(message));
+                }
+            } else {
+                LOG_ERROR << "Request failed (" << static_cast<int>(result) << ")";
+            }
+        }, 5);
     });
-}
-
-void Room::_cancelStarting() {
-    app().getLoop()->invalidateTimer(_timerId);
-}
-
-void Room::_checkFinished() {
-
 }
 
 Room::~Room() {

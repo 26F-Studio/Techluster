@@ -38,10 +38,6 @@ namespace tech::structures {
 
         void setData(const Json::Value &list);
 
-        [[nodiscard]] State getState() const;
-
-        void setState(const State &state);
-
         void subscribe(const drogon::WebSocketConnectionPtr &connection);
 
         void unsubscribe(const drogon::WebSocketConnectionPtr &connection);
@@ -69,6 +65,10 @@ namespace tech::structures {
 
         void checkReady();
 
+        void cancelStarting();
+
+        void checkFinished();
+
         ~Room();
 
     private:
@@ -90,14 +90,12 @@ namespace tech::structures {
 
         [[nodiscard]] uint64_t _size() const;
 
+        [[nodiscard]] uint64_t _count() const;
+
         void _insert(const drogon::WebSocketConnectionPtr &connection);
 
         void _remove(const drogon::WebSocketConnectionPtr &connection);
 
         void _startingGame();
-
-        void _cancelStarting();
-
-        void _checkFinished();
     };
 }
