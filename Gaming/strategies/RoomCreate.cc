@@ -23,9 +23,10 @@ Result RoomCreate::fromJson(
 ) {
     if (!(
             request.isMember("data") && request["data"].isObject() &&
-            request["data"] && request["data"]["capacity"].isUInt64() &&
-            request["data"] && request["data"]["info"].isObject() &&
-            request["data"] && request["data"]["data"].isObject()
+            request["data"].isMember("capacity") && request["data"]["capacity"].isUInt64() &&
+            request["data"]["capacity"].asUInt64() > 0 &&
+            request["data"].isMember("info") && request["data"]["info"].isObject() &&
+            request["data"].isMember("data") && request["data"]["data"].isObject()
     )) {
         response["type"] = static_cast<int>(Type::failed);
         response["reason"] = "Invalid argument(s)";
