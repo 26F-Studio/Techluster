@@ -63,6 +63,15 @@ void NodeManager::updateNode(NodeServer &&nodeServer) {
     _updateTimer(nodePair->second);
 }
 
+Json::Value NodeManager::getAllNodes(const NodeServer::Type &type) const {
+    Json::Value result(Json::arrayValue);
+    shared_lock<shared_mutex> lock(_sharedMutex);
+    for (const auto&[_, nodeServer]: _allNodes.at(type)) {
+        result.append(nodeServer.getIpPort());
+    }
+    return result;
+}
+
 string NodeManager::getBestNode(const NodeServer::Type &type) const {
     //TODO: implement logics
     shared_lock<shared_mutex> lock(_sharedMutex);

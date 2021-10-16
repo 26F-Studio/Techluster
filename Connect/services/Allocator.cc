@@ -17,7 +17,7 @@ Json::Value Allocator::message(drogon::HttpStatusCode &code) {
     string host;
     if (_getNode(host, NodeServer::Type::message)) {
         response["type"] = "Success";
-        response["data"]["host"] = host;
+        response["data"] = host;
     } else {
         code = HttpStatusCode::k503ServiceUnavailable;
         response["type"] = "Failure";
@@ -31,7 +31,29 @@ Json::Value Allocator::gaming(drogon::HttpStatusCode &code) {
     string host;
     if (_getNode(host, NodeServer::Type::gaming)) {
         response["type"] = "Success";
-        response["data"]["host"] = host;
+        response["data"] = host;
+    } else {
+        code = HttpStatusCode::k503ServiceUnavailable;
+        response["type"] = "Failure";
+        response["reason"] = "No node server available now";
+    }
+    return response;
+}
+
+Json::Value Allocator::transfers(HttpStatusCode &code) {
+    Json::Value response;
+    response["type"] = "Success";
+    response["data"] = _nodeManager->getAllNodes(NodeServer::Type::transfer);
+    return response;
+}
+
+Json::Value Allocator::transfer(HttpStatusCode &code, const Json::Value &request) {
+    // TODO: Implement delay calculation
+    Json::Value response;
+    string host;
+    if (_getNode(host, NodeServer::Type::transfer)) {
+        response["type"] = "Success";
+        response["data"] = host;
     } else {
         code = HttpStatusCode::k503ServiceUnavailable;
         response["type"] = "Failure";
@@ -45,7 +67,7 @@ Json::Value Allocator::user(drogon::HttpStatusCode &code) {
     string host;
     if (_getNode(host, NodeServer::Type::user)) {
         response["type"] = "Success";
-        response["data"]["host"] = host;
+        response["data"] = host;
     } else {
         code = HttpStatusCode::k503ServiceUnavailable;
         response["type"] = "Failure";

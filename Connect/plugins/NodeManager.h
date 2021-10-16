@@ -26,6 +26,8 @@ namespace tech::plugins {
 
         std::string getBestNode(const structures::NodeServer::Type &type) const;
 
+        Json::Value getAllNodes(const structures::NodeServer::Type &type) const;
+
         Json::Value parseInfo() const;
 
         Json::Value parseInfo(const structures::NodeServer::Type &nodeType) const;
