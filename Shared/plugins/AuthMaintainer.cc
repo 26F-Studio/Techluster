@@ -45,6 +45,8 @@ void AuthMaintainer::initAndStart(const Json::Value &config) {
 
 void AuthMaintainer::shutdown() { LOG_INFO << "AuthMaintainer shutdown."; }
 
+string AuthMaintainer::getReportAddress() const { return _connectAddress.load().toIpPort(); }
+
 void AuthMaintainer::_updateAuthAddress() {
     auto client = HttpClient::newHttpClient("http://" + _connectAddress.load().toIpPort());
     auto req = HttpRequest::newHttpRequest();
@@ -61,7 +63,7 @@ void AuthMaintainer::_updateAuthAddress() {
                          << serializer::json::stringify(response);
             } else {
                 auto parts = drogon::utils::splitString(
-                        response["data"]["host"].asString(),
+                        response["data"].asString(),
                         ":"
                 );
                 if (parts.size() == 2) {

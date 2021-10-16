@@ -4,16 +4,17 @@
 
 #pragma once
 
+#include <drogon/HttpController.h>
 #include <drogon/plugins/Plugin.h>
 
 namespace tech::plugins {
     class AuthMaintainer : public drogon::Plugin<AuthMaintainer> {
     public:
-        AuthMaintainer() = default;
-
         void initAndStart(const Json::Value &config) override;
 
         void shutdown() override;
+
+        [[nodiscard]] std::string getReportAddress() const;
 
         drogon::HttpStatusCode checkAccessToken(const std::string &accessToken, int64_t &id);
 
