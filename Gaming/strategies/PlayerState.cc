@@ -36,14 +36,27 @@ Result PlayerState::fromJson(
     data["state"] = stateNumber;
 
     try {
-        player->setState(Player::toState(stateNumber));
+        auto state = Player::toState(stateNumber);
 
-        app().getPlugin<RoomManager>()->getSharedRoom(
-                player->getJoinedId()
-        ).room.publish(
+        player->setState(state);
+
+        auto sharedRoom = app().getPlugin<RoomManager>()->getSharedRoom(player->getJoinedId());
+        auto &room = sharedRoom.room;
+
+        room.publish(
                 _parseMessage(Type::other, move(data)),
                 player->userId()
         );
+
+        if (state == Player::State::ready) {
+            room.checkReady();
+        } else if (state == Player::State::finish ||
+                   state == Player::State::dead) {
+            room.checkFinished();
+        } else if (state == Player::State::standby) {
+            room.cancelStarting();
+        }
+
         response["type"] = static_cast<int>(Type::self);
         return Result::success;
     } catch (const exception &error) {
