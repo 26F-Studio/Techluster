@@ -55,6 +55,16 @@ void Player::setJoinedId(const string &joinedId) {
     _joinedId = joinedId;
 }
 
+Json::Value Player::getPingList() const {
+    shared_lock<shared_mutex> lock(_sharedMutex);
+    return _pingList;
+}
+
+void Player::setPingList(Json::Value &&pingList) {
+    unique_lock<shared_mutex> lock(_sharedMutex);
+    _pingList = move(pingList);
+}
+
 Json::Value Player::info() const {
     Json::Value result;
     result["userId"] = userId();

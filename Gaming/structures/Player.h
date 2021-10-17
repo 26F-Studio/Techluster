@@ -85,6 +85,10 @@ namespace tech::structures {
 
         void setJoinedId(const std::string &joinedId = "");
 
+        [[nodiscard]] Json::Value getPingList() const;
+
+        void setPingList(Json::Value &&pingList);
+
         [[nodiscard]] Json::Value info() const;
 
         void reset();
@@ -97,5 +101,6 @@ namespace tech::structures {
         std::atomic<Type> _type;
         std::atomic<State> _state;
         std::string _config, _joinedId;
+        Json::Value _pingList;
     };
 }
