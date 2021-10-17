@@ -71,7 +71,6 @@ void AuthMaintainer::_updateAuthAddress() {
                             parts[0],
                             stoi(parts[1])
                     );
-                    LOG_INFO << _authAddress.load().toIpPort();
                 } else {
                     // TODO: Send an email if failed too many times.
                     LOG_WARN << "No user node available right now!";
