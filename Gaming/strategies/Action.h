@@ -10,6 +10,8 @@ namespace tech::strategies {
     enum class Action {
         /// Room actions
         roomCreate = 0,
+        roomData,
+        roomInfo,
         roomJoin,
         roomKick,
         roomLeave,
@@ -19,6 +21,7 @@ namespace tech::strategies {
         /// Player actions
         playerConfig = 10,
         playerGroup,
+        playerPing,
         playerRole,
         playerState,
         playerType,
