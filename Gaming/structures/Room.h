@@ -17,6 +17,12 @@ namespace tech::structures {
             started,
         };
 
+        enum class EndCondition {
+            playingLeft = 0,
+            finishReach,
+            deadReach,
+        };
+
         explicit Room(
                 const std::string &password,
                 const uint64_t &capacity,
@@ -74,9 +80,10 @@ namespace tech::structures {
     private:
         mutable std::shared_mutex _sharedMutex;
         const std::string _roomId, _passwordHash;
-        std::atomic<uint64_t> _capacity, _timerId;
+        std::atomic<uint64_t> _capacity, _endCount, _timerId;
         Json::Value _info, _data;
         std::atomic<State> _state;
+        std::atomic<EndCondition> _endCondition;
         std::unordered_map<int64_t, drogon::WebSocketConnectionPtr> _connectionsMap;
         std::atomic<trantor::InetAddress> _transferNode;
 
@@ -97,5 +104,7 @@ namespace tech::structures {
         void _remove(const drogon::WebSocketConnectionPtr &connection);
 
         void _startingGame();
+
+        std::string _getTransferNode();
     };
 }

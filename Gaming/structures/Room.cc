@@ -17,6 +17,7 @@ using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::utils;
+using namespace trantor;
 
 Room::Room(
         const string &password,
@@ -29,6 +30,23 @@ Room::Room(
     _info(move(info)),
     _data(move(data)) {
     _state = State::pending;
+    _endCondition = EndCondition::playingLeft;
+    _endCount = 1;
+
+    if (_data.isMember("endCondition") && _data["endCondition"].isUInt()) {
+        switch (_data["endCondition"].asUInt()) {
+            case 1:
+                _endCondition = EndCondition::finishReach;
+                break;
+            case 2:
+                _endCondition = EndCondition::deadReach;
+                break;
+        }
+    }
+
+    if (_data.isMember("endCount") && _data["endCount"].isUInt64()) {
+        _endCount = _data["endCount"].asUInt64();
+    }
 }
 
 Room::Room(Room &&room) noexcept:
@@ -194,10 +212,10 @@ Json::Value Room::parse(const bool &inner) const {
     result["roomId"] = _roomId;
     result["capacity"] = _capacity.load();
     result["state"] = static_cast<int>(_state.load());
+    result["count"] = _count();
 
     shared_lock<shared_mutex> lock(_sharedMutex);
     result["info"] = _info;
-    result["count"] = _connectionsMap.size();
     if (inner) {
         result["data"] = _data;
         result["players"] = Json::arrayValue;
@@ -252,7 +270,7 @@ void Room::checkReady() {
     }
     for (const auto &[_, connection]: _connectionsMap) {
         const auto &player = connection->getContext<Player>();
-        if (player->getType() == Player::Type::gamer ||
+        if (player->getType() == Player::Type::gamer &&
             player->getState() == Player::State::standby) {
             return;
         }
@@ -269,12 +287,37 @@ void Room::checkReady() {
 
 void Room::cancelStarting() {
     app().getLoop()->invalidateTimer(_timerId);
-
     _state = State::pending;
 }
 
 void Room::checkFinished() {
+    shared_lock<shared_mutex> lock(_sharedMutex);
+    if (_state != State::started) {
+        return;
+    }
+    // TODO: Implement other finish conditions
+    for (const auto &[_, connection]: _connectionsMap) {
+        const auto &player = connection->getContext<Player>();
+        if (player->getType() == Player::Type::gamer &&
+            player->getState() == Player::State::playing) {
+            return;
+        }
+    }
+    _state = State::pending;
 
+    Json::Value message;
+    message["type"] = static_cast<int>(Type::server);
+    message["action"] = static_cast<int>(Action::gameEnd);
+    publish(serializer::json::stringify(message));
+}
+
+Room::~Room() {
+    cancelStarting();
+    for (const auto &[_, connection]: _connectionsMap) {
+        if (connection->connected() && connection->hasContext()) {
+            connection->getContext<Player>()->reset();
+        }
+    }
 }
 
 bool Room::_full() const {
@@ -324,41 +367,73 @@ void Room::_remove(const WebSocketConnectionPtr &connection) {
 }
 
 void Room::_startingGame() {
-    app().getLoop()->runAfter(3, [this]() {
+    _timerId = app().getLoop()->runAfter(3, [this]() {
         _state = State::started;
-        // TODO: Connect to transfer node
-        auto client = HttpClient::newHttpClient("http://" + app().getPlugin<AuthMaintainer>()->getReportAddress());
-        auto req = HttpRequest::newHttpRequest();
-        req->setPath("/tech/api/v2/allocator/transfer");
-        req->addHeader("x-credential", app().getPlugin<Authorizer>()->getCredential());
-        client->sendRequest(req, [this](ReqResult result, const HttpResponsePtr &responsePtr) {
-            if (result == ReqResult::Ok) {
-                Json::Value response;
-                string parseError = http::toJson(responsePtr, response);
-                if (!parseError.empty()) {
-                    LOG_WARN << "Invalid response body (" << responsePtr->getStatusCode() << "): \n"
-                             << parseError;
-                } else if (responsePtr->getStatusCode() != k200OK) {
-                    LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
-                             << serializer::json::stringify(response);
-                } else {
-                    Json::Value message;
-                    message["type"] = static_cast<int>(Type::server);
-                    message["action"] = static_cast<int>(Action::gameStart);
-                    message["data"] = response["data"];
-                    publish(serializer::json::stringify(message));
-                }
-            } else {
-                LOG_ERROR << "Request failed (" << static_cast<int>(result) << ")";
-            }
-        }, 5);
+        try {
+            Json::Value message;
+            message["type"] = static_cast<int>(Type::server);
+            message["action"] = static_cast<int>(Action::gameStart);
+            message["data"] = _getTransferNode();
+            publish(serializer::json::stringify(message));
+        } catch (const NetworkException &e) {
+            // TODO: Send an email if failed too many times.
+            LOG_ERROR << e.what();
+            // _startingGame();
+        }
     });
 }
 
-Room::~Room() {
-    for (const auto &[_, connection]: _connectionsMap) {
-        if (connection->connected() && connection->hasContext()) {
-            connection->getContext<Player>()->reset();
+string Room::_getTransferNode() {
+    Json::Value pingList(Json::arrayValue);
+    {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        for (const auto&[_, connection]: _connectionsMap) {
+            const auto &player = connection->getContext<Player>();
+            if (player->getType() == Player::Type::gamer) { // TODO: Determine if spectators should be count in
+                pingList.append(player->getPingList());
+            }
         }
+    }
+
+    auto client = HttpClient::newHttpClient(
+            "http://" + app().getPlugin<AuthMaintainer>()->getReportAddress()
+    );
+    auto req = HttpRequest::newHttpJsonRequest(pingList);
+    req->setMethod(Post);
+    req->setPath("/tech/api/v2/allocator/transfer");
+    req->addHeader("x-credential", app().getPlugin<Authorizer>()->getCredential());
+
+    auto[reqResult, responsePtr] = client->sendRequest(req, 5);
+    if (reqResult == ReqResult::Ok) {
+        Json::Value response;
+        string parseError = http::toJson(responsePtr, response);
+        if (!parseError.empty()) {
+            throw NetworkException(
+                    "Parsing failed(" +
+                    to_string(static_cast<int>(responsePtr->getStatusCode())) +
+                    "): " + parseError,
+                    ReqResult::BadResponse
+            );
+        } else if (responsePtr->getStatusCode() != k200OK) {
+            throw NetworkException(
+                    "Invalid response(" +
+                    to_string(static_cast<int>(responsePtr->getStatusCode())) +
+                    "): " + serializer::json::stringify(response),
+                    ReqResult::BadResponse
+            );
+        } else {
+            const auto &address = response["data"].asString();
+            auto parts = drogon::utils::splitString(address, ":");
+            if (parts.size() == 2) {
+                _transferNode = InetAddress(parts[0], stoi(parts[1]));
+                return address;
+            }
+            throw NetworkException(
+                    "Invalid address: " + address,
+                    ReqResult::BadResponse
+            );
+        }
+    } else {
+        throw NetworkException("Request failed", reqResult);
     }
 }
