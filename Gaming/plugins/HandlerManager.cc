@@ -6,10 +6,13 @@
 #include <strategies/Action.h>
 #include <strategies/PlayerConfig.h>
 #include <strategies/PlayerGroup.h>
+#include <strategies/PlayerPing.h>
 #include <strategies/PlayerRole.h>
 #include <strategies/PlayerState.h>
 #include <strategies/PlayerType.h>
 #include <strategies/RoomCreate.h>
+#include <strategies/RoomData.h>
+#include <strategies/RoomInfo.h>
 #include <strategies/RoomJoin.h>
 #include <strategies/RoomKick.h>
 #include <strategies/RoomLeave.h>
@@ -24,17 +27,21 @@ using namespace drogon;
 using namespace std;
 
 void HandlerManager::initAndStart(const Json::Value &config) {
-    _handlerFactory.registerHandler<PlayerConfig>(toUInt(Action::roomCreate));
-    _handlerFactory.registerHandler<PlayerGroup>(toUInt(Action::roomJoin));
-    _handlerFactory.registerHandler<PlayerRole>(toUInt(Action::roomKick));
-    _handlerFactory.registerHandler<PlayerState>(toUInt(Action::roomLeave));
-    _handlerFactory.registerHandler<PlayerType>(toUInt(Action::roomList));
-    _handlerFactory.registerHandler<RoomCreate>(toUInt(Action::roomRemove));
-    _handlerFactory.registerHandler<RoomJoin>(toUInt(Action::playerConfig));
-    _handlerFactory.registerHandler<RoomKick>(toUInt(Action::playerGroup));
-    _handlerFactory.registerHandler<RoomLeave>(toUInt(Action::playerRole));
-    _handlerFactory.registerHandler<RoomList>(toUInt(Action::playerState));
-    _handlerFactory.registerHandler<RoomRemove>(toUInt(Action::playerType));
+    _handlerFactory.registerHandler<PlayerConfig>(toUInt(Action::playerConfig));
+    _handlerFactory.registerHandler<PlayerGroup>(toUInt(Action::playerGroup));
+    _handlerFactory.registerHandler<PlayerPing>(toUInt(Action::playerPing));
+    _handlerFactory.registerHandler<PlayerRole>(toUInt(Action::playerRole));
+    _handlerFactory.registerHandler<PlayerState>(toUInt(Action::playerState));
+    _handlerFactory.registerHandler<PlayerType>(toUInt(Action::playerType));
+
+    _handlerFactory.registerHandler<RoomCreate>(toUInt(Action::roomCreate));
+    _handlerFactory.registerHandler<RoomData>(toUInt(Action::roomData));
+    _handlerFactory.registerHandler<RoomInfo>(toUInt(Action::roomInfo));
+    _handlerFactory.registerHandler<RoomJoin>(toUInt(Action::roomJoin));
+    _handlerFactory.registerHandler<RoomKick>(toUInt(Action::roomKick));
+    _handlerFactory.registerHandler<RoomLeave>(toUInt(Action::roomLeave));
+    _handlerFactory.registerHandler<RoomList>(toUInt(Action::roomList));
+    _handlerFactory.registerHandler<RoomRemove>(toUInt(Action::roomRemove));
 
     LOG_INFO << "HandlerManager loaded.";
 }
