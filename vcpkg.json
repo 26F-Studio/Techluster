@@ -9,14 +9,7 @@
     "documentation": "https://github.com/26F-Studio/Techmino-Docs",
     "license": "LGPL-3.0",
     "dependencies": [
-        "hiredis",
-        {
-            "name": "redis-plus-plus",
-            "default-features": false,
-            "features": [
-                "cxx17"
-            ]
-        },
+        "cpp-redis",
         {
             "name": "drogon",
             "default-features": false,

@@ -6,24 +6,38 @@
 
 #include <drogon/drogon.h>
 #include <structures/RedisToken.h>
-#include <sw/redis++/redis++.h>
+#include <cpp_redis/cpp_redis>
 
 namespace tech::structures {
     class RedisHelper : public trantor::NonCopyable {
     private:
         struct Expiration {
-            int64_t refresh, access, email;
-        };
-    public:
-        explicit RedisHelper(
-                const sw::redis::ConnectionOptions &options,
-                Expiration expiration
-        );
+            [[nodiscard]] int getRefreshSeconds() const {
+                return static_cast<int>(refresh.count());
+            }
 
-        explicit RedisHelper(
-                const sw::redis::ConnectionOptions &options,
-                sw::redis::ConnectionPoolOptions poolOptions,
-                Expiration expiration
+            [[nodiscard]] int getAccessSeconds() const {
+                return static_cast<int>(access.count());
+            }
+
+            [[nodiscard]] int getEmailSeconds() const {
+                return static_cast<int>(email.count());
+            }
+
+            std::chrono::seconds refresh{}, access{}, email{};
+        };
+
+    public:
+        explicit RedisHelper(Expiration expiration);
+
+        RedisHelper(RedisHelper &&helper) noexcept;
+
+        void connect(
+                const std::string &host = "127.0.0.1",
+                const size_t &port = 6379,
+                const uint32_t &timeout = 0,
+                const int32_t &retries = 0,
+                const uint32_t &interval = 0
         );
 
         RedisToken refresh(const std::string &refreshToken);
@@ -52,10 +66,11 @@ namespace tech::structures {
                 const uint64_t &maxCount
         );
 
+
     private:
         const Expiration _expiration;
 
-        sw::redis::Redis _redisClient;
+        cpp_redis::client _redisClient;
 
         void _compare(
                 const std::string &key,
@@ -64,10 +79,16 @@ namespace tech::structures {
 
         void _expire(
                 const std::string &key,
-                const std::chrono::duration<uint64_t> &ttl
+                const std::chrono::seconds &ttl
         );
 
         std::string _get(const std::string &key);
+
+        void _setEx(
+                const std::string &key,
+                const int &ttl,
+                const std::string &value
+        );
 
         void _extendRefreshToken(const std::string &refreshToken);
 

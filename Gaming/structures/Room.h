@@ -20,7 +20,6 @@ namespace tech::structures {
         enum class EndCondition {
             playingLeft = 0,
             finishReach,
-            deadReach,
         };
 
         explicit Room(

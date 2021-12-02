@@ -10,7 +10,6 @@
 using namespace drogon;
 using namespace drogon_model;
 using namespace std;
-using namespace sw::redis;
 using namespace tech::plugins;
 using namespace tech::structures;
 using namespace tech::utils;
@@ -44,61 +43,28 @@ void DataManager::initAndStart(const Json::Value &config) {
         LOG_ERROR << R"("Invalid expirations config")";
         abort();
     }
+    _redisHelper = make_unique<RedisHelper>(move(RedisHelper(
+            {
+                    chrono::minutes(config["expirations"]["refresh"].asInt64()),
+                    chrono::minutes(config["expirations"]["access"].asInt64()),
+                    chrono::minutes(config["expirations"]["email"].asInt64())
+            }
+    )));
 
     if (!(
             config.isMember("redis") && config["redis"].isObject() &&
             config["redis"].isMember("host") && config["redis"]["host"].isString() &&
             config["redis"].isMember("port") && config["redis"]["port"].isInt() &&
-            config["redis"].isMember("password") && config["redis"]["password"].isString() &&
-            config["redis"].isMember("db") && config["redis"]["db"].isInt() &&
-            config["redis"].isMember("connections") && config["redis"]["connections"].isUInt() &&
             config["redis"].isMember("timeout") && config["redis"]["timeout"].isUInt64()
     )) {
         LOG_ERROR << R"("Invalid redis config")";
         abort();
     }
-    ConnectionOptions options;
-    options.host = config["redis"]["host"].asString();
-    options.port = config["redis"]["port"].asInt();
-    options.password = config["redis"]["password"].asString();
-    options.db = config["redis"]["db"].asInt();
-    options.socket_timeout = chrono::milliseconds(config["redis"]["timeout"].asUInt64());
-
-    if (config["redis"]["connections"].asUInt() == 0) {
-        ConnectionPoolOptions poolOptions;
-        poolOptions.size = thread::hardware_concurrency();
-        poolOptions.wait_timeout = chrono::milliseconds(config["redis"]["timeout"].asUInt64());
-        _redisHelper = make_unique<RedisHelper>(move(RedisHelper(
-                options,
-                poolOptions,
-                {
-                        config["expirations"]["refresh"].asInt64(),
-                        config["expirations"]["access"].asInt64(),
-                        config["expirations"]["email"].asInt64()
-                }
-        )));
-    } else if (config["redis"]["connections"].asUInt() > 1) {
-        ConnectionPoolOptions poolOptions;
-        poolOptions.size = config["redis"]["connections"].asUInt();
-        _redisHelper = make_unique<RedisHelper>(move(RedisHelper(
-                options,
-                poolOptions,
-                {
-                        config["expirations"]["refresh"].asInt64(),
-                        config["expirations"]["access"].asInt64(),
-                        config["expirations"]["email"].asInt64()
-                }
-        )));
-    } else {
-        _redisHelper = make_unique<RedisHelper>(move(RedisHelper(
-                options,
-                {
-                        config["expirations"]["refresh"].asInt64(),
-                        config["expirations"]["access"].asInt64(),
-                        config["expirations"]["email"].asInt64()
-                }
-        )));
-    }
+    _redisHelper->connect(
+            config["redis"]["host"].asString(),
+            config["redis"]["port"].asUInt(),
+            config["redis"]["timeout"].asUInt()
+    );
 
     _pgClient = app().getDbClient();
     _dataMapper = make_unique<

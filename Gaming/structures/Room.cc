@@ -38,8 +38,8 @@ Room::Room(
             case 1:
                 _endCondition = EndCondition::finishReach;
                 break;
-            case 2:
-                _endCondition = EndCondition::deadReach;
+            default:
+                _endCondition = EndCondition::playingLeft;
                 break;
         }
     }

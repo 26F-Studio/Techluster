@@ -9,22 +9,34 @@
 
 using namespace drogon;
 using namespace std;
-using namespace sw::redis;
+using namespace cpp_redis;
 using namespace tech::structures;
 using namespace tech::utils;
 
-RedisHelper::RedisHelper(
-        const ConnectionOptions &options,
-        Expiration expiration
-) : _redisClient(options),
-    _expiration(expiration) {}
+RedisHelper::RedisHelper(Expiration expiration) : _expiration(expiration) {}
 
-RedisHelper::RedisHelper(
-        const ConnectionOptions &options,
-        ConnectionPoolOptions poolOptions,
-        Expiration expiration
-) : _redisClient(options, poolOptions),
-    _expiration(expiration) {}
+RedisHelper::RedisHelper(RedisHelper &&helper) noexcept: _expiration(helper._expiration) {}
+
+void RedisHelper::connect(
+        const string &host,
+        const size_t &port,
+        const uint32_t &timeout,
+        const int32_t &retries,
+        const uint32_t &interval
+) {
+    _redisClient.connect(
+            host,
+            port,
+            [](const string &host, size_t port, client::connect_state status) {
+                if (status == client::connect_state::dropped) {
+                    LOG_ERROR << "client disconnected from " << host << ":" << port;
+                }
+            },
+            timeout,
+            retries,
+            interval
+    );
+}
 
 RedisToken RedisHelper::refresh(const string &refreshToken) {
     _extendRefreshToken(refreshToken);
@@ -55,18 +67,20 @@ void RedisHelper::checkEmailCode(
 }
 
 void RedisHelper::deleteEmailCode(const string &email) {
-    _redisClient.del("player:code:email_" + email);
+    _redisClient.del({"player:code:email_" + email});
+    _redisClient.sync_commit();
 }
 
 void RedisHelper::setEmailCode(
         const string &email,
         const string &code
 ) {
-    _redisClient.set(
+    _redisClient.setex(
             "player:code:email_" + email,
-            code,
-            chrono::minutes(_expiration.email)
+            _expiration.getEmailSeconds(),
+            code
     );
+    _redisClient.sync_commit();
 }
 
 int64_t RedisHelper::getUserId(const string &accessToken) {
@@ -122,7 +136,7 @@ bool RedisHelper::tokenBucket(
 
         if (generatedCount >= 1) {
             setDate(datetime::toString(nowMicroseconds));
-            _redisClient.incrby("tokenBucketCount:" + key, generatedCount - 1);
+            _redisClient.incrby("tokenBucketCount:" + key, static_cast<int>(generatedCount) - 1);
             hasToken = true;
         } else {
             hasToken = checkCount(countValue);
@@ -148,49 +162,64 @@ void RedisHelper::_compare(
 
 void RedisHelper::_expire(
         const string &key,
-        const chrono::duration <uint64_t> &ttl
+        const chrono::seconds &ttl
 ) {
-    if (!_redisClient.expire(key, ttl)) {
+    auto result = _redisClient.expire(key, static_cast<int>(ttl.count()));
+    _redisClient.sync_commit();
+    if (result.get().is_error()) {
         throw redis_exception::KeyNotFound("Key = " + key);
     }
 }
 
 string RedisHelper::_get(const string &key) {
     auto result = _redisClient.get(key);
-    if (!result) {
+    _redisClient.sync_commit();
+    if (result.get().is_error()) {
         throw redis_exception::KeyNotFound("Key = " + key);
     }
-    return result.value();
+    return result.get().as_string();
+}
+
+void RedisHelper::_setEx(
+        const string &key,
+        const int &ttl,
+        const string &value
+) {
+    auto result = _redisClient.setex(key, ttl, value);
+    _redisClient.sync_commit();
+    if (result.get().is_error()) {
+        throw redis_exception::KeyNotFound("Key = " + key);
+    }
 }
 
 void RedisHelper::_extendRefreshToken(const string &refreshToken) {
     _expire(
             "player:refresh:" + refreshToken,
-            chrono::minutes(_expiration.refresh)
+            _expiration.refresh
     );
 }
 
 string RedisHelper::_generateRefreshToken(const string &userId) {
     auto refreshToken = crypto::keccak(drogon::utils::getUuid());
-    _redisClient.set(
+    _setEx(
             "player:refresh:" + refreshToken,
-            userId,
-            chrono::minutes(_expiration.refresh)
+            _expiration.getRefreshSeconds(),
+            userId
     );
     return refreshToken;
 }
 
 string RedisHelper::_generateAccessToken(const string &userId) {
     auto accessToken = crypto::blake2B(drogon::utils::getUuid());
-    _redisClient.set(
+    _setEx(
             "player:access:" + userId,
-            accessToken,
-            chrono::minutes(_expiration.access)
+            _expiration.getAccessSeconds(),
+            accessToken
     );
-    _redisClient.set(
+    _setEx(
             "player:id:" + accessToken,
-            userId,
-            chrono::minutes(_expiration.access)
+            _expiration.getAccessSeconds(),
+            userId
     );
     return accessToken;
 }

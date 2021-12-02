@@ -1,3 +1,7 @@
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 project(User CXX)
 
 # locate mailio
@@ -36,8 +40,8 @@ aux_source_directory(utils UTIL_SRC)
 target_link_libraries(${PROJECT_NAME} PRIVATE
         ${MAILIO_LIB}
         Drogon::Drogon
-        hiredis::hiredis
-        redis++::redis++
+        ${CPPREDIS_LIB}
+        ${TACOPIE_LIB}
         Shared::Shared)
 
 drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
