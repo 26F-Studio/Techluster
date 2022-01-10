@@ -90,6 +90,8 @@ namespace tech::structures {
                 const std::string &value
         );
 
+        // TODO: Add more wrappers for basic redis commands
+
         void _extendRefreshToken(const std::string &refreshToken);
 
         std::string _generateRefreshToken(const std::string &userId);

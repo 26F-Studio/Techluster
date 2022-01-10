@@ -67,12 +67,10 @@ void DataManager::initAndStart(const Json::Value &config) {
     );
 
     _pgClient = app().getDbClient();
-    _dataMapper = make_unique<
-            Mapper<Techluster::Data>
-    >(app().getDbClient());
-    _playerMapper = make_unique<
-            Mapper<Techluster::Player>
-    >(app().getDbClient());
+    _dataMapper = make_unique<Mapper < Techluster::Data>>
+    (app().getDbClient());
+    _playerMapper = make_unique<Mapper < Techluster::Player>>
+    (app().getDbClient());
 
     LOG_INFO << "DataManager loaded.";
 }
