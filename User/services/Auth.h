@@ -6,6 +6,7 @@
 
 #include <plugins/Configurator.h>
 #include <plugins/DataManager.h>
+#include <plugins/EmailHelper.h>
 #include <utils/http.h>
 
 namespace tech::services {
@@ -34,6 +35,7 @@ namespace tech::services {
     private:
         tech::plugins::Configurator *_configurator;
         tech::plugins::DataManager *_dataManager;
+        tech::plugins::EmailHelper *_emailHelper;
 
         static std::string _getFileContent(std::string_view path);
     };

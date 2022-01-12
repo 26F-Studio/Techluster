@@ -6,7 +6,7 @@
 #include <mailio/smtp.hpp>
 #include <services/Auth.h>
 #include <structures/Exceptions.h>
-#include <utils/crypto.h>
+#include <utils/io.h>
 
 using namespace drogon;
 using namespace mailio;
@@ -17,7 +17,8 @@ using namespace tech::structures;
 using namespace tech::utils;
 
 Auth::Auth() : _configurator(app().getPlugin<Configurator>()),
-               _dataManager(app().getPlugin<DataManager>()) {}
+               _dataManager(app().getPlugin<DataManager>()),
+               _emailHelper(app().getPlugin<EmailHelper>()) {}
 
 Json::Value Auth::check(HttpStatusCode &code, const string &accessToken) {
     Json::Value response;
@@ -61,30 +62,18 @@ Json::Value Auth::verifyEmail(HttpStatusCode &code, const Json::Value &data) {
     Json::Value response;
     auto email = data["email"].asString();
     auto verifyCode = _dataManager->verifyEmail(email);
-    auto mailContent = _getFileContent("./verifyEmail.html");
+    auto mailContent = io::getFileContent("./verifyEmail.html");
     drogon::utils::replaceAll(
             mailContent,
             "{{VERIFY_CODE}}",
             verifyCode
     );
-    message msg;
     try {
-        msg.header_codec(message::header_codec_t::BASE64);
-        msg.from(mail_address(
-                _configurator->getEmailName(),
-                _configurator->getEmailAddress()
-        ));
-        msg.add_recipient(mail_address(
-                "email_" + crypto::blake2B(email, 4),
-                email
-        ));
-        msg.subject("[Techmino] Verify Code");
-        msg.content_transfer_encoding(mime::content_transfer_encoding_t::QUOTED_PRINTABLE);
-        msg.content_type(message::media_type_t::TEXT, "html", "utf-8");
-        msg.content(mailContent);
-        smtps conn(_configurator->getEmailHost(), _configurator->getEmailPort());
-        conn.authenticate(_configurator->getEmailUsername(), _configurator->getEmailPassword(), smtps::auth_method_t::START_TLS);
-        conn.submit(msg);
+        _emailHelper->smtp(
+                email,
+                "[Techmino] Verify Code",
+                mailContent
+        );
         response["type"] = "Success";
     } catch (smtp_error &e) {
         code = k503ServiceUnavailable;
@@ -202,18 +191,4 @@ Json::Value Auth::migrateEmail(HttpStatusCode &code, const Json::Value &data) {
         response["reason"] = e.what();
     }
     return response;
-}
-
-string Auth::_getFileContent(string_view path) {
-    constexpr auto readSize = size_t{4096};
-    auto stream = ifstream{path.data()};
-    stream.exceptions(ios_base::badbit);
-
-    auto out = string{};
-    auto buf = string(readSize, '\0');
-    while (stream.read(&buf[0], readSize)) {
-        out.append(buf, 0, stream.gcount());
-    }
-    out.append(buf, 0, stream.gcount());
-    return out;
 }
