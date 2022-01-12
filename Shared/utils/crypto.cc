@@ -8,7 +8,6 @@
 #include <cryptopp/keccak.h>
 #include <cryptopp/osrng.h>
 #include <cryptopp/panama.h>
-#include <sstream>
 #include <utils/crypto.h>
 
 using namespace tech::utils;
