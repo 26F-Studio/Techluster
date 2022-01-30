@@ -3,6 +3,7 @@
 //
 
 #include <drogon/drogon.h>
+#include <structures/Exceptions.h>
 #include <plugins/DataManager.h>
 #include <utils/crypto.h>
 #include <utils/serializer.h>
@@ -60,22 +61,30 @@ void DataManager::initAndStart(const Json::Value &config) {
         LOG_ERROR << R"("Invalid redis config")";
         abort();
     }
-    _redisHelper->connect(
-            config["redis"]["host"].asString(),
-            config["redis"]["port"].asUInt(),
-            config["redis"]["timeout"].asUInt()
-    );
+    try {
+        _redisHelper->connect(
+                config["redis"]["host"].asString(),
+                config["redis"]["port"].asUInt(),
+                config["redis"]["timeout"].asUInt()
+        );
+    } catch (const cpp_redis::redis_error &e) {
+        LOG_ERROR << e.what();
+        abort();
+    }
 
     _pgClient = app().getDbClient();
-    _dataMapper = make_unique<Mapper < Techluster::Data>>
-    (app().getDbClient());
-    _playerMapper = make_unique<Mapper < Techluster::Player>>
-    (app().getDbClient());
+    _dataMapper = make_unique < orm::Mapper < techluster::Data >>
+                                                               (app().getDbClient());
+    _playerMapper = make_unique < orm::Mapper < techluster::Player >>
+                                                                   (app().getDbClient());
 
     LOG_INFO << "DataManager loaded.";
 }
 
-void DataManager::shutdown() { LOG_INFO << "DataManager shutdown."; }
+void DataManager::shutdown() {
+    _redisHelper->disconnect();
+    LOG_INFO << "DataManager shutdown.";
+}
 
 int64_t DataManager::getUserId(const string &accessToken) {
     return _redisHelper->getUserId(accessToken);
@@ -99,20 +108,18 @@ std::string DataManager::verifyEmail(const string &email) {
 
 RedisToken DataManager::loginEmailCode(const string &email, const string &code) {
     _redisHelper->checkEmailCode(email, code);
-    if (_playerMapper->count(Criteria(
-            Techluster::Player::Cols::_email,
-            CompareOperator::EQ,
+    if (_playerMapper->count(orm::Criteria(
+            techluster::Player::Cols::_email,
+            orm::CompareOperator::EQ,
             email
     )) == 0) {
-        Techluster::Player newPlayer;
+        techluster::Player newPlayer;
         newPlayer.setEmail(email);
-        newPlayer.setPassword("Undefined");
-        newPlayer.setUsername("email_" + email);
         _playerMapper->insert(newPlayer);
     }
-    auto player = _playerMapper->findOne(Criteria(
-            Techluster::Player::Cols::_email,
-            CompareOperator::EQ,
+    auto player = _playerMapper->findOne(orm::Criteria(
+            techluster::Player::Cols::_email,
+            orm::CompareOperator::EQ,
             email
     ));
     _redisHelper->deleteEmailCode(email);
@@ -125,18 +132,21 @@ RedisToken DataManager::loginEmailPassword(
         const string &email,
         const string &password
 ) {
-    auto matchedUsers = _pgClient->execSqlSync(
-            "select * from player "
-            "where email = $1 "
-            "and crypt($2, password) = password",
-            email, password
-    );
-    if (matchedUsers.empty()) {
-        throw range_error("No users found");
-    }
-    return move(_redisHelper->generateTokens(
-            to_string(matchedUsers[0]["id"].as<int32_t>())
+    auto player = _playerMapper->findOne(orm::Criteria(
+            techluster::Player::Cols::_email,
+            orm::CompareOperator::EQ,
+            email
+    ) || orm::Criteria(
+            techluster::Player::Cols::_password,
+            orm::CompareOperator::EQ,
+            password
     ));
+
+
+    if (player.getValueOfPassword().empty()) {
+        throw sql_exception::EmptyValue("password is empty");
+    }
+    return _redisHelper->generateTokens(to_string(player.getValueOfId()));
 }
 
 void DataManager::resetEmail(
@@ -145,9 +155,9 @@ void DataManager::resetEmail(
         const string &newPassword
 ) {
     _redisHelper->checkEmailCode(email, code);
-    if (_playerMapper->count(Criteria(
-            Techluster::Player::Cols::_email,
-            CompareOperator::EQ,
+    if (_playerMapper->count(orm::Criteria(
+            techluster::Player::Cols::_email,
+            orm::CompareOperator::EQ,
             email
     )) == 0) {
         throw out_of_range("No user found");
@@ -167,9 +177,9 @@ void DataManager::migrateEmail(
         const string &newEmail,
         const string &code
 ) {
-    auto player = _playerMapper->findOne(Criteria(
-            Techluster::Player::Cols::_email,
-            CompareOperator::EQ,
+    auto player = _playerMapper->findOne(orm::Criteria(
+            techluster::Player::Cols::_email,
+            orm::CompareOperator::EQ,
             _redisHelper->getUserId(accessToken)
     ));
     _redisHelper->checkEmailCode(newEmail, code);
@@ -188,9 +198,9 @@ Json::Value DataManager::getUserInfo(
     } else {
         _redisHelper->checkAccessToken(accessToken);
     }
-    auto player = _playerMapper->findOne(Criteria(
-            Techluster::Player::Cols::_id,
-            CompareOperator::EQ,
+    auto player = _playerMapper->findOne(orm::Criteria(
+            techluster::Player::Cols::_id,
+            orm::CompareOperator::EQ,
             id
     ));
     Json::Value result;
@@ -208,9 +218,9 @@ void DataManager::updateUserInfo(
         const string &accessToken,
         const Json::Value &info
 ) {
-    auto player = _playerMapper->findOne(Criteria(
-            Techluster::Player::Cols::_id,
-            CompareOperator::EQ,
+    auto player = _playerMapper->findOne(orm::Criteria(
+            techluster::Player::Cols::_id,
+            orm::CompareOperator::EQ,
             _redisHelper->getUserId(accessToken)
     ));
     bool updated = false;
@@ -268,9 +278,9 @@ string DataManager::getUserAvatar(
         _redisHelper->checkAccessToken(accessToken);
     }
 
-    auto player = _playerMapper->findOne(Criteria(
-            Techluster::Player::Cols::_id,
-            CompareOperator::EQ,
+    auto player = _playerMapper->findOne(orm::Criteria(
+            techluster::Player::Cols::_id,
+            orm::CompareOperator::EQ,
             id
     ));
     return player.getValueOfAvatar();
@@ -288,9 +298,9 @@ Json::Value DataManager::getUserData(
     } else {
         _redisHelper->checkAccessToken(accessToken);
     }
-    auto data = _dataMapper->findOne(Criteria(
-            Techluster::Player::Cols::_id,
-            CompareOperator::EQ,
+    auto data = _dataMapper->findOne(orm::Criteria(
+            techluster::Player::Cols::_id,
+            orm::CompareOperator::EQ,
             id
     ));
     string rawString;
@@ -334,9 +344,9 @@ void DataManager::updateUserData(
     } else {
         _redisHelper->checkAccessToken(accessToken);
     }
-    auto data = _dataMapper->findOne(Criteria(
-            Techluster::Player::Cols::_id,
-            CompareOperator::EQ,
+    auto data = _dataMapper->findOne(orm::Criteria(
+            techluster::Player::Cols::_id,
+            orm::CompareOperator::EQ,
             id
     ));
     string rawString;

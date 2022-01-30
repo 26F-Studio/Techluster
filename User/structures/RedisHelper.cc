@@ -36,6 +36,14 @@ void RedisHelper::connect(
             retries,
             interval
     );
+    LOG_INFO << "Redis connected.";
+}
+
+void RedisHelper::disconnect() {
+    if (_redisClient.is_connected()) {
+        _redisClient.disconnect();
+        LOG_INFO << "Redis disconnected.";
+    }
 }
 
 RedisToken RedisHelper::refresh(const string &refreshToken) {
@@ -164,20 +172,22 @@ void RedisHelper::_expire(
         const string &key,
         const chrono::seconds &ttl
 ) {
-    auto result = _redisClient.expire(key, static_cast<int>(ttl.count()));
+    auto future = _redisClient.expire(key, static_cast<int>(ttl.count()));
     _redisClient.sync_commit();
-    if (result.get().is_error()) {
+    auto reply = future.get();
+    if (reply.is_error()) {
         throw redis_exception::KeyNotFound("Key = " + key);
     }
 }
 
 string RedisHelper::_get(const string &key) {
-    auto result = _redisClient.get(key);
+    auto future = _redisClient.get(key);
     _redisClient.sync_commit();
-    if (result.get().is_error()) {
+    auto reply = future.get();
+    if (reply.is_error()) {
         throw redis_exception::KeyNotFound("Key = " + key);
     }
-    return result.get().as_string();
+    return reply.as_string();
 }
 
 void RedisHelper::_setEx(
@@ -185,11 +195,13 @@ void RedisHelper::_setEx(
         const int &ttl,
         const string &value
 ) {
-    auto result = _redisClient.setex(key, ttl, value);
+    auto future = _redisClient.setex(key, ttl, value);
     _redisClient.sync_commit();
-    if (result.get().is_error()) {
+    auto reply = future.get();
+    if (reply.is_error()) {
         throw redis_exception::KeyNotFound("Key = " + key);
     }
+
 }
 
 void RedisHelper::_extendRefreshToken(const string &refreshToken) {

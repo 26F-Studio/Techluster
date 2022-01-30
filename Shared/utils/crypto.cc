@@ -9,6 +9,7 @@
 #include <cryptopp/osrng.h>
 #include <cryptopp/panama.h>
 #include <utils/crypto.h>
+#include <sstream>
 
 using namespace tech::utils;
 using namespace CryptoPP;

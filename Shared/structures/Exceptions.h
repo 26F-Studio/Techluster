@@ -48,6 +48,18 @@ namespace tech::structures {
         return static_cast<int>(prefix) + static_cast<int>(result);
     }
 
+    namespace sql_exception {
+        class EmptyValue : public internal::BaseException {
+        public:
+            explicit EmptyValue(std::string message);
+        };
+
+        class NotEqual : public internal::BaseException {
+        public:
+            explicit NotEqual(std::string message);
+        };
+    }
+
     namespace redis_exception {
         class KeyNotFound : public internal::BaseException {
         public:

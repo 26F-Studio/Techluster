@@ -7,6 +7,7 @@
 #include <services/Auth.h>
 #include <structures/Exceptions.h>
 #include <utils/io.h>
+#include <string>
 
 using namespace drogon;
 using namespace mailio;
@@ -71,7 +72,7 @@ Json::Value Auth::verifyEmail(HttpStatusCode &code, const Json::Value &data) {
     try {
         _emailHelper->smtp(
                 email,
-                "[Techmino] Verify Code",
+                "[Techmino] 验证码 Verify Code",
                 mailContent
         );
         response["type"] = "Success";
@@ -116,9 +117,15 @@ Json::Value Auth::loginMail(HttpStatusCode &code, const Json::Value &data) {
             response["reason"] = "Invalid parameters";
         }
     } catch (const redis_exception::KeyNotFound &e) {
+        LOG_DEBUG << e.what();
         code = k403Forbidden;
         response["type"] = "Failed";
         response["reason"] = "Invalid verify code";
+    } catch (const sql_exception::EmptyValue &e) {
+        LOG_DEBUG << e.what();
+        code = k403Forbidden;
+        response["type"] = "Failed";
+        response["reason"] = "You must set a password first.";
     } catch (const orm::DrogonDbException &e) {
         LOG_ERROR << e.base().what();
         code = k500InternalServerError;

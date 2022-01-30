@@ -91,9 +91,9 @@ namespace tech::plugins {
         uint64_t _ipMaxCount{}, _emailMaxCount{};
 
         drogon::orm::DbClientPtr _pgClient;
-        std::unique_ptr<tech::structures::RedisHelper> _redisHelper;
-        std::unique_ptr<drogon::orm::Mapper<drogon_model::Techluster::Data>> _dataMapper;
-        std::unique_ptr<drogon::orm::Mapper<drogon_model::Techluster::Player>> _playerMapper;
+        std::unique_ptr <tech::structures::RedisHelper> _redisHelper;
+        std::unique_ptr <drogon::orm::Mapper<drogon_model::techluster::Data>> _dataMapper;
+        std::unique_ptr <drogon::orm::Mapper<drogon_model::techluster::Player>> _playerMapper;
     };
 }
 

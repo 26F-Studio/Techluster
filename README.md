@@ -29,9 +29,9 @@ The new distributed backends for [Techmino](https://github.com/26F-Studio/Techmi
 
 #### In progress
 
-* [X]  Allocate various server nodes
-* [X]  Monitor server nodes and decide which one to be allocated
-* [X]  Authenticate new server nodes
+-[X] Allocate various server nodes
+-[X] Monitor server nodes and decide which one to be allocated
+-[X] Authenticate new server nodes
 
 #### Finished
 
@@ -93,14 +93,14 @@ The new distributed backends for [Techmino](https://github.com/26F-Studio/Techmi
 
 #### In progress
 
-* [ ]  Check if the access token is valid
-* [ ]  Refresh access token and refresh token (if necessary)
-* [ ]  Send verification code through email to newly registered user
-* [ ]  Login with verification code or password
-* [ ]  Reset password with verification code
-* [ ]  Change email with access token and verification code
-* [ ]  Get/Update user info and avatar
-* [ ]  Get/Update user data
+-[ ] Check if the access token is valid
+-[ ] Refresh access token and refresh token (if necessary)
+-[ ] Send verification code through email to newly registered user
+-[ ] Login with verification code or password
+-[ ] Reset password with verification code
+-[ ] Change email with access token and verification code
+-[ ] Get/Update user info and avatar
+-[ ] Get/Update user data
 
 #### Finished
 

@@ -30,7 +30,9 @@ namespace tech::structures {
     public:
         explicit RedisHelper(Expiration expiration);
 
-        RedisHelper(RedisHelper &&helper) noexcept;
+        RedisHelper(RedisHelper &&helper)
+
+        noexcept;
 
         void connect(
                 const std::string &host = "127.0.0.1",
@@ -39,6 +41,8 @@ namespace tech::structures {
                 const int32_t &retries = 0,
                 const uint32_t &interval = 0
         );
+
+        void disconnect();
 
         RedisToken refresh(const std::string &refreshToken);
 

@@ -18,7 +18,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     message(STATUS "Compiler is Intel C++")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     message(STATUS "Compiler is Visual Studio C++")
-    add_compile_options(/MP)
+    add_compile_options(/MP /source-charset:utf-8 /execution-charset:utf-8)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS NOMINMAX)
 endif ()
 
