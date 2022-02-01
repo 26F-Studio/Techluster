@@ -5,6 +5,7 @@
 #include <plugins/AuthMaintainer.h>
 #include <plugins/Authorizer.h>
 #include <strategies/Action.h>
+#include <structures/JsonHelper.h>
 #include <structures/MessageHandler.h>
 #include <structures/Player.h>
 #include <structures/Room.h>
@@ -156,7 +157,7 @@ void Room::subscribe(const WebSocketConnectionPtr &connection) {
     response["type"] = static_cast<int>(Type::self);
     response["action"] = static_cast<int>(Action::roomJoin);
     response["data"] = parse(true);
-    connection->send(serializer::json::stringify(response));
+    connection->send(JsonHelper(response).stringify());
 
     if (_size() > 1) {
         Json::Value message;
@@ -164,7 +165,7 @@ void Room::subscribe(const WebSocketConnectionPtr &connection) {
         message["action"] = static_cast<int>(Action::roomJoin);
         message["data"] = player->info();
         publish(
-                move(serializer::json::stringify(message)),
+                move(JsonHelper(message).stringify()),
                 player->userId()
         );
     }
@@ -184,7 +185,7 @@ void Room::unsubscribe(const WebSocketConnectionPtr &connection) {
         message["type"] = static_cast<int>(Type::other);
         message["action"] = static_cast<int>(Action::roomLeave);
         message["data"] = player->userId();
-        publish(move(serializer::json::stringify(message)));
+        publish(move(JsonHelper(message).stringify()));
     }
 }
 
@@ -280,7 +281,7 @@ void Room::checkReady() {
     Json::Value message;
     message["type"] = static_cast<int>(Type::server);
     message["action"] = static_cast<int>(Action::gameReady);
-    publish(serializer::json::stringify(message));
+    publish(JsonHelper(message).stringify());
 
     _startingGame();
 }
@@ -308,7 +309,7 @@ void Room::checkFinished() {
     Json::Value message;
     message["type"] = static_cast<int>(Type::server);
     message["action"] = static_cast<int>(Action::gameEnd);
-    publish(serializer::json::stringify(message));
+    publish(JsonHelper(message).stringify());
 }
 
 Room::~Room() {
@@ -374,7 +375,7 @@ void Room::_startingGame() {
             message["type"] = static_cast<int>(Type::server);
             message["action"] = static_cast<int>(Action::gameStart);
             message["data"] = _getTransferNode();
-            publish(serializer::json::stringify(message));
+            publish(JsonHelper(message).stringify());
         } catch (const NetworkException &e) {
             // TODO: Send an email if failed too many times.
             LOG_ERROR << e.what();
@@ -400,7 +401,7 @@ string Room::_getTransferNode() {
     );
     auto req = HttpRequest::newHttpJsonRequest(pingList);
     req->setMethod(Post);
-    req->setPath("/tech/api/v2/allocator/transfer");
+    req->setPath("/tech/api/v2/allocator/latency");
     req->addHeader("x-credential", app().getPlugin<Authorizer>()->getCredential());
 
     auto[reqResult, responsePtr] = client->sendRequest(req, 5);
@@ -418,7 +419,7 @@ string Room::_getTransferNode() {
             throw NetworkException(
                     "Invalid response(" +
                     to_string(static_cast<int>(responsePtr->getStatusCode())) +
-                    "): " + serializer::json::stringify(response),
+                    "): " + JsonHelper(response).stringify(),
                     ReqResult::BadResponse
             );
         } else {
