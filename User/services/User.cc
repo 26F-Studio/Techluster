@@ -117,7 +117,7 @@ Json::Value User::getData(
                 accessToken,
                 id,
                 field,
-                data["requirements"]
+                data
         );
     } catch (const orm::UnexpectedRows &e) {
         code = k500InternalServerError;
@@ -143,7 +143,6 @@ Json::Value User::getData(
 Json::Value User::updateData(
         HttpStatusCode &code,
         const string &accessToken,
-        const int64_t &id,
         const DataField &field,
         const Json::Value &data
 ) {
@@ -151,15 +150,14 @@ Json::Value User::updateData(
     try {
         _dataManager->updateUserData(
                 accessToken,
-                id,
                 field,
-                data["requirements"]
+                data
         );
         response["type"] = "Success";
     } catch (const orm::UnexpectedRows &e) {
         code = k500InternalServerError;
         response["type"] = "Error";
-        response["reason"] = "No user's id = " + to_string(id);
+        response["reason"] = e.what();
     } catch (const redis_exception::KeyNotFound &e) {
         code = k401Unauthorized;
         response["type"] = "Failed";
