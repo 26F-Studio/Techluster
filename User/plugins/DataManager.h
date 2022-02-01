@@ -77,9 +77,8 @@ namespace tech::plugins {
 
         void updateUserData(
                 const std::string &accessToken,
-                const int64_t &userId,
                 const tech::structures::DataField &field,
-                const Json::Value &list
+                const Json::Value &request
         );
 
         [[nodiscard]] bool ipLimit(const std::string &ip) const;
