@@ -5,8 +5,8 @@
 #include <drogon/drogon.h>
 #include <structures/Exceptions.h>
 #include <plugins/DataManager.h>
+#include <structures/JsonHelper.h>
 #include <utils/crypto.h>
-#include <utils/serializer.h>
 
 using namespace drogon;
 using namespace drogon_model;
@@ -17,29 +17,23 @@ using namespace tech::utils;
 
 void DataManager::initAndStart(const Json::Value &config) {
     if (!(
-            config.isMember("tokenBucket") && config["tokenBucket"].isObject() &&
-            config["tokenBucket"].isMember("ip") && config["tokenBucket"]["ip"].isObject() &&
-            config["tokenBucket"].isMember("email") && config["tokenBucket"]["email"].isObject() &&
-
-            config["tokenBucket"]["ip"].isMember("interval") && config["tokenBucket"]["ip"]["interval"].isUInt64() &&
-            config["tokenBucket"]["ip"].isMember("maxCount") && config["tokenBucket"]["ip"]["maxCount"].isUInt64() &&
-            config["tokenBucket"]["email"].isMember("interval") && config["tokenBucket"]["email"]["interval"].isUInt64() &&
-            config["tokenBucket"]["email"].isMember("maxCount") && config["tokenBucket"]["email"]["maxCount"].isUInt64()
+            config["tokenBucket"]["ip"]["interval"].isUInt64() &&
+            config["tokenBucket"]["ip"]["maxCount"].isUInt64() &&
+            config["tokenBucket"]["email"]["interval"].isUInt64() &&
+            config["tokenBucket"]["email"]["maxCount"].isUInt64()
     )) {
         LOG_ERROR << R"(Invalid tokenBucket config)";
         abort();
-    } else {
-        _ipInterval = chrono::seconds(config["tokenBucket"]["ip"]["interval"].asUInt64());
-        _ipMaxCount = config["tokenBucket"]["ip"]["maxCount"].asUInt64();
-        _emailInterval = chrono::seconds(config["tokenBucket"]["email"]["interval"].asUInt64());
-        _emailMaxCount = config["tokenBucket"]["email"]["maxCount"].asUInt64();
     }
+    _ipInterval = chrono::seconds(config["tokenBucket"]["ip"]["interval"].asUInt64());
+    _ipMaxCount = config["tokenBucket"]["ip"]["maxCount"].asUInt64();
+    _emailInterval = chrono::seconds(config["tokenBucket"]["email"]["interval"].asUInt64());
+    _emailMaxCount = config["tokenBucket"]["email"]["maxCount"].asUInt64();
 
     if (!(
-            config.isMember("expirations") && config["expirations"].isObject() &&
-            config["expirations"].isMember("refresh") && config["expirations"]["refresh"].isInt64() &&
-            config["expirations"].isMember("access") && config["expirations"]["access"].isInt64() &&
-            config["expirations"].isMember("email") && config["expirations"]["email"].isInt64()
+            config["expirations"]["refresh"].isInt64() &&
+            config["expirations"]["access"].isInt64() &&
+            config["expirations"]["email"].isInt64()
     )) {
         LOG_ERROR << R"("Invalid expirations config")";
         abort();
@@ -52,15 +46,6 @@ void DataManager::initAndStart(const Json::Value &config) {
             }
     )));
 
-    if (!(
-            config.isMember("redis") && config["redis"].isObject() &&
-            config["redis"].isMember("host") && config["redis"]["host"].isString() &&
-            config["redis"].isMember("port") && config["redis"]["port"].isInt() &&
-            config["redis"].isMember("timeout") && config["redis"]["timeout"].isUInt64()
-    )) {
-        LOG_ERROR << R"("Invalid redis config")";
-        abort();
-    }
     try {
         _redisHelper->connect(
                 config["redis"]["host"].asString(),
@@ -73,10 +58,8 @@ void DataManager::initAndStart(const Json::Value &config) {
     }
 
     _pgClient = app().getDbClient();
-    _dataMapper = make_unique < orm::Mapper < techluster::Data >>
-                                                               (app().getDbClient());
-    _playerMapper = make_unique < orm::Mapper < techluster::Player >>
-                                                                   (app().getDbClient());
+    _dataMapper = make_unique<orm::Mapper<techluster::Data>>(app().getDbClient());
+    _playerMapper = make_unique<orm::Mapper<techluster::Player>>(app().getDbClient());
 
     LOG_INFO << "DataManager loaded.";
 }
@@ -87,7 +70,7 @@ void DataManager::shutdown() {
 }
 
 int64_t DataManager::getUserId(const string &accessToken) {
-    return _redisHelper->getUserId(accessToken);
+    return _redisHelper->getIdByAccessToken(accessToken);
 }
 
 RedisToken DataManager::refresh(const string &refreshToken) {
@@ -116,6 +99,8 @@ RedisToken DataManager::loginEmailCode(const string &email, const string &code) 
         techluster::Player newPlayer;
         newPlayer.setEmail(email);
         _playerMapper->insert(newPlayer);
+        techluster::Data newData;
+        _dataMapper->insert(newData);
     }
     auto player = _playerMapper->findOne(orm::Criteria(
             techluster::Player::Cols::_email,
@@ -136,12 +121,11 @@ RedisToken DataManager::loginEmailPassword(
             techluster::Player::Cols::_email,
             orm::CompareOperator::EQ,
             email
-    ) || orm::Criteria(
+    ) && orm::Criteria(
             techluster::Player::Cols::_password,
             orm::CompareOperator::EQ,
             password
     ));
-
 
     if (player.getValueOfPassword().empty()) {
         throw sql_exception::EmptyValue("password is empty");
@@ -155,20 +139,13 @@ void DataManager::resetEmail(
         const string &newPassword
 ) {
     _redisHelper->checkEmailCode(email, code);
-    if (_playerMapper->count(orm::Criteria(
+    auto player = _playerMapper->findOne(orm::Criteria(
             techluster::Player::Cols::_email,
             orm::CompareOperator::EQ,
             email
-    )) == 0) {
-        throw out_of_range("No user found");
-    } else {
-        _pgClient->execSqlSync(
-                "update player set "
-                "password = crypt($1, gen_salt('bf', 10)) "
-                "where email = $2",
-                newPassword, email
-        );
-    }
+    ));
+    player.setPassword(newPassword);
+    _playerMapper->update(player);
     _redisHelper->deleteEmailCode(email);
 }
 
@@ -178,9 +155,9 @@ void DataManager::migrateEmail(
         const string &code
 ) {
     auto player = _playerMapper->findOne(orm::Criteria(
-            techluster::Player::Cols::_email,
+            techluster::Player::Cols::_id,
             orm::CompareOperator::EQ,
-            _redisHelper->getUserId(accessToken)
+            _redisHelper->getIdByAccessToken(accessToken)
     ));
     _redisHelper->checkEmailCode(newEmail, code);
     player.setEmail(newEmail);
@@ -194,7 +171,7 @@ Json::Value DataManager::getUserInfo(
 ) {
     auto id = userId;
     if (userId < 0) {
-        id = _redisHelper->getUserId(accessToken);
+        id = _redisHelper->getIdByAccessToken(accessToken);
     } else {
         _redisHelper->checkAccessToken(accessToken);
     }
@@ -221,7 +198,7 @@ void DataManager::updateUserInfo(
     auto player = _playerMapper->findOne(orm::Criteria(
             techluster::Player::Cols::_id,
             orm::CompareOperator::EQ,
-            _redisHelper->getUserId(accessToken)
+            _redisHelper->getIdByAccessToken(accessToken)
     ));
     bool updated = false;
     if (info.isMember("username") &&
@@ -273,7 +250,7 @@ string DataManager::getUserAvatar(
 ) {
     auto id = userId;
     if (userId < 0) {
-        id = _redisHelper->getUserId(accessToken);
+        id = _redisHelper->getIdByAccessToken(accessToken);
     } else {
         _redisHelper->checkAccessToken(accessToken);
     }
@@ -290,12 +267,19 @@ Json::Value DataManager::getUserData(
         const string &accessToken,
         const int64_t &userId,
         const DataField &field,
-        const Json::Value &list
+        const Json::Value &request
 ) {
+    if (!request["paths"].isArray()) {
+        throw invalid_argument("'paths' must be an array");
+    }
+    // TODO: Only allow access to other user's protected data if they are friends
     auto id = userId;
     if (userId < 0) {
-        id = _redisHelper->getUserId(accessToken);
+        id = _redisHelper->getIdByAccessToken(accessToken);
     } else {
+        if (field == DataField::kProtected || field == DataField::kPrivate) {
+            throw invalid_argument("Cannot access other's protected data");
+        }
         _redisHelper->checkAccessToken(accessToken);
     }
     auto data = _dataMapper->findOne(orm::Criteria(
@@ -315,35 +299,23 @@ Json::Value DataManager::getUserData(
             rawString = data.getValueOfPrivate();
             break;
     }
-    Json::Value output, input = serializer::json::parse(rawString);
-    for (const auto &item: list) {
-        Json::Value &tempInput = input;
-        for (const auto &path: item) {
-            if (path.isUInt()) {
-                tempInput = tempInput[path.asUInt()];
-            } else if (path.isString()) {
-                tempInput = tempInput[path.asString()];
-            } else {
-                throw range_error("Invalid requirements list");
-            }
-        }
-        output.append(tempInput);
+    Json::Value output;
+    auto source = JsonHelper(rawString);
+    for (const auto &item: request["paths"]) {
+        output.append(source.retrieveByPath(item.asString()));
     }
     return output;
 }
 
 void DataManager::updateUserData(
         const string &accessToken,
-        const int64_t &userId,
         const DataField &field,
-        const Json::Value &list
+        const Json::Value &request
 ) {
-    auto id = userId;
-    if (userId < 0) {
-        id = _redisHelper->getUserId(accessToken);
-    } else {
-        _redisHelper->checkAccessToken(accessToken);
+    if (!request["data"].isArray()) {
+        throw invalid_argument("'data' must be an array");
     }
+    auto id = _redisHelper->getIdByAccessToken(accessToken);
     auto data = _dataMapper->findOne(orm::Criteria(
             techluster::Player::Cols::_id,
             orm::CompareOperator::EQ,
@@ -361,21 +333,29 @@ void DataManager::updateUserData(
             rawString = data.getValueOfPrivate();
             break;
     }
-    Json::Value input = serializer::json::parse(rawString);
-    for (const auto &item: list) {
-        Json::Value &tempInput = input;
-        for (const auto &path: item) {
-            if (path.isUInt()) {
-                tempInput = tempInput[path.asUInt()];
-            } else if (path.isString()) {
-                tempInput = tempInput[path.asString()];
-            } else if (path.isObject()) {
-                tempInput = path;
-            } else {
-                throw range_error("Invalid requirements list");
-            }
-        }
+    auto target = JsonHelper(rawString);
+    if (request["options"]["overwrite"].isBool()) {
+        target.canOverwrite(request["options"]["overwrite"].asBool());
     }
+    if (request["options"]["skip"].isBool()) {
+        target.canSkip(request["options"]["skip"].asBool());
+    }
+    for (const auto &item: request["data"]) {
+        target.modifyByPath(item["path"].asString(), item["value"]);
+        LOG_DEBUG << target.stringify("  ");
+    }
+    switch (field) {
+        case DataField::kPublic:
+            data.setPublic(target.stringify());
+            break;
+        case DataField::kProtected:
+            data.setProtected(target.stringify());
+            break;
+        case DataField::kPrivate:
+            data.setPrivate(target.stringify());
+            break;
+    }
+    _dataMapper->update(data);
 }
 
 bool DataManager::ipLimit(const string &ip) const {
