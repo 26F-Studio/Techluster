@@ -93,15 +93,6 @@ void User::getData(const HttpRequestPtr &req, function<void(const drogon::HttpRe
         http::fromJson(code, response, callback);
         return;
     }
-    if (!(
-            request.isMember("requirements") && request["requirements"].isArray()
-    )) {
-        code = drogon::k400BadRequest;
-        response["type"] = "Error";
-        response["reason"] = "Invalid parameters";
-        http::fromJson(code, response, callback);
-        return;
-    }
     auto id = req->getParameter("id");
     auto field = req->attributes()->get<DataField>("field");
     http::fromJson(code, _service.getData(
@@ -132,21 +123,10 @@ void User::updateData(const HttpRequestPtr &req, function<void(const drogon::Htt
         http::fromJson(code, response, callback);
         return;
     }
-    if (!(
-            request.isMember("requirements") && request["requirements"].isArray()
-    )) {
-        code = drogon::k400BadRequest;
-        response["type"] = "Error";
-        response["reason"] = "Invalid parameters";
-        http::fromJson(code, response, callback);
-        return;
-    }
-    auto id = req->getParameter("id");
     auto field = req->attributes()->get<DataField>("field");
     http::fromJson(code, _service.updateData(
             code,
             accessToken,
-            id.empty() ? -1 : stoll(id),
             field,
             request
     ), callback);
