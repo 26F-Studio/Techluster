@@ -7,7 +7,6 @@
 #include <services/Auth.h>
 #include <structures/Exceptions.h>
 #include <utils/io.h>
-#include <string>
 
 using namespace drogon;
 using namespace mailio;
@@ -126,6 +125,10 @@ Json::Value Auth::loginMail(HttpStatusCode &code, const Json::Value &data) {
         code = k403Forbidden;
         response["type"] = "Failed";
         response["reason"] = "You must set a password first.";
+    } catch (const orm::UnexpectedRows &e) {
+        code = k404NotFound;
+        response["type"] = "Failed";
+        response["reason"] = "Invalid username or password";
     } catch (const orm::DrogonDbException &e) {
         LOG_ERROR << e.base().what();
         code = k500InternalServerError;
@@ -152,6 +155,10 @@ Json::Value Auth::resetEmail(HttpStatusCode &code, const Json::Value &data) {
         code = k403Forbidden;
         response["type"] = "Failed";
         response["reason"] = "Invalid verify code";
+    } catch (const orm::UnexpectedRows &e) {
+        code = k404NotFound;
+        response["type"] = "Failed";
+        response["reason"] = "User not found";
     } catch (const orm::DrogonDbException &e) {
         LOG_ERROR << e.base().what();
         code = k500InternalServerError;
@@ -159,7 +166,7 @@ Json::Value Auth::resetEmail(HttpStatusCode &code, const Json::Value &data) {
         response["reason"] = "ORM error";
     } catch (const exception &e) {
         LOG_ERROR << e.what();
-        code = drogon::k503ServiceUnavailable;
+        code = k503ServiceUnavailable;
         response["type"] = "Failed";
         response["reason"] = e.what();
     }
