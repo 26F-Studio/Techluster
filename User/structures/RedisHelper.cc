@@ -64,18 +64,18 @@ RedisToken RedisHelper::generateTokens(const string &userId) {
 }
 
 void RedisHelper::checkAccessToken(const string &accessToken) {
-    _get("player:id:" + accessToken);
+    _get("player:access:" + accessToken);
 }
 
 void RedisHelper::checkEmailCode(
         const string &email,
         const string &code
 ) {
-    _compare("player:code:email_" + email, code);
+    _compare("player:code:email:" + email, code);
 }
 
 void RedisHelper::deleteEmailCode(const string &email) {
-    _redisClient.del({"player:code:email_" + email});
+    _redisClient.del({"player:code:email:" + email});
     _redisClient.sync_commit();
 }
 
@@ -84,15 +84,15 @@ void RedisHelper::setEmailCode(
         const string &code
 ) {
     _redisClient.setex(
-            "player:code:email_" + email,
+            "player:code:email:" + email,
             _expiration.getEmailSeconds(),
             code
     );
     _redisClient.sync_commit();
 }
 
-int64_t RedisHelper::getUserId(const string &accessToken) {
-    return stoll(_get("player:id:" + accessToken));
+int64_t RedisHelper::getIdByAccessToken(const string &accessToken) {
+    return stoll(_get("player:access:" + accessToken));
 }
 
 bool RedisHelper::tokenBucket(
@@ -175,7 +175,7 @@ void RedisHelper::_expire(
     auto future = _redisClient.expire(key, static_cast<int>(ttl.count()));
     _redisClient.sync_commit();
     auto reply = future.get();
-    if (reply.is_error()) {
+    if (reply.is_null()) {
         throw redis_exception::KeyNotFound("Key = " + key);
     }
 }
@@ -184,7 +184,7 @@ string RedisHelper::_get(const string &key) {
     auto future = _redisClient.get(key);
     _redisClient.sync_commit();
     auto reply = future.get();
-    if (reply.is_error()) {
+    if (reply.is_null()) {
         throw redis_exception::KeyNotFound("Key = " + key);
     }
     return reply.as_string();
@@ -198,10 +198,9 @@ void RedisHelper::_setEx(
     auto future = _redisClient.setex(key, ttl, value);
     _redisClient.sync_commit();
     auto reply = future.get();
-    if (reply.is_error()) {
+    if (reply.is_null()) {
         throw redis_exception::KeyNotFound("Key = " + key);
     }
-
 }
 
 void RedisHelper::_extendRefreshToken(const string &refreshToken) {
@@ -224,12 +223,12 @@ string RedisHelper::_generateRefreshToken(const string &userId) {
 string RedisHelper::_generateAccessToken(const string &userId) {
     auto accessToken = crypto::blake2B(drogon::utils::getUuid());
     _setEx(
-            "player:access:" + userId,
+            "player:id:" + userId,
             _expiration.getAccessSeconds(),
             accessToken
     );
     _setEx(
-            "player:id:" + accessToken,
+            "player:access:" + accessToken,
             _expiration.getAccessSeconds(),
             userId
     );
