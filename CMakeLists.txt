@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
+include(utils.cmake)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -18,8 +20,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     message(STATUS "Compiler is Intel C++")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     message(STATUS "Compiler is Visual Studio C++")
-    add_compile_options(/MP /source-charset:utf-8 /execution-charset:utf-8)
-    add_compile_definitions(_CRT_SECURE_NO_WARNINGS NOMINMAX)
+    get_WIN32_WINNT(WIN32_WINNT)
+    add_compile_options(/MP /utf-8)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS NOMINMAX _WIN32_WINNT=${WIN32_WINNT})
 endif ()
 
 find_library(CPPREDIS_LIB cpp_redis)
