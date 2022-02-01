@@ -21,31 +21,9 @@ void Allocator::gaming(const HttpRequestPtr &req, function<void(const HttpRespon
     http::fromJson(code, _service.gaming(code), callback);
 }
 
-void Allocator::transfers(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
+void Allocator::transfer(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     HttpStatusCode code = HttpStatusCode::k200OK;
-    http::fromJson(code, _service.transfers(code), callback);
-}
-
-void Allocator::transfer(const HttpRequestPtr &req, function<void(const drogon::HttpResponsePtr &)> &&callback) {
-    HttpStatusCode code = HttpStatusCode::k200OK;
-    Json::Value request, response;
-    auto credential = req->getHeader("x-credential");
-    if (credential.empty() || !app().getPlugin<Authorizer>()->checkCredential(credential)) {
-        code = drogon::k400BadRequest;
-        response["type"] = "Error";
-        response["reason"] = "Invalid x-credential header";
-        http::fromJson(code, response, callback);
-        return;
-    }
-    string parseError = http::toJson(req, request);
-    if (!parseError.empty()) {
-        code = drogon::k400BadRequest;
-        response["type"] = "Error";
-        response["reason"] = "Wrong format: " + parseError;
-        http::fromJson(code, response, callback);
-        return;
-    }
-    http::fromJson(code, _service.transfer(code, request), callback);
+    http::fromJson(code, _service.transfer(code), callback);
 }
 
 void Allocator::user(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {

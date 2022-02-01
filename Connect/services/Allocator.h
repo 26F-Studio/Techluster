@@ -16,9 +16,7 @@ namespace tech::services {
 
         Json::Value gaming(drogon::HttpStatusCode &code);
 
-        Json::Value transfers(drogon::HttpStatusCode &code);
-
-        Json::Value transfer(drogon::HttpStatusCode &code, const Json::Value &request);
+        Json::Value transfer(drogon::HttpStatusCode &code);
 
         Json::Value user(drogon::HttpStatusCode &code);
 

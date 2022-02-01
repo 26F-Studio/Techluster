@@ -40,21 +40,13 @@ Json::Value Allocator::gaming(drogon::HttpStatusCode &code) {
     return response;
 }
 
-Json::Value Allocator::transfers(HttpStatusCode &code) {
+Json::Value Allocator::transfer(HttpStatusCode &code) {
     Json::Value response;
-    response["type"] = "Success";
-    response["data"] = _nodeManager->getAllNodes(NodeServer::Type::transfer);
-    return response;
-}
-
-Json::Value Allocator::transfer(HttpStatusCode &code, const Json::Value &request) {
-    // TODO: Implement delay calculation
-    Json::Value response;
-    string host;
-    if (_getNode(host, NodeServer::Type::transfer)) {
+    try {
         response["type"] = "Success";
-        response["data"] = host;
-    } else {
+        response["data"] = _nodeManager->getAllNodes(NodeServer::Type::transfer);
+    } catch (exception &e) {
+        LOG_DEBUG << e.what();
         code = HttpStatusCode::k503ServiceUnavailable;
         response["type"] = "Failure";
         response["reason"] = "No node server available now";
