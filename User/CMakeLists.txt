@@ -14,18 +14,18 @@ elseif (UNIX)
 endif ()
 
 # Include boost lib if compiler is gcc
-#if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-#    find_package(OpenSSL REQUIRED)
-#    target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
-#
-#    set(Boost_USE_STATIC_LIBS ON)
-#    set(Boost_USE_MULTITHREADED ON)
-#    find_package(Boost 1.75 REQUIRED regex date_time)
-#    if (Boost_FOUND)
-#        target_include_directories(${PROJECT_NAME} PUBLIC ${Boost_INCLUDE_DIRS})
-#        target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
-#    endif ()
-#endif ()
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    find_package(OpenSSL REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+
+    set(Boost_USE_STATIC_LIBS ON)
+    set(Boost_USE_MULTITHREADED ON)
+    find_package(Boost 1.75 REQUIRED regex date_time)
+    if (Boost_FOUND)
+        target_include_directories(${PROJECT_NAME} PUBLIC ${Boost_INCLUDE_DIRS})
+        target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
+    endif ()
+endif ()
 
 add_executable(${PROJECT_NAME} main.cc)
 
