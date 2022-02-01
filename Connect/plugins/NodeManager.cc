@@ -12,11 +12,10 @@ using namespace tech::structures;
 
 void NodeManager::initAndStart(const Json::Value &config) {
     if (!(
-            config.isMember("nodeType") && config["nodeType"].isObject() &&
-            config["nodeType"].isMember("message") && config["nodeType"]["message"].isString() &&
-            config["nodeType"].isMember("gaming") && config["nodeType"]["gaming"].isString() &&
-            config["nodeType"].isMember("transfer") && config["nodeType"]["transfer"].isString() &&
-            config["nodeType"].isMember("user") && config["nodeType"]["user"].isString()
+            config["nodeType"]["message"].isString() &&
+            config["nodeType"]["gaming"].isString() &&
+            config["nodeType"]["transfer"].isString() &&
+            config["nodeType"]["user"].isString()
     )) {
         LOG_ERROR << R"(Invalid nodeType config)";
         abort();
@@ -27,10 +26,7 @@ void NodeManager::initAndStart(const Json::Value &config) {
         _typeMapper[config["nodeType"]["user"].asString()] = NodeServer::Type::user;
     }
 
-    if (!(
-            config.isMember("heartBeat") && config["heartBeat"].isObject() &&
-            config["heartBeat"].isMember("waitTimes") && config["heartBeat"]["waitTimes"].isUInt()
-    )) {
+    if (!config["heartBeat"]["waitTimes"].isUInt()) {
         LOG_ERROR << R"(Invalid heartBeat config)";
         abort();
     } else {
