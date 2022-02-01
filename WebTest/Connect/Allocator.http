@@ -1,0 +1,11 @@
+### Retrieve a message node
+GET http://{{connectHost}}/{{httpBase}}/allocator/message
+
+### Retrieve a gaming node
+GET http://{{connectHost}}/{{httpBase}}/allocator/gaming
+
+### Retrieve transfer nodes
+GET http://{{connectHost}}/{{httpBase}}/allocator/transfer
+
+### Retrieve a user node
+GET http://{{connectHost}}/{{httpBase}}/allocator/user

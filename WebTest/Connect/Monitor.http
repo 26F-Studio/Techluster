@@ -1,0 +1,19 @@
+### Get connect node infos
+GET http://{{connectHost}}/{{httpBase}}/monitor/self
+x-credential: {{credential}}
+
+### Get gaming node infos
+GET http://{{connectHost}}/{{httpBase}}/monitor/gaming
+x-credential: {{credential}}
+
+### Get message node infos
+GET http://{{connectHost}}/{{httpBase}}/monitor/message
+x-credential: {{credential}}
+
+### Get transfer node infos
+GET http://{{connectHost}}/{{httpBase}}/monitor/transfer
+x-credential: {{credential}}
+
+### Get user node infos
+GET http://{{connectHost}}/{{httpBase}}/monitor/user
+x-credential: {{credential}}

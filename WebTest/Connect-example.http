@@ -1,3 +1,0 @@
-### Retrieve a user node
-GET http://localhost:62601/tech/api/v2/allocator/user
-Accept: application/json

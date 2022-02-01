@@ -1,0 +1,12 @@
+### Report a heartbeat message
+POST http://{{connectHost}}/{{httpBase}}/heartbeat/report
+Content-Type: application/json
+
+{
+  "ip": "127.0.0.1",
+  "port": 62641,
+  "type": "transfer",
+  "taskInterval": 5.0,
+  "description": "Transfer Node #1 of Guest",
+  "credential": "{{credential}}"
+}
