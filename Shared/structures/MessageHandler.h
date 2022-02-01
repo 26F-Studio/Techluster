@@ -5,7 +5,7 @@
 #pragma once
 
 #include <drogon/WebSocketController.h>
-#include <utils/serializer.h>
+#include <structures/JsonHelper.h>
 
 namespace tech::structures {
     enum class Result {
@@ -45,7 +45,7 @@ namespace tech::structures {
             Json::Value message;
             message["type"] = static_cast<int>(type);
             message["action"] = _action;
-            return utils::serializer::json::stringify(message);
+            return tech::structures::JsonHelper(message).stringify();
         }
 
         [[nodiscard]] std::string _parseMessage(
@@ -56,7 +56,7 @@ namespace tech::structures {
             message["type"] = static_cast<int>(type);
             message["action"] = _action;
             message["data"] = std::move(data);
-            return utils::serializer::json::stringify(message);
+            return tech::structures::JsonHelper(message).stringify();
         }
     };
 }

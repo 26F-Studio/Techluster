@@ -6,8 +6,8 @@
 #include <drogon/drogon.h>
 #include <plugins/AuthMaintainer.h>
 #include <structures/Exceptions.h>
+#include <structures/JsonHelper.h>
 #include <utils/http.h>
-#include <utils/serializer.h>
 
 using namespace drogon;
 using namespace std;
@@ -60,7 +60,7 @@ void AuthMaintainer::_updateAuthAddress() {
                          << parseError;
             } else if (responsePtr->getStatusCode() != k200OK) {
                 LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
-                         << serializer::json::stringify(response);
+                         << JsonHelper(response).stringify();
             } else {
                 auto parts = drogon::utils::splitString(
                         response["data"].asString(),
@@ -100,7 +100,7 @@ HttpStatusCode AuthMaintainer::checkAccessToken(const string &accessToken, int64
             response.isMember("data") && response["data"].isInt64()
     )) {
         throw NetworkException(
-                "Invalid Response: " + serializer::json::stringify(response),
+                "Invalid Response: " + JsonHelper(response).stringify(),
                 ReqResult::BadResponse
         );
     }

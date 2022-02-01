@@ -5,7 +5,7 @@
 #pragma once
 
 #include <structures/MessageHandler.h>
-#include <utils/serializer.h>
+#include <structures/JsonHelper.h>
 #include <utils/websocket.h>
 
 namespace tech::socket::v2 {
@@ -24,18 +24,18 @@ namespace tech::socket::v2 {
                 wsConnPtr->send(message, WebSocketMessageType::Pong);
             } else if (type == WebSocketMessageType::Text ||
                        type == WebSocketMessageType::Binary) {
-                Json::Value request = serializer::json::parse(message), response;
+                Json::Value request = JsonHelper(message).stringify(), response;
                 drogon::CloseCode code;
                 auto result = _service.requestHandler(
                         wsConnPtr, request, response, code
                 );
                 if (result == Result::success ||
                     result == Result::failed) {
-                    wsConnPtr->send(serializer::json::stringify(response));
+                    wsConnPtr->send(JsonHelper(response).stringify());
                 } else if (result == Result::error) {
                     wsConnPtr->shutdown(
                             code,
-                            serializer::json::stringify(response)
+                            JsonHelper(response).stringify()
                     );
                 }
             } else if (type == WebSocketMessageType::Close) {

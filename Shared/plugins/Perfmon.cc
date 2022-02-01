@@ -6,12 +6,11 @@
 #include <drogon/drogon.h>
 #include <plugins/Authorizer.h>
 #include <plugins/Perfmon.h>
+#include <structures/JsonHelper.h>
 #include <utils/http.h>
-#include <utils/serializer.h>
 
 #if _WIN32
 
-#include <windows.h>
 #include <iphlpapi.h>
 
 #pragma comment(lib, "IPHlpApi.lib")
@@ -30,6 +29,7 @@
 using namespace drogon;
 using namespace std;
 using namespace tech::plugins;
+using namespace tech::structures;
 using namespace tech::utils;
 
 void Perfmon::initAndStart(const Json::Value &config) {
@@ -113,7 +113,7 @@ void Perfmon::_report() {
                          << parseError;
             } else if (responsePtr->getStatusCode() != k200OK) {
                 LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
-                         << serializer::json::stringify(response);
+                         << JsonHelper(response).stringify();
             }
         } else {
             LOG_WARN << "Request failed (" << static_cast<int>(result) << ")";
