@@ -1,0 +1,21 @@
+function(get_WIN32_WINNT _WIN32_WINNT)
+    if (CMAKE_SYSTEM_VERSION)
+        set(_fullVersion ${CMAKE_SYSTEM_VERSION})
+        message(STATUS "Windows version is: ${_fullVersion}")
+        string(REGEX MATCH "^([0-9]+).([0-9])" _fullVersion ${_fullVersion})
+        string(REGEX MATCH "^([0-9]+)" _majorVersion ${_fullVersion})
+        # Check for Windows 10, b/c we'll need to convert to hex 'A'.
+        if ("${_majorVersion}" MATCHES "10")
+            set(_majorVersion "A")
+            string(REGEX REPLACE "^([0-9]+)" ${_majorVersion} _fullVersion ${_fullVersion})
+        endif ()
+        # Remove all remaining '.' characters.
+        string(REPLACE "." "" _fullVersion ${_fullVersion})
+        # Prepend each digit with a zero.
+        string(REGEX REPLACE "([0-9A-Z])" "0\\1" _fullVersion ${_fullVersion})
+        message(STATUS "_WIN32_WINNT=${_fullVersion}")
+        set(${_WIN32_WINNT} "0x${_fullVersion}" PARENT_SCOPE)
+    else ()
+        message(FATAL "CMAKE_SYSTEM_VERSION is not available!")
+    endif ()
+endfunction()
