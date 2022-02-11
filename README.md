@@ -2,6 +2,11 @@
 
 The new distributed backends for [Techmino](https://github.com/26F-Studio/Techmino)
 
+<p style="text-align:center">
+    <img src="https://img.shields.io/github/languages/code-size/26F-Studio/Techluster.svg?style=flat-square" alt="Code size"/>
+    <img src="https://img.shields.io/github/repo-size/26F-Studio/Techluster.svg?style=flat-square" alt="GitHub repo size"/>
+</p>
+
 ## Design Graph
 
 [![Design Graph](http://assets.processon.com/chart_image/615fd6410e3e747620f50b70.png)](https://www.processon.com/view/link/611977a06376893a9f00fb77)
