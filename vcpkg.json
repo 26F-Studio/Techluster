@@ -10,6 +10,7 @@
     "license": "LGPL-3.0",
     "dependencies": [
         "cpp-redis",
+        "cryptopp",
         {
             "name": "drogon",
             "default-features": false,
@@ -19,7 +20,7 @@
                 "postgres"
             ]
         },
-        "cryptopp",
+        "magic-enum",
         "mailio"
     ]
 }
