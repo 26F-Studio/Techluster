@@ -45,7 +45,8 @@ void http::fromJson(
 }
 
 [[maybe_unused]] void http::fromPlain(
-        const HttpStatusCode &code, const string &body,
+        const HttpStatusCode &code,
+        const string &body,
         const function<void(const HttpResponsePtr &)> &callback
 ) { from(code, CT_TEXT_PLAIN, body, callback); }
 
