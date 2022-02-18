@@ -5,11 +5,11 @@
 #pragma once
 
 #include <drogon/drogon.h>
+#include <helpers/RedisHelper.h>
 #include <structures/RedisToken.h>
-#include <cpp_redis/cpp_redis>
 
 namespace tech::structures {
-    class RedisHelper : public trantor::NonCopyable {
+    class UserRedis : public helpers::RedisHelper {
     private:
         struct Expiration {
             [[nodiscard]] int getRefreshSeconds() const {
@@ -28,27 +28,13 @@ namespace tech::structures {
         };
 
     public:
-        explicit RedisHelper(Expiration expiration);
+        explicit UserRedis(Expiration expiration);
 
-        RedisHelper(RedisHelper &&helper)
-
-        noexcept;
-
-        void connect(
-                const std::string &host = "127.0.0.1",
-                const size_t &port = 6379,
-                const uint32_t &timeout = 0,
-                const int32_t &retries = 0,
-                const uint32_t &interval = 0
-        );
-
-        void disconnect();
+        UserRedis(UserRedis &&redis) noexcept;
 
         RedisToken refresh(const std::string &refreshToken);
 
         [[nodiscard]] RedisToken generateTokens(const std::string &userId);
-
-        void checkAccessToken(const std::string &accessToken);
 
         void checkEmailCode(
                 const std::string &email,
@@ -64,35 +50,8 @@ namespace tech::structures {
 
         [[nodiscard]] int64_t getIdByAccessToken(const std::string &accessToken);
 
-        [[nodiscard]] bool tokenBucket(
-                const std::string &key,
-                const std::chrono::microseconds &restoreInterval,
-                const uint64_t &maxCount
-        );
-
-
     private:
         const Expiration _expiration;
-
-        cpp_redis::client _redisClient;
-
-        void _compare(
-                const std::string &key,
-                const std::string &value
-        );
-
-        void _expire(
-                const std::string &key,
-                const std::chrono::seconds &ttl
-        );
-
-        std::string _get(const std::string &key);
-
-        void _setEx(
-                const std::string &key,
-                const int &ttl,
-                const std::string &value
-        );
 
         // TODO: Add more wrappers for basic redis commands
 
