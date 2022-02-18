@@ -5,17 +5,55 @@
 #pragma once
 
 #include <drogon/HttpController.h>
-#include <services/User.h>
+#include <plugins/DataManager.h>
+#include <structures/ExceptionHandlers.h>
 
 namespace tech::api::v2 {
-    class User : public drogon::HttpController<User> {
+    class User :
+            public drogon::HttpController<User>,
+            public structures::ResponseJsonHandler,
+            public helpers::I18nHelper<User> {
     public:
+        User();
+
         METHOD_LIST_BEGIN
-            METHOD_ADD(User::getInfo, "/info", drogon::Get);
-            METHOD_ADD(User::updateInfo, "/info", drogon::Put);
-            METHOD_ADD(User::getAvatar, "/avatar", drogon::Get);
-            METHOD_ADD(User::getData, "/data", drogon::Post, "tech::filters::ValidateField");
-            METHOD_ADD(User::updateData, "/data", drogon::Put, "tech::filters::ValidateField");
+            METHOD_ADD(
+                    User::getInfo,
+                    "/info",
+                    drogon::Get,
+                    "tech::filters::CheckAccessToken",
+                    "tech::filters::CheckUserId"
+            );
+            METHOD_ADD(
+                    User::updateInfo,
+                    "/info",
+                    drogon::Put,
+                    "tech::filters::CheckAccessToken",
+                    "tech::filters::UserUpdateInfo"
+            );
+            METHOD_ADD(
+                    User::getAvatar,
+                    "/avatar",
+                    drogon::Get,
+                    "tech::filters::CheckAccessToken",
+                    "tech::filters::CheckUserId");
+            METHOD_ADD(
+                    User::getData,
+                    "/data",
+                    drogon::Post,
+                    "tech::filters::CheckAccessToken",
+                    "tech::filters::CheckUserId",
+                    "tech::filters::CheckDataField",
+                    "tech::filters::UserGetData"
+            );
+            METHOD_ADD(
+                    User::updateData,
+                    "/data",
+                    drogon::Put,
+                    "tech::filters::CheckAccessToken",
+                    "tech::filters::CheckDataField",
+                    "tech::filters::UserUpdateData"
+            );
         METHOD_LIST_END
 
         void getInfo(
@@ -44,6 +82,6 @@ namespace tech::api::v2 {
         );
 
     private:
-        services::User _service;
+        tech::plugins::DataManager *_dataManager;
     };
 }
