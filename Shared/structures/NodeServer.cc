@@ -6,19 +6,21 @@
 
 using namespace std;
 using namespace tech::structures;
+using namespace tech::types;
 using namespace trantor;
 
 NodeServer::NodeServer(
+        const NodeType &type,
         const string &ip,
         const uint16_t &port,
-        const Type &type,
         const double &taskInterval,
-        string description
-) : _inetAddress(ip, port),
+        string description,
+        Json::Value info
+) : _type(type),
+    _inetAddress(ip, port),
     _taskInterval(taskInterval),
-    _type(type),
     _description(move(description)),
-    _info(Json::objectValue) {}
+    _info(move(info)) {}
 
 NodeServer::NodeServer(NodeServer &&nodeServer) noexcept:
         _inetAddress(nodeServer._inetAddress),
@@ -35,7 +37,7 @@ uint64_t NodeServer::getNetEndian() const {
     return (static_cast<uint64_t>(_inetAddress.ipNetEndian()) << 32) + _inetAddress.portNetEndian();
 }
 
-NodeServer::Type NodeServer::getType() const { return _type; }
+NodeType NodeServer::getType() const { return _type; }
 
 double NodeServer::getInterval() const { return _taskInterval; }
 

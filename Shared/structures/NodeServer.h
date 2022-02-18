@@ -6,23 +6,18 @@
 
 #include <drogon/drogon.h>
 #include <shared_mutex>
+#include <types/NodeType.h>
 
 namespace tech::structures {
     class NodeServer {
     public:
-        enum class Type {
-            gaming,
-            message,
-            transfer,
-            user
-        };
-
         NodeServer(
+                const types::NodeType &type,
                 const std::string &ip,
                 const uint16_t &port,
-                const Type &type,
                 const double &taskInterval,
-                std::string description
+                std::string description,
+                Json::Value info
         );
 
         NodeServer(NodeServer &&nodeServer) noexcept;
@@ -31,7 +26,7 @@ namespace tech::structures {
 
         uint64_t getNetEndian() const;
 
-        Type getType() const;
+        types::NodeType getType() const;
 
         double getInterval() const;
 
@@ -55,7 +50,7 @@ namespace tech::structures {
         mutable std::shared_mutex _sharedMutex;
 
         const trantor::InetAddress _inetAddress;
-        const Type _type;
+        const types::NodeType _type;
         const double _taskInterval;
         const std::string _description;
         std::atomic<uint64_t> _deactivateTimerId;
