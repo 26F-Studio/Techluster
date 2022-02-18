@@ -13,7 +13,7 @@ using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
 
-RoomCreate::RoomCreate() : MessageHandler(toUInt(Action::roomCreate)) {}
+RoomCreate::RoomCreate() : MessageHandlerBase(toUInt(Action::roomCreate)) {}
 
 Result RoomCreate::fromJson(
         const WebSocketConnectionPtr &wsConnPtr,

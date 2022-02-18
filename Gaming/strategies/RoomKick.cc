@@ -13,7 +13,7 @@ using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
 
-RoomKick::RoomKick() : MessageHandler(toUInt(Action::roomKick)) {}
+RoomKick::RoomKick() : MessageHandlerBase(toUInt(Action::roomKick)) {}
 
 Result RoomKick::fromJson(
         const WebSocketConnectionPtr &wsConnPtr,

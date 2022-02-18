@@ -13,7 +13,7 @@ using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
 
-PlayerRole::PlayerRole() : MessageHandler(toUInt(Action::playerRole)) {}
+PlayerRole::PlayerRole() : MessageHandlerBase(toUInt(Action::playerRole)) {}
 
 Result PlayerRole::fromJson(
         const WebSocketConnectionPtr &wsConnPtr,

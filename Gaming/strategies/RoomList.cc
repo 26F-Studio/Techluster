@@ -13,7 +13,7 @@ using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
 
-RoomList::RoomList() : MessageHandler(toUInt(Action::roomList)) {}
+RoomList::RoomList() : MessageHandlerBase(toUInt(Action::roomList)) {}
 
 Result RoomList::fromJson(
         const WebSocketConnectionPtr &wsConnPtr,

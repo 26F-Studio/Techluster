@@ -13,7 +13,7 @@ using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
 
-PlayerType::PlayerType() : MessageHandler(toUInt(Action::playerType)) {}
+PlayerType::PlayerType() : MessageHandlerBase(toUInt(Action::playerType)) {}
 
 Result PlayerType::fromJson(
         const WebSocketConnectionPtr &wsConnPtr,

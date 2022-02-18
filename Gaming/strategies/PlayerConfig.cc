@@ -13,7 +13,7 @@ using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
 
-PlayerConfig::PlayerConfig() : MessageHandler(toUInt(Action::playerConfig)) {}
+PlayerConfig::PlayerConfig() : MessageHandlerBase(toUInt(Action::playerConfig)) {}
 
 Result PlayerConfig::fromJson(
         const WebSocketConnectionPtr &wsConnPtr,

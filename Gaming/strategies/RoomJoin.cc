@@ -12,7 +12,7 @@ using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
 
-RoomJoin::RoomJoin() : MessageHandler(toUInt(Action::roomJoin)) {}
+RoomJoin::RoomJoin() : MessageHandlerBase(toUInt(Action::roomJoin)) {}
 
 Result RoomJoin::fromJson(
         const WebSocketConnectionPtr &wsConnPtr,

@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <structures/MessageHandler.h>
+#include <structures/MessageHandlerBase.h>
 
 namespace tech::strategies {
-    class PlayerState : public structures::MessageHandler {
+    class PlayerState : public structures::MessageHandlerBase {
     public:
         PlayerState();
 

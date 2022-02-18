@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <structures/MessageHandler.h>
+#include <structures/MessageHandlerBase.h>
 
 namespace tech::strategies {
-    class RoomList : public structures::MessageHandler {
+    class RoomList : public structures::MessageHandlerBase {
     public:
         RoomList();
 

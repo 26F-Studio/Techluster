@@ -13,7 +13,7 @@ using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
 
-RoomRemove::RoomRemove() : MessageHandler(toUInt(Action::roomRemove)) {}
+RoomRemove::RoomRemove() : MessageHandlerBase(toUInt(Action::roomRemove)) {}
 
 Result RoomRemove::fromJson(
         const WebSocketConnectionPtr &wsConnPtr,

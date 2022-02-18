@@ -13,7 +13,7 @@ using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
 
-PlayerPing::PlayerPing() : MessageHandler(toUInt(Action::playerPing)) {}
+PlayerPing::PlayerPing() : MessageHandlerBase(toUInt(Action::playerPing)) {}
 
 Result PlayerPing::fromJson(
         const WebSocketConnectionPtr &wsConnPtr,

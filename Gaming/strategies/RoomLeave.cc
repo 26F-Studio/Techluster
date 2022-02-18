@@ -12,7 +12,7 @@ using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
 
-RoomLeave::RoomLeave() : MessageHandler(toUInt(Action::roomLeave)) {}
+RoomLeave::RoomLeave() : MessageHandlerBase(toUInt(Action::roomLeave)) {}
 
 Result RoomLeave::fromJson(
         const WebSocketConnectionPtr &wsConnPtr,
