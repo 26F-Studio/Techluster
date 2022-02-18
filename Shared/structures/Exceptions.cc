@@ -2,40 +2,66 @@
 // Created by particleg on 2021/10/2.
 //
 
+#include <helpers/ResponseJson.h>
+#include <magic_enum.hpp>
 #include <structures/Exceptions.h>
-
-#include <utility>
+#include <utils/data.h>
 
 using namespace drogon;
+using namespace magic_enum;
 using namespace std;
+using namespace tech::helpers;
 using namespace tech::internal;
 using namespace tech::structures;
+using namespace tech::types;
+using namespace tech::utils::data;
 
 BaseException::BaseException(string message) : _message(move(message)) {}
 
-char const *BaseException::what() const
-
-noexcept {
-return _message.
-
-c_str();
-
-}
+char const *BaseException::what() const noexcept { return _message.c_str(); }
 
 CodeException::CodeException(string message, const int &code) :
         BaseException(move(message)), _code(code) {}
 
-const int &CodeException::code() const
-
-noexcept {
-return
-_code;
-}
+const int &CodeException::code() const noexcept { return _code; }
 
 NetworkException::NetworkException(
         string message,
         const ReqResult &result
 ) : CodeException(move(message), TypePrefix::request + result) {}
+
+ResponseException::ResponseException(
+        string message,
+        const ResultCode &code,
+        const drogon::HttpStatusCode &statusCode
+) : BaseException(move(message)), _code(code), _statusCode(statusCode) {}
+
+ResponseException::ResponseException(
+        string message,
+        const exception &e,
+        const ResultCode &code,
+        const HttpStatusCode &statusCode
+) : BaseException(move(message)), _code(code), _statusCode(statusCode), _reason(e.what()) {}
+
+const ResultCode &ResponseException::code() const noexcept { return _code; }
+
+const drogon::HttpStatusCode &ResponseException::statusCode() const noexcept { return _statusCode; }
+
+Json::Value ResponseException::toJson() const noexcept {
+    ResponseJson result;
+    result.setResult(_code);
+    result.setMessage(_message);
+    if (!_reason.empty()) {
+        result.setReason(_reason);
+    }
+    return result.ref();
+}
+
+json_exception::InvalidFormat::InvalidFormat(std::string message) :
+        BaseException(move(message)) {}
+
+json_exception::WrongType::WrongType(const JsonValue &valueType) :
+        BaseException(string(enum_name(valueType))) {}
 
 sql_exception::EmptyValue::EmptyValue(string message) :
         BaseException(move(message)) {}

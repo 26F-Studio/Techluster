@@ -5,6 +5,8 @@
 #pragma once
 
 #include <drogon/drogon.h>
+#include <types/JsonValue.h>
+#include <types/ResultCode.h>
 
 namespace tech::internal {
     class BaseException : public std::exception {
@@ -44,8 +46,43 @@ namespace tech::structures {
         );
     };
 
-    static int operator+(const NetworkException::TypePrefix &prefix, const drogon::ReqResult &result) {
-        return static_cast<int>(prefix) + static_cast<int>(result);
+    class ResponseException : public internal::BaseException {
+    public:
+        explicit ResponseException(
+                std::string message,
+                const types::ResultCode &code = types::ResultCode::internalError,
+                const drogon::HttpStatusCode &statusCode = drogon::HttpStatusCode::k500InternalServerError
+        );
+
+        explicit ResponseException(
+                std::string message,
+                const std::exception &e,
+                const types::ResultCode &code = types::ResultCode::internalError,
+                const drogon::HttpStatusCode &statusCode = drogon::HttpStatusCode::k500InternalServerError
+        );
+
+        [[nodiscard]] const types::ResultCode &code() const noexcept;
+
+        [[nodiscard]] const drogon::HttpStatusCode &statusCode() const noexcept;
+
+        [[nodiscard]] Json::Value toJson() const noexcept;
+
+    private:
+        const std::string _reason;
+        const types::ResultCode _code;
+        const drogon::HttpStatusCode _statusCode;
+    };
+
+    namespace json_exception {
+        class InvalidFormat : public internal::BaseException {
+        public:
+            explicit InvalidFormat(std::string message);
+        };
+
+        class WrongType : public internal::BaseException {
+        public:
+            explicit WrongType(const types::JsonValue &valueType);
+        };
     }
 
     namespace sql_exception {
