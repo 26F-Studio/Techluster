@@ -5,7 +5,7 @@
 #pragma once
 
 #include <drogon/WebSocketController.h>
-#include <structures/JsonHelper.h>
+#include <helpers/BasicJson.h>
 
 namespace tech::structures {
     enum class Result {
@@ -23,9 +23,9 @@ namespace tech::structures {
         server,
     };
 
-    class MessageHandler {
+    class MessageHandlerBase {
     public:
-        explicit MessageHandler(const int &action) : _action(action) {}
+        explicit MessageHandlerBase(const int &action) : _action(action) {}
 
         virtual Result fromJson(
                 const drogon::WebSocketConnectionPtr &wsConnPtr,
@@ -34,7 +34,7 @@ namespace tech::structures {
                 drogon::CloseCode &code
         ) = 0;
 
-        virtual ~MessageHandler() = default;
+        virtual ~MessageHandlerBase() = default;
 
     protected:
         const int _action;
@@ -45,7 +45,7 @@ namespace tech::structures {
             Json::Value message;
             message["type"] = static_cast<int>(type);
             message["action"] = _action;
-            return tech::structures::JsonHelper(message).stringify();
+            return helpers::BasicJson(std::move(message)).stringify();
         }
 
         [[nodiscard]] std::string _parseMessage(
@@ -56,7 +56,7 @@ namespace tech::structures {
             message["type"] = static_cast<int>(type);
             message["action"] = _action;
             message["data"] = std::move(data);
-            return tech::structures::JsonHelper(message).stringify();
+            return helpers::BasicJson(std::move(message)).stringify();
         }
     };
 }
