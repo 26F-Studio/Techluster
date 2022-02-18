@@ -30,7 +30,7 @@ void tech::filters::EmailThreshold::doFilter(
         if (!app().getPlugin<DataManager>()->emailLimit(requestJson["email"].asString())) {
             ResponseJson response;
             response.setResult(ResultCode::tooFrequent);
-            response.setMessage(i18n("tooFrequent.email"));
+            response.setMessage(i18n("tooFrequent"));
             http::fromJson(k429TooManyRequests, response.ref(), failedCb);
             return;
         }

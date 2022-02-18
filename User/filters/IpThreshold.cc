@@ -27,7 +27,7 @@ void IpThreshold::doFilter(
         if (!app().getPlugin<DataManager>()->ipLimit(req->getPeerAddr().toIp())) {
             ResponseJson response;
             response.setResult(ResultCode::tooFrequent);
-            response.setMessage(i18n("tooFrequent.ip"));
+            response.setMessage(i18n("tooFrequent"));
             http::fromJson(k429TooManyRequests, response.ref(), failedCb);
             return;
         }
