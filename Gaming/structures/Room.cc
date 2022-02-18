@@ -2,11 +2,11 @@
 // Created by particleg on 2021/10/8.
 //
 
+#include <helpers/BasicJson.h>
 #include <plugins/AuthMaintainer.h>
 #include <plugins/Authorizer.h>
 #include <strategies/Action.h>
-#include <structures/JsonHelper.h>
-#include <structures/MessageHandler.h>
+#include <structures/MessageHandlerBase.h>
 #include <structures/Player.h>
 #include <structures/Room.h>
 #include <utils/crypto.h>
@@ -14,6 +14,7 @@
 
 using namespace drogon;
 using namespace std;
+using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
@@ -157,7 +158,7 @@ void Room::subscribe(const WebSocketConnectionPtr &connection) {
     response["type"] = static_cast<int>(Type::self);
     response["action"] = static_cast<int>(Action::roomJoin);
     response["data"] = parse(true);
-    connection->send(JsonHelper(response).stringify());
+    connection->send(BasicJson(response).stringify());
 
     if (_size() > 1) {
         Json::Value message;
@@ -165,7 +166,7 @@ void Room::subscribe(const WebSocketConnectionPtr &connection) {
         message["action"] = static_cast<int>(Action::roomJoin);
         message["data"] = player->info();
         publish(
-                move(JsonHelper(message).stringify()),
+                move(BasicJson(message).stringify()),
                 player->userId()
         );
     }
@@ -185,7 +186,7 @@ void Room::unsubscribe(const WebSocketConnectionPtr &connection) {
         message["type"] = static_cast<int>(Type::other);
         message["action"] = static_cast<int>(Action::roomLeave);
         message["data"] = player->userId();
-        publish(move(JsonHelper(message).stringify()));
+        publish(move(BasicJson(message).stringify()));
     }
 }
 
@@ -281,7 +282,7 @@ void Room::checkReady() {
     Json::Value message;
     message["type"] = static_cast<int>(Type::server);
     message["action"] = static_cast<int>(Action::gameReady);
-    publish(JsonHelper(message).stringify());
+    publish(BasicJson(message).stringify());
 
     _startingGame();
 }
@@ -309,7 +310,7 @@ void Room::checkFinished() {
     Json::Value message;
     message["type"] = static_cast<int>(Type::server);
     message["action"] = static_cast<int>(Action::gameEnd);
-    publish(JsonHelper(message).stringify());
+    publish(BasicJson(message).stringify());
 }
 
 Room::~Room() {
@@ -375,7 +376,7 @@ void Room::_startingGame() {
             message["type"] = static_cast<int>(Type::server);
             message["action"] = static_cast<int>(Action::gameStart);
             message["data"] = _getTransferNode();
-            publish(JsonHelper(message).stringify());
+            publish(BasicJson(message).stringify());
         } catch (const NetworkException &e) {
             // TODO: Send an email if failed too many times.
             LOG_ERROR << e.what();
@@ -419,7 +420,7 @@ string Room::_getTransferNode() {
             throw NetworkException(
                     "Invalid response(" +
                     to_string(static_cast<int>(responsePtr->getStatusCode())) +
-                    "): " + JsonHelper(response).stringify(),
+                    "): " + BasicJson(response).stringify(),
                     ReqResult::BadResponse
             );
         } else {
