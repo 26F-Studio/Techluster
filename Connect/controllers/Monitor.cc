@@ -34,6 +34,7 @@ void Monitor::getInfo(const HttpRequestPtr &req, function<void(const HttpRespons
         try {
             response.setData(_nodeManager->parseInfo(nodeType));
         } catch (exception &e) {
+            // TODO: Move this into NodeManager
             code = HttpStatusCode::k406NotAcceptable;
             response.setResult(ResultCode::invalidArguments);
             response.setMessage(i18n("notAvailable."s.append(enum_name(nodeType))));

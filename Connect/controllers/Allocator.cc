@@ -36,6 +36,7 @@ void Allocator::allocate(
             response.setData(_nodeManager->getBestNode(nodeType));
         }
     } catch (exception &e) {
+        // TODO: Move this into NodeManager
         code = HttpStatusCode::k503ServiceUnavailable;
         response.setResult(ResultCode::notAvailable);
         response.setMessage(i18n("notAvailable."s.append(enum_name(nodeType))));
