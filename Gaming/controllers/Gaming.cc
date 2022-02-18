@@ -2,8 +2,8 @@
 // Created by Parti on 2021/3/27.
 //
 
-#include <controllers/Room.h>
+#include <controllers/Gaming.h>
 
 using namespace tech::socket::v2;
 
-Room::Room() = default;
+Gaming::Gaming() = default;
