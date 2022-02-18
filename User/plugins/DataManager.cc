@@ -3,17 +3,23 @@
 //
 
 #include <drogon/drogon.h>
-#include <structures/Exceptions.h>
+#include <helpers/DataJson.h>
 #include <plugins/DataManager.h>
-#include <structures/JsonHelper.h>
+#include <structures/Exceptions.h>
 #include <utils/crypto.h>
+#include <utils/data.h>
+#include <utils/io.h>
 
 using namespace drogon;
 using namespace drogon_model;
 using namespace std;
+using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::structures;
+using namespace tech::types;
 using namespace tech::utils;
+
+DataManager::DataManager() : I18nHelper(CMAKE_PROJECT_NAME) {}
 
 void DataManager::initAndStart(const Json::Value &config) {
     if (!(
@@ -31,23 +37,45 @@ void DataManager::initAndStart(const Json::Value &config) {
     _emailMaxCount = config["tokenBucket"]["email"]["maxCount"].asUInt64();
 
     if (!(
-            config["expirations"]["refresh"].isInt64() &&
-            config["expirations"]["access"].isInt64() &&
-            config["expirations"]["email"].isInt64()
+            config["smtp"]["server"].isString() &&
+            config["smtp"]["account"].isString() &&
+            config["smtp"]["password"].isString() &&
+            config["smtp"]["senderEmail"].isString() &&
+            config["smtp"]["senderName"].isString()
     )) {
-        LOG_ERROR << R"("Invalid expirations config")";
+        LOG_ERROR << R"(Invalid smtp config)";
         abort();
     }
-    _redisHelper = make_unique<RedisHelper>(move(RedisHelper(
+    _emailHelper = make_unique<EmailHelper>(
+            config["smtp"]["server"].asString(),
+            config["smtp"]["account"].asString(),
+            config["smtp"]["password"].asString(),
+            config["smtp"]["senderEmail"].asString(),
+            config["smtp"]["senderName"].asString()
+    );
+
+    if (!(
+            config["redis"]["host"].isString() &&
+            config["redis"]["port"].isUInt() &&
+            config["redis"]["timeout"].isUInt() &&
+            config["redis"]["expirations"]["refresh"].isInt64() &&
+            config["redis"]["expirations"]["access"].isInt64() &&
+            config["redis"]["expirations"]["email"].isInt64()
+    )) {
+        LOG_ERROR << R"("Invalid redis config")";
+        abort();
+    }
+
+    _userRedis = make_unique<UserRedis>(move(UserRedis(
             {
-                    chrono::minutes(config["expirations"]["refresh"].asInt64()),
-                    chrono::minutes(config["expirations"]["access"].asInt64()),
-                    chrono::minutes(config["expirations"]["email"].asInt64())
+                    chrono::minutes(config["redis"]["expirations"]["refresh"].asInt64()),
+                    chrono::minutes(config["redis"]["expirations"]["access"].asInt64()),
+                    chrono::minutes(config["redis"]["expirations"]["email"].asInt64())
             }
     )));
 
     try {
-        _redisHelper->connect(
+        _userRedis->connect(
                 config["redis"]["host"].asString(),
                 config["redis"]["port"].asUInt(),
                 config["redis"]["timeout"].asUInt()
@@ -57,7 +85,6 @@ void DataManager::initAndStart(const Json::Value &config) {
         abort();
     }
 
-    _pgClient = app().getDbClient();
     _dataMapper = make_unique<orm::Mapper<techluster::Data>>(app().getDbClient());
     _playerMapper = make_unique<orm::Mapper<techluster::Player>>(app().getDbClient());
 
@@ -65,72 +92,117 @@ void DataManager::initAndStart(const Json::Value &config) {
 }
 
 void DataManager::shutdown() {
-    _redisHelper->disconnect();
+    _userRedis->disconnect();
     LOG_INFO << "DataManager shutdown.";
 }
 
 int64_t DataManager::getUserId(const string &accessToken) {
-    return _redisHelper->getIdByAccessToken(accessToken);
+    try {
+        return _userRedis->getIdByAccessToken(accessToken);
+    } catch (const redis_exception::KeyNotFound &e) {
+        LOG_DEBUG << "Key not found:" << e.what();
+        throw ResponseException(
+                i18n("invalidAccessToken"),
+                ResultCode::notAcceptable,
+                k401Unauthorized
+        );
+    }
 }
 
 RedisToken DataManager::refresh(const string &refreshToken) {
-    return move(_redisHelper->refresh(refreshToken));
+    try {
+        return move(_userRedis->refresh(refreshToken));
+    } catch (const redis_exception::KeyNotFound &e) {
+        LOG_DEBUG << "Key not found:" << e.what();
+        throw ResponseException(
+                i18n("invalidRefreshToken"),
+                ResultCode::notAcceptable,
+                k401Unauthorized
+        );
+    }
 }
 
-std::string DataManager::verifyEmail(const string &email) {
-    auto code = drogon::utils::genRandomString(8);
-    transform(
-            code.begin(),
-            code.end(),
-            code.begin(),
-            ::toupper
+void DataManager::verifyEmail(const string &email) {
+    auto code = data::randomString(8);
+    _userRedis->setEmailCode(email, code);
+    auto mailContent = io::getFileContent("./verifyEmail.html");
+    drogon::utils::replaceAll(
+            mailContent,
+            "{{VERIFY_CODE}}",
+            code
     );
-    _redisHelper->setEmailCode(email, code);
-    return code;
+    // TODO: Replace with async method
+    _emailHelper->smtp(
+            email,
+            "[Techmino] Verify Code 验证码",
+            mailContent
+    );
 }
 
-RedisToken DataManager::loginEmailCode(const string &email, const string &code) {
-    _redisHelper->checkEmailCode(email, code);
+tuple<RedisToken, bool> DataManager::loginEmailCode(
+        const string &email,
+        const string &code
+) {
+    _checkEmailCode(email, code);
+
+    techluster::Player player;
+    bool isNew = false;
     if (_playerMapper->count(orm::Criteria(
             techluster::Player::Cols::_email,
             orm::CompareOperator::EQ,
             email
     )) == 0) {
-        techluster::Player newPlayer;
-        newPlayer.setEmail(email);
-        _playerMapper->insert(newPlayer);
-        techluster::Data newData;
-        _dataMapper->insert(newData);
+        isNew = true;
+        player.setEmail(email);
+        _playerMapper->insert(player);
+        techluster::Data data;
+        _dataMapper->insert(data);
+    } else {
+        player = _playerMapper->findOne(orm::Criteria(
+                techluster::Player::Cols::_email,
+                orm::CompareOperator::EQ,
+                email
+        ));
     }
-    auto player = _playerMapper->findOne(orm::Criteria(
-            techluster::Player::Cols::_email,
-            orm::CompareOperator::EQ,
-            email
-    ));
-    _redisHelper->deleteEmailCode(email);
-    return move(_redisHelper->generateTokens(
-            to_string(player.getValueOfId())
-    ));
+
+    return {
+            _userRedis->generateTokens(to_string(player.getValueOfId())),
+            isNew
+    };
 }
 
 RedisToken DataManager::loginEmailPassword(
         const string &email,
         const string &password
 ) {
-    auto player = _playerMapper->findOne(orm::Criteria(
-            techluster::Player::Cols::_email,
-            orm::CompareOperator::EQ,
-            email
-    ) && orm::Criteria(
-            techluster::Player::Cols::_password,
-            orm::CompareOperator::EQ,
-            password
-    ));
+    try {
+        auto player = _playerMapper->findOne(orm::Criteria(
+                techluster::Player::Cols::_email,
+                orm::CompareOperator::EQ,
+                email
+        ) && orm::Criteria(
+                techluster::Player::Cols::_password,
+                orm::CompareOperator::EQ,
+                password
+        ));
 
-    if (player.getValueOfPassword().empty()) {
-        throw sql_exception::EmptyValue("password is empty");
+        if (player.getValueOfPassword().empty()) {
+            throw ResponseException(
+                    i18n("noPassword"),
+                    ResultCode::nullValue,
+                    k403Forbidden
+            );
+        }
+
+        return _userRedis->generateTokens(to_string(player.getValueOfId()));
+    } catch (const orm::UnexpectedRows &e) {
+        LOG_DEBUG << "Unexpected rows: " << e.what();
+        throw ResponseException(
+                i18n("invalidEmailPass"),
+                ResultCode::notAcceptable,
+                k403Forbidden
+        );
     }
-    return _redisHelper->generateTokens(to_string(player.getValueOfId()));
 }
 
 void DataManager::resetEmail(
@@ -138,15 +210,27 @@ void DataManager::resetEmail(
         const string &code,
         const string &newPassword
 ) {
-    _redisHelper->checkEmailCode(email, code);
-    auto player = _playerMapper->findOne(orm::Criteria(
-            techluster::Player::Cols::_email,
-            orm::CompareOperator::EQ,
-            email
-    ));
-    player.setPassword(newPassword);
-    _playerMapper->update(player);
-    _redisHelper->deleteEmailCode(email);
+    _checkEmailCode(email, code);
+
+    try {
+        auto player = _playerMapper->findOne(orm::Criteria(
+                techluster::Player::Cols::_email,
+                orm::CompareOperator::EQ,
+                email
+        ));
+        player.setPassword(newPassword);
+        if (player.getValueOfIsNew()) {
+            player.setIsNew(false);
+        }
+        _playerMapper->update(player);
+    } catch (const orm::UnexpectedRows &e) {
+        LOG_DEBUG << "Unexpected rows: " << e.what();
+        throw ResponseException(
+                i18n("userNotFound"),
+                ResultCode::notFound,
+                k404NotFound
+        );
+    }
 }
 
 void DataManager::migrateEmail(
@@ -154,212 +238,278 @@ void DataManager::migrateEmail(
         const string &newEmail,
         const string &code
 ) {
-    auto player = _playerMapper->findOne(orm::Criteria(
-            techluster::Player::Cols::_id,
-            orm::CompareOperator::EQ,
-            _redisHelper->getIdByAccessToken(accessToken)
-    ));
-    _redisHelper->checkEmailCode(newEmail, code);
-    player.setEmail(newEmail);
-    _playerMapper->update(player);
-    _redisHelper->deleteEmailCode(newEmail);
+    _checkEmailCode(newEmail, code);
+
+    try {
+        auto player = _playerMapper->findOne(orm::Criteria(
+                techluster::Player::Cols::_id,
+                orm::CompareOperator::EQ,
+                _userRedis->getIdByAccessToken(accessToken)
+        ));
+        if (player.getValueOfEmail() == newEmail) {
+            return;
+        }
+        if (_playerMapper->count(orm::Criteria(
+                techluster::Player::Cols::_email,
+                orm::CompareOperator::EQ,
+                newEmail
+        ))) {
+            throw ResponseException(
+                    i18n("emailExists"),
+                    ResultCode::conflict,
+                    k409Conflict
+            );
+        }
+        player.setEmail(newEmail);
+        _playerMapper->update(player);
+    } catch (const redis_exception::KeyNotFound &e) {
+        LOG_DEBUG << "Key not found:" << e.what();
+        throw ResponseException(
+                i18n("invalidAccessToken"),
+                ResultCode::notAcceptable,
+                k401Unauthorized
+        );
+    } catch (const orm::UnexpectedRows &e) {
+        LOG_DEBUG << "Unexpected rows: " << e.what();
+        throw ResponseException(
+                i18n("userNotFound"),
+                ResultCode::notFound,
+                k404NotFound
+        );
+    }
 }
 
 Json::Value DataManager::getUserInfo(
         const string &accessToken,
         const int64_t &userId
 ) {
-    auto id = userId;
-    if (userId < 0) {
-        id = _redisHelper->getIdByAccessToken(accessToken);
-    } else {
-        _redisHelper->checkAccessToken(accessToken);
+    int64_t targetId;
+    try {
+        auto tempUserId = _userRedis->getIdByAccessToken(accessToken);
+        targetId = userId < 0 ? tempUserId : userId;
+    } catch (const redis_exception::KeyNotFound &e) {
+        LOG_DEBUG << "Key not found:" << e.what();
+        throw ResponseException(
+                i18n("invalidAccessToken"),
+                ResultCode::notAcceptable,
+                k401Unauthorized
+        );
     }
-    auto player = _playerMapper->findOne(orm::Criteria(
-            techluster::Player::Cols::_id,
-            orm::CompareOperator::EQ,
-            id
-    ));
-    Json::Value result;
-    result["id"] = player.getValueOfId();
-    result["avatar_frame"] = player.getValueOfAvatarFrame();
-    result["avatar_hash"] = player.getValueOfAvatarHash();
-    result["clan"] = player.getValueOfClan();
-    result["motto"] = player.getValueOfMotto();
-    result["region"] = player.getValueOfRegion();
-    result["username"] = player.getValueOfUsername();
-    return result;
+    try {
+        auto result = _playerMapper->findOne(orm::Criteria(
+                techluster::Player::Cols::_id,
+                orm::CompareOperator::EQ,
+                targetId
+        )).toJson();
+        result.removeMember("password");
+        result.removeMember("avatar");
+        result.removeMember("is_new");
+        return result;
+    } catch (const orm::UnexpectedRows &e) {
+        LOG_DEBUG << "Unexpected rows: " << e.what();
+        throw ResponseException(
+                i18n("userNotFound"),
+                ResultCode::notFound,
+                k404NotFound
+        );
+    }
 }
 
 void DataManager::updateUserInfo(
         const string &accessToken,
-        const Json::Value &info
+        RequestJson request
 ) {
-    auto player = _playerMapper->findOne(orm::Criteria(
-            techluster::Player::Cols::_id,
-            orm::CompareOperator::EQ,
-            _redisHelper->getIdByAccessToken(accessToken)
-    ));
-    bool updated = false;
-    if (info.isMember("username") &&
-        info["username"].isString() &&
-        info["username"].asString() != player.getValueOfUsername()) {
-        updated = true;
-        player.setEmail(info["username"].asString());
+    try {
+        auto player = _playerMapper->findOne(orm::Criteria(
+                techluster::Player::Cols::_id,
+                orm::CompareOperator::EQ,
+                _userRedis->getIdByAccessToken(accessToken)
+        ));
+        if (player.getValueOfIsNew()) {
+            if (!request.check("password", JsonValue::String)) {
+                throw ResponseException(
+                        i18n("noPassword"),
+                        ResultCode::nullValue,
+                        k403Forbidden
+                );
+            }
+            player.setIsNew(false);
+        } else {
+            request.remove("password");
+        }
+        if (request.check("avatar", JsonValue::String)) {
+            player.setAvatarHash(crypto::blake2B(request["avatar"].asString()));
+        }
+        player.updateByJson(request.ref());
+        _playerMapper->update(player);
+    } catch (const orm::UnexpectedRows &e) {
+        LOG_DEBUG << "Unexpected rows: " << e.what();
+        throw ResponseException(
+                i18n("userNotFound"),
+                ResultCode::notFound,
+                k404NotFound
+        );
     }
-    if (info.isMember("motto") &&
-        info["motto"].isString() &&
-        info["motto"].asString() != player.getValueOfMotto()) {
-        updated = true;
-        player.setMotto(info["motto"].asString());
-    }
-    if (info.isMember("region") &&
-        info["region"].isInt() &&
-        info["region"].asInt() != player.getValueOfRegion()) {
-        updated = true;
-        player.setRegion(static_cast<short>(info["region"].asInt()));
-    }
-    if (info.isMember("avatar") &&
-        info["avatar"].isString() &&
-        info["avatar"].asString() != player.getValueOfAvatar()) {
-        updated = true;
-        player.setAvatar(info["avatar"].asString());
-        player.setAvatarHash(crypto::blake2B(info["avatar"].asString(), 4));
-    }
-    if (info.isMember("avatar_frame") &&
-        info["avatar_frame"].isInt() &&
-        info["avatar_frame"].asInt() != player.getValueOfAvatarFrame()) {
-        updated = true;
-        player.setAvatarFrame(static_cast<short>(info["avatar_frame"].asInt()));
-    }
-    if (info.isMember("clan") &&
-        info["clan"].isString() &&
-        info["clan"].asString() != player.getValueOfClan()) {
-        updated = true;
-        player.setClan(info["clan"].asString());
-    }
-    if (!updated) {
-        throw invalid_argument("Nothing changed");
-    }
-    _playerMapper->update(player);
 }
 
-string DataManager::getUserAvatar(
+string DataManager::getAvatar(
         const string &accessToken,
         const int64_t &userId
 ) {
-    auto id = userId;
-    if (userId < 0) {
-        id = _redisHelper->getIdByAccessToken(accessToken);
-    } else {
-        _redisHelper->checkAccessToken(accessToken);
+    int64_t targetId;
+    try {
+        auto tempUserId = _userRedis->getIdByAccessToken(accessToken);
+        targetId = userId < 0 ? tempUserId : userId;
+    } catch (const redis_exception::KeyNotFound &e) {
+        LOG_DEBUG << "Key not found:" << e.what();
+        throw ResponseException(
+                i18n("invalidAccessToken"),
+                ResultCode::notAcceptable,
+                k401Unauthorized
+        );
     }
-
-    auto player = _playerMapper->findOne(orm::Criteria(
-            techluster::Player::Cols::_id,
-            orm::CompareOperator::EQ,
-            id
-    ));
-    return player.getValueOfAvatar();
+    try {
+        auto player = _playerMapper->findOne(orm::Criteria(
+                techluster::Player::Cols::_id,
+                orm::CompareOperator::EQ,
+                targetId
+        ));
+        return player.getValueOfAvatar();
+    } catch (const orm::UnexpectedRows &e) {
+        LOG_DEBUG << "Unexpected rows: " << e.what();
+        throw ResponseException(
+                i18n("userNotFound"),
+                ResultCode::notFound,
+                k404NotFound
+        );
+    }
 }
 
 Json::Value DataManager::getUserData(
         const string &accessToken,
         const int64_t &userId,
         const DataField &field,
-        const Json::Value &request
+        const RequestJson &request
 ) {
-    if (!request["paths"].isArray()) {
-        throw invalid_argument("'paths' must be an array");
-    }
     // TODO: Only allow access to other user's protected data if they are friends
-    auto id = userId;
-    if (userId < 0) {
-        id = _redisHelper->getIdByAccessToken(accessToken);
-    } else {
-        if (field == DataField::kProtected || field == DataField::kPrivate) {
-            throw invalid_argument("Cannot access other's protected data");
+    int64_t targetId;
+    try {
+        auto tempUserId = _userRedis->getIdByAccessToken(accessToken);
+        if (userId != tempUserId && field != DataField::Public) {
+            throw ResponseException(
+                    i18n("noPermission"),
+                    ResultCode::noPermission,
+                    k403Forbidden
+            );
         }
-        _redisHelper->checkAccessToken(accessToken);
+        targetId = userId < 0 ? tempUserId : userId;
+    } catch (const redis_exception::KeyNotFound &e) {
+        LOG_DEBUG << "Key not found:" << e.what();
+        throw ResponseException(
+                i18n("invalidAccessToken"),
+                ResultCode::notAcceptable,
+                k401Unauthorized
+        );
     }
-    auto data = _dataMapper->findOne(orm::Criteria(
-            techluster::Player::Cols::_id,
-            orm::CompareOperator::EQ,
-            id
-    ));
-    string rawString;
-    switch (field) {
-        case DataField::kPublic:
-            rawString = data.getValueOfPublic();
-            break;
-        case DataField::kProtected:
-            rawString = data.getValueOfProtected();
-            break;
-        case DataField::kPrivate:
-            rawString = data.getValueOfPrivate();
-            break;
+    try {
+        auto data = _dataMapper->findOne(orm::Criteria(
+                techluster::Player::Cols::_id,
+                orm::CompareOperator::EQ,
+                targetId
+        ));
+        string rawString;
+        switch (field) {
+            case DataField::Public:
+                rawString = data.getValueOfPublic();
+                break;
+            case DataField::Protected:
+                rawString = data.getValueOfProtected();
+                break;
+            case DataField::Private:
+                rawString = data.getValueOfPrivate();
+                break;
+        }
+        Json::Value output;
+        auto source = DataJson(rawString);
+        for (const auto &item: request["paths"]) {
+            output.append(source.retrieveByPath(item.asString()));
+        }
+        return output;
+    } catch (const orm::UnexpectedRows &e) {
+        LOG_DEBUG << "Unexpected rows: " << e.what();
+        throw ResponseException(
+                i18n("userNotFound"),
+                ResultCode::notFound,
+                k404NotFound
+        );
     }
-    Json::Value output;
-    auto source = JsonHelper(rawString);
-    for (const auto &item: request["paths"]) {
-        output.append(source.retrieveByPath(item.asString()));
-    }
-    return output;
 }
 
 void DataManager::updateUserData(
         const string &accessToken,
         const DataField &field,
-        const Json::Value &request
+        const RequestJson &request
 ) {
-    if (!request["data"].isArray()) {
-        throw invalid_argument("'data' must be an array");
+    try {
+        auto data = _dataMapper->findOne(orm::Criteria(
+                techluster::Player::Cols::_id,
+                orm::CompareOperator::EQ,
+                _userRedis->getIdByAccessToken(accessToken)
+        ));
+        string rawString;
+        switch (field) {
+            case DataField::Public:
+                rawString = data.getValueOfPublic();
+                break;
+            case DataField::Protected:
+                rawString = data.getValueOfProtected();
+                break;
+            case DataField::Private:
+                rawString = data.getValueOfPrivate();
+                break;
+        }
+        auto target = DataJson(rawString);
+        if (request.check("options.overwrite", JsonValue::Bool)) {
+            target.canOverwrite(request["options"]["overwrite"].asBool());
+        }
+        if (request.check("options.skip", JsonValue::Bool)) {
+            target.canSkip(request["options"]["skip"].asBool());
+        }
+        for (const auto &item: request["data"]) {
+            target.modifyByPath(item["path"].asString(), item["value"]);
+            LOG_DEBUG << target.stringify("  ");
+        }
+        switch (field) {
+            case DataField::Public:
+                data.setPublic(target.stringify());
+                break;
+            case DataField::Protected:
+                data.setProtected(target.stringify());
+                break;
+            case DataField::Private:
+                data.setPrivate(target.stringify());
+                break;
+        }
+        _dataMapper->update(data);
+    } catch (const redis_exception::KeyNotFound &e) {
+        LOG_DEBUG << "Key not found:" << e.what();
+        throw ResponseException(
+                i18n("invalidAccessToken"),
+                ResultCode::notAcceptable,
+                k401Unauthorized
+        );
+    } catch (const orm::UnexpectedRows &e) {
+        LOG_DEBUG << "Unexpected rows: " << e.what();
+        throw ResponseException(
+                i18n("userNotFound"),
+                ResultCode::notFound,
+                k404NotFound
+        );
     }
-    auto id = _redisHelper->getIdByAccessToken(accessToken);
-    auto data = _dataMapper->findOne(orm::Criteria(
-            techluster::Player::Cols::_id,
-            orm::CompareOperator::EQ,
-            id
-    ));
-    string rawString;
-    switch (field) {
-        case DataField::kPublic:
-            rawString = data.getValueOfPublic();
-            break;
-        case DataField::kProtected:
-            rawString = data.getValueOfProtected();
-            break;
-        case DataField::kPrivate:
-            rawString = data.getValueOfPrivate();
-            break;
-    }
-    auto target = JsonHelper(rawString);
-    if (request["options"]["overwrite"].isBool()) {
-        target.canOverwrite(request["options"]["overwrite"].asBool());
-    }
-    if (request["options"]["skip"].isBool()) {
-        target.canSkip(request["options"]["skip"].asBool());
-    }
-    for (const auto &item: request["data"]) {
-        target.modifyByPath(item["path"].asString(), item["value"]);
-        LOG_DEBUG << target.stringify("  ");
-    }
-    switch (field) {
-        case DataField::kPublic:
-            data.setPublic(target.stringify());
-            break;
-        case DataField::kProtected:
-            data.setProtected(target.stringify());
-            break;
-        case DataField::kPrivate:
-            data.setPrivate(target.stringify());
-            break;
-    }
-    _dataMapper->update(data);
 }
 
 bool DataManager::ipLimit(const string &ip) const {
-    return _redisHelper->tokenBucket(
+    return _userRedis->tokenBucket(
             "ip:" + ip,
             _ipInterval,
             _ipMaxCount
@@ -367,9 +517,33 @@ bool DataManager::ipLimit(const string &ip) const {
 }
 
 bool DataManager::emailLimit(const string &email) const {
-    return _redisHelper->tokenBucket(
+    return _userRedis->tokenBucket(
             "email:" + email,
             _emailInterval,
             _emailMaxCount
     );
+}
+
+void DataManager::_checkEmailCode(
+        const string &email,
+        const string &code
+) {
+    try {
+        _userRedis->checkEmailCode(email, code);
+        _userRedis->deleteEmailCode(email);
+    } catch (const redis_exception::KeyNotFound &e) {
+        LOG_DEBUG << "Key not found: " << e.what();
+        throw ResponseException(
+                i18n("invalidVerifyEmail"),
+                ResultCode::notFound,
+                k404NotFound
+        );
+    } catch (const redis_exception::NotEqual &e) {
+        LOG_DEBUG << "Value not equal at: " << e.what();
+        throw ResponseException(
+                i18n("invalidVerifyCode"),
+                ResultCode::notAcceptable,
+                k403Forbidden
+        );
+    }
 }

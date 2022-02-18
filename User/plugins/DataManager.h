@@ -5,38 +5,37 @@
 #pragma once
 
 #include <drogon/plugins/Plugin.h>
+#include <helpers/EmailHelper.h>
+#include <helpers/I18nHelper.h>
+#include <helpers/RequestJson.h>
 #include <models/Data.h>
 #include <models/Player.h>
-#include <structures/DataField.h>
-#include <structures/RedisHelper.h>
+#include <structures/UserRedis.h>
+#include <types/DataField.h>
 
 namespace tech::plugins {
-    class DataManager : public drogon::Plugin<DataManager> {
+    class DataManager :
+            public drogon::Plugin<DataManager>,
+            public helpers::I18nHelper<DataManager> {
     public:
-        DataManager() = default;
+        DataManager();
 
         void initAndStart(const Json::Value &config) override;
 
         void shutdown() override;
 
-        [[nodiscard]] int64_t getUserId(
-                const std::string &accessToken
-        );
+        [[nodiscard]] int64_t getUserId(const std::string &accessToken);
 
-        tech::structures::RedisToken refresh(
-                const std::string &refreshToken
-        );
+        structures::RedisToken refresh(const std::string &refreshToken);
 
-        [[nodiscard]] std::string verifyEmail(
-                const std::string &email
-        );
+        void verifyEmail(const std::string &email);
 
-        [[nodiscard]] tech::structures::RedisToken loginEmailCode(
+        [[nodiscard]] std::tuple<structures::RedisToken, bool> loginEmailCode(
                 const std::string &email,
                 const std::string &code
         );
 
-        [[nodiscard]] tech::structures::RedisToken loginEmailPassword(
+        [[nodiscard]] structures::RedisToken loginEmailPassword(
                 const std::string &email,
                 const std::string &password
         );
@@ -60,10 +59,10 @@ namespace tech::plugins {
 
         void updateUserInfo(
                 const std::string &accessToken,
-                const Json::Value &info
+                helpers::RequestJson request
         );
 
-        [[nodiscard]] std::string getUserAvatar(
+        [[nodiscard]] std::string getAvatar(
                 const std::string &accessToken,
                 const int64_t &userId
         );
@@ -71,14 +70,14 @@ namespace tech::plugins {
         [[nodiscard]] Json::Value getUserData(
                 const std::string &accessToken,
                 const int64_t &userId,
-                const tech::structures::DataField &field,
-                const Json::Value &list
+                const types::DataField &field,
+                const helpers::RequestJson &request
         );
 
         void updateUserData(
                 const std::string &accessToken,
-                const tech::structures::DataField &field,
-                const Json::Value &request
+                const types::DataField &field,
+                const helpers::RequestJson &request
         );
 
         [[nodiscard]] bool ipLimit(const std::string &ip) const;
@@ -89,10 +88,15 @@ namespace tech::plugins {
         std::chrono::seconds _ipInterval{}, _emailInterval{};
         uint64_t _ipMaxCount{}, _emailMaxCount{};
 
-        drogon::orm::DbClientPtr _pgClient;
-        std::unique_ptr <tech::structures::RedisHelper> _redisHelper;
-        std::unique_ptr <drogon::orm::Mapper<drogon_model::techluster::Data>> _dataMapper;
-        std::unique_ptr <drogon::orm::Mapper<drogon_model::techluster::Player>> _playerMapper;
+        std::unique_ptr<helpers::EmailHelper> _emailHelper;
+        std::unique_ptr<tech::structures::UserRedis> _userRedis;
+        std::unique_ptr<drogon::orm::Mapper<drogon_model::techluster::Data>> _dataMapper;
+        std::unique_ptr<drogon::orm::Mapper<drogon_model::techluster::Player>> _playerMapper;
+
+        void _checkEmailCode(
+                const std::string &email,
+                const std::string &code
+        );
     };
 }
 
