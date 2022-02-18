@@ -6,7 +6,7 @@
 
 #include <drogon/plugins/Plugin.h>
 #include <structures/HandlerFactory.h>
-#include <structures/MessageHandler.h>
+#include <structures/MessageHandlerBase.h>
 
 namespace tech::structures {
     template<class handlerManagerImpl>
@@ -27,6 +27,6 @@ namespace tech::structures {
         virtual ~HandlerManagerBase() = default;
 
     protected:
-        HandlerFactory<MessageHandler> _handlerFactory;
+        HandlerFactory<MessageHandlerBase> _handlerFactory;
     };
 }
