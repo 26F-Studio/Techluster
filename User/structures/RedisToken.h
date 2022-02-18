@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <json/value.h>
 
 namespace tech::structures {
     class RedisToken {
@@ -19,6 +20,9 @@ namespace tech::structures {
         [[nodiscard]] std::string &refresh();
 
         [[nodiscard]] std::string &access();
+
+        [[nodiscard]] Json::Value parse() const;
+
 
     private:
         std::string _refreshToken, _accessToken;

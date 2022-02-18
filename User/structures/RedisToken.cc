@@ -21,3 +21,11 @@ RedisToken::RedisToken(
 string &RedisToken::refresh() { return _refreshToken; }
 
 string &RedisToken::access() { return _accessToken; }
+
+Json::Value RedisToken::parse() const {
+    Json::Value result;
+    result["refreshToken"] = _refreshToken;
+    result["accessToken"] = _accessToken;
+    return result;
+}
+
