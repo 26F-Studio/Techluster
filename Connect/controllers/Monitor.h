@@ -5,26 +5,33 @@
 #pragma once
 
 #include <drogon/HttpController.h>
-#include <services/Monitor.h>
+#include <helpers/I18nHelper.h>
+#include <plugins/NodeManager.h>
+#include <plugins/Perfmon.h>
 
 namespace tech::api::v2 {
-    class Monitor : public drogon::HttpController<Monitor> {
+    class Monitor :
+            public drogon::HttpController<Monitor>,
+            public helpers::I18nHelper<Monitor> {
     public:
+        Monitor();
+
         METHOD_LIST_BEGIN
-            METHOD_ADD(Monitor::selfInfo, "/self", drogon::Get, drogon::Options, "drogon::LocalHostFilter");
-            METHOD_ADD(Monitor::othersInfo, "/{1}", drogon::Get, drogon::Options, "drogon::LocalHostFilter");
+            METHOD_ADD(
+                    Monitor::getInfo,
+                    "",
+                    drogon::Get,
+                    drogon::Options,
+                    "drogon::LocalHostFilter",
+                    "tech::filters::CheckNodeType"
+            );
         METHOD_LIST_END
 
-        void selfInfo(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
-
-        void othersInfo(
-                const drogon::HttpRequestPtr &req,
-                std::function<void(const drogon::HttpResponsePtr &)> &&callback,
-                const std::string &nodeType
-        );
+        void getInfo(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
 
     private:
-        services::Monitor _service;
+        plugins::NodeManager *_nodeManager;
+        plugins::Perfmon *_perfmon;
     };
 }
 
