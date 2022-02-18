@@ -1,40 +1,20 @@
 //
-// Created by ParticleG on 2022/2/1.
+// Created by ParticleG on 2022/2/9.
 //
 
-#include <algorithm>
-#include <drogon/drogon.h>
-#include <structures/JsonHelper.h>
+#include <helpers/DataJson.h>
+#include <utils/data.h>
 
-using namespace tech::structures;
 using namespace std;
+using namespace tech::helpers;
+using namespace tech::utils::data;
 
-JsonHelper::JsonHelper(Json::Value json) : _value(move(json)) {}
+void DataJson::canOverwrite(const bool &overwrite) { _overwrite = overwrite; }
 
-JsonHelper::JsonHelper(Json::Value &&json) : _value(move(json)) {}
+void DataJson::canSkip(const bool &skip) { _skip = skip; }
 
-JsonHelper::JsonHelper(const string &raw) { stringstream(raw) >> _value; }
-
-string JsonHelper::stringify(const string &indentation) {
-    Json::StreamWriterBuilder writerBuilder;
-    writerBuilder.settings_["indentation"] = indentation;
-    std::unique_ptr<Json::StreamWriter> jsonWriter(writerBuilder.newStreamWriter());
-    std::ostringstream oss;
-    jsonWriter->write(_value, &oss);
-    return oss.str();
-}
-
-Json::Value &JsonHelper::value() { return _value; }
-
-void JsonHelper::canOverwrite(const bool &overwrite) { _overwrite = overwrite; }
-
-void JsonHelper::canSkip(const bool &skip) { _skip = skip; }
-
-Json::Value JsonHelper::retrieveByPath(const string &path) {
-    if (path.empty()) {
-        return _value;
-    }
-    auto *resultPtr = &_value;
+Json::Value DataJson::retrieveByPath(const string &path) {
+    auto resultPtr = &_value;
     for (const auto &keyString: drogon::utils::splitString(path, ".")) {
         if (resultPtr->isNull()) {
             return {Json::nullValue};
@@ -50,7 +30,7 @@ Json::Value JsonHelper::retrieveByPath(const string &path) {
     return *resultPtr;
 }
 
-void JsonHelper::modifyByPath(
+void DataJson::modifyByPath(
         const string &path,
         const Json::Value &value
 ) {
@@ -71,7 +51,7 @@ void JsonHelper::modifyByPath(
     }
 }
 
-void JsonHelper::_stoul(variant<string, uint32_t> &key) {
+void DataJson::_stoul(variant<string, uint32_t> &key) {
     if (holds_alternative<string>(key)) {
         const auto &keyString = get<string>(key);
         if (all_of(keyString.begin(), keyString.end(), ::isdigit)) {
@@ -80,7 +60,7 @@ void JsonHelper::_stoul(variant<string, uint32_t> &key) {
     }
 }
 
-void JsonHelper::_keyHandler(
+void DataJson::_keyHandler(
         const variant<string, uint32_t> &key,
         const function<void(const std::string &)> &objectHandler,
         const function<void(const uint32_t &)> &arrayHandler
@@ -92,7 +72,7 @@ void JsonHelper::_keyHandler(
     }
 }
 
-void JsonHelper::_try_overwrite(
+void DataJson::_try_overwrite(
         Json::Value *&target,
         const Json::ValueType &type
 ) const {
@@ -105,7 +85,7 @@ void JsonHelper::_try_overwrite(
     }
 }
 
-void JsonHelper::_try_skip(
+void DataJson::_try_skip(
         Json::Value *&target,
         const uint32_t &size
 ) const {
@@ -116,7 +96,7 @@ void JsonHelper::_try_skip(
     }
 }
 
-void JsonHelper::_modifyElement(
+void DataJson::_modifyElement(
         Json::Value *&target,
         const variant<string, uint32_t> &key,
         const Json::Value &value
@@ -133,7 +113,7 @@ void JsonHelper::_modifyElement(
             (*target)[name] = value;
         }, [this, &target, &value](const uint32_t &index) {
             _try_overwrite(target, Json::arrayValue);
-            if (target->size() > index) {
+            if (target->size() >= index) {
                 (*target)[index] = value;
             } else {
                 _try_skip(target, index);
@@ -143,7 +123,7 @@ void JsonHelper::_modifyElement(
     }
 }
 
-void JsonHelper::_followElement(
+void DataJson::_followElement(
         Json::Value *&target,
         const variant<std::string, uint32_t> &key
 ) {

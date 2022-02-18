@@ -1,31 +1,28 @@
 //
-// Created by ParticleG on 2022/2/1.
+// Created by ParticleG on 2022/2/9.
 //
 
 #pragma once
 
-#include <functional>
-#include <json/json.h>
+#include <helpers/BasicJson.h>
 #include <variant>
 
-namespace tech::structures {
-    class JsonHelper {
+namespace tech::helpers {
+    class DataJson : public BasicJson {
     public:
-        explicit JsonHelper(Json::Value json);
+        DataJson() : BasicJson() {}
 
-        explicit JsonHelper(Json::Value &&json);
+        explicit DataJson(Json::Value json) : BasicJson(std::move(json)) {}
 
-        explicit JsonHelper(const std::string &raw);
+        explicit DataJson(const std::string &raw) : BasicJson(raw) {}
 
-        std::string stringify(const std::string &indentation = "");
+        // Retrieve the value of the json object
+        Json::Value retrieveByPath(const std::string &path);
 
-        Json::Value &value();
-
+        // Modify the value of the json object
         void canOverwrite(const bool &overwrite);
 
         void canSkip(const bool &skip);
-
-        Json::Value retrieveByPath(const std::string &path);
 
         void modifyByPath(
                 const std::string &path,
@@ -33,7 +30,6 @@ namespace tech::structures {
         );
 
     private:
-        Json::Value _value;
         bool _overwrite{}, _skip{};
 
         static void _stoul(std::variant<std::string, uint32_t> &key);
