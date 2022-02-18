@@ -5,28 +5,26 @@
 #pragma once
 
 #include <drogon/HttpController.h>
-#include <services/Allocator.h>
+#include <plugins/NodeManager.h>
 
 namespace tech::api::v2 {
-    class Allocator : public drogon::HttpController<Allocator> {
+    class Allocator :
+            public drogon::HttpController<Allocator>,
+            public helpers::I18nHelper<Allocator> {
     public:
+        Allocator();
+
         METHOD_LIST_BEGIN
-            METHOD_ADD(Allocator::message, "/message", drogon::Get);
-            METHOD_ADD(Allocator::gaming, "/gaming", drogon::Get);
-            METHOD_ADD(Allocator::transfer, "/transfer", drogon::Get);
-            METHOD_ADD(Allocator::user, "/user", drogon::Get);
+            METHOD_ADD(Allocator::allocate, "", drogon::Get, "tech::filters::CheckNodeType");
         METHOD_LIST_END
 
-        void message(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
-
-        void gaming(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
-
-        void transfer(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
-
-        void user(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
+        void allocate(
+                const drogon::HttpRequestPtr &req,
+                std::function<void(const drogon::HttpResponsePtr &)> &&callback
+        );
 
     private:
-        services::Allocator _service;
+        plugins::NodeManager *_nodeManager;
     };
 }
 
