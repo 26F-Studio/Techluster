@@ -3,29 +3,18 @@
 //
 
 #include <drogon/drogon.h>
+#include <structures/Exceptions.h>
 #include <plugins/NodeManager.h>
 
 using namespace drogon;
 using namespace std;
 using namespace tech::plugins;
 using namespace tech::structures;
+using namespace tech::types;
+
+NodeManager::NodeManager() : I18nHelper(CMAKE_PROJECT_NAME) {}
 
 void NodeManager::initAndStart(const Json::Value &config) {
-    if (!(
-            config["nodeType"]["message"].isString() &&
-            config["nodeType"]["gaming"].isString() &&
-            config["nodeType"]["transfer"].isString() &&
-            config["nodeType"]["user"].isString()
-    )) {
-        LOG_ERROR << R"(Invalid nodeType config)";
-        abort();
-    } else {
-        _typeMapper[config["nodeType"]["gaming"].asString()] = NodeServer::Type::gaming;
-        _typeMapper[config["nodeType"]["message"].asString()] = NodeServer::Type::message;
-        _typeMapper[config["nodeType"]["transfer"].asString()] = NodeServer::Type::transfer;
-        _typeMapper[config["nodeType"]["user"].asString()] = NodeServer::Type::user;
-    }
-
     if (!config["heartBeat"]["waitTimes"].isUInt()) {
         LOG_ERROR << R"(Invalid heartBeat config)";
         abort();
@@ -37,14 +26,6 @@ void NodeManager::initAndStart(const Json::Value &config) {
 }
 
 void NodeManager::shutdown() { LOG_INFO << "NodeManager shutdown."; }
-
-NodeServer::Type NodeManager::toType(const string &typeString) const {
-    if (_typeMapper.contains(typeString)) {
-        return _typeMapper.at(typeString);
-    } else {
-        throw std::runtime_error("Invalid node type");
-    }
-}
 
 void NodeManager::updateNode(NodeServer &&nodeServer) {
     unique_lock<shared_mutex> lock(_sharedMutex);
@@ -59,7 +40,7 @@ void NodeManager::updateNode(NodeServer &&nodeServer) {
     _updateTimer(nodePair->second);
 }
 
-Json::Value NodeManager::getAllNodes(const NodeServer::Type &type) const {
+Json::Value NodeManager::getAllNodes(const NodeType &type) const {
     Json::Value result(Json::arrayValue);
     shared_lock<shared_mutex> lock(_sharedMutex);
     for (const auto&[_, nodeServer]: _allNodes.at(type)) {
@@ -68,7 +49,7 @@ Json::Value NodeManager::getAllNodes(const NodeServer::Type &type) const {
     return result;
 }
 
-string NodeManager::getBestNode(const NodeServer::Type &type) const {
+string NodeManager::getBestNode(const NodeType &type) const {
     //TODO: implement logics
     shared_lock<shared_mutex> lock(_sharedMutex);
     return _allNodes.at(type).begin()->second.getIpPort();
@@ -89,7 +70,7 @@ Json::Value NodeManager::parseInfo() const {
     return result;
 }
 
-Json::Value NodeManager::parseInfo(const NodeServer::Type &nodeType) const {
+Json::Value NodeManager::parseInfo(const NodeType &nodeType) const {
     Json::Value result(Json::arrayValue);
     shared_lock<shared_mutex> lock(_sharedMutex);
     for (const auto&[type, nodeList]: _allNodes) {

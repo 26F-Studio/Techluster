@@ -5,40 +5,39 @@
 #pragma once
 
 #include <drogon/plugins/Plugin.h>
-#include <list>
+#include <helpers/I18nHelper.h>
 #include <structures/NodeServer.h>
 #include <shared_mutex>
 
 namespace tech::plugins {
-    class NodeManager : public drogon::Plugin<NodeManager> {
+    class NodeManager :
+            public drogon::Plugin<NodeManager>,
+            public helpers::I18nHelper<NodeManager> {
     public:
         using NetEndian = uint64_t;
 
-        NodeManager() = default;
+        NodeManager();
 
         void initAndStart(const Json::Value &config) override;
 
         void shutdown() override;
 
-        structures::NodeServer::Type toType(const std::string &typeString) const;
-
         void updateNode(structures::NodeServer &&nodeServer);
 
-        std::string getBestNode(const structures::NodeServer::Type &type) const;
+        std::string getBestNode(const types::NodeType &type) const;
 
-        Json::Value getAllNodes(const structures::NodeServer::Type &type) const;
+        Json::Value getAllNodes(const types::NodeType &type) const;
 
         Json::Value parseInfo() const;
 
-        Json::Value parseInfo(const structures::NodeServer::Type &nodeType) const;
+        Json::Value parseInfo(const types::NodeType &nodeType) const;
 
     private:
         mutable std::shared_mutex _sharedMutex;
 
         std::atomic<uint32_t> _waitTimes;
-        std::unordered_map<std::string, structures::NodeServer::Type> _typeMapper;
         std::unordered_map<
-                structures::NodeServer::Type,
+                types::NodeType,
                 std::unordered_map<NetEndian, structures::NodeServer>
         > _allNodes;
 
