@@ -4,24 +4,24 @@
 
 #include <charconv>
 #include <drogon/drogon.h>
+#include <helpers/BasicJson.h>
 #include <plugins/AuthMaintainer.h>
 #include <structures/Exceptions.h>
-#include <structures/JsonHelper.h>
 #include <utils/http.h>
 
 using namespace drogon;
 using namespace std;
 using namespace trantor;
+using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::structures;
 using namespace tech::utils;
 
 void AuthMaintainer::initAndStart(const Json::Value &config) {
     if (!(
-            config.isMember("maintainer") && config["maintainer"].isObject() &&
-            config["maintainer"].isMember("ip") && config["maintainer"]["ip"].isString() &&
-            config["maintainer"].isMember("port") && config["maintainer"]["port"].isUInt() &&
-            config["maintainer"].isMember("taskMinutes") && config["maintainer"]["taskMinutes"].isUInt64() &&
+            config["maintainer"]["ip"].isString() &&
+            config["maintainer"]["port"].isUInt() &&
+            config["maintainer"]["taskMinutes"].isUInt64() &&
             config["maintainer"]["taskMinutes"].asUInt64() >= 10
     )) {
         LOG_ERROR << R"("Invalid AuthMaintainer config")";
@@ -60,17 +60,12 @@ void AuthMaintainer::_updateAuthAddress() {
                          << parseError;
             } else if (responsePtr->getStatusCode() != k200OK) {
                 LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
-                         << JsonHelper(response).stringify();
+                         << BasicJson(response).stringify();
             } else {
-                auto parts = drogon::utils::splitString(
-                        response["data"].asString(),
-                        ":"
-                );
+                auto parts = drogon::utils::splitString(response["data"].asString(), ":");
                 if (parts.size() == 2) {
-                    _authAddress = InetAddress(
-                            parts[0],
-                            stoi(parts[1])
-                    );
+                    _authAddress = InetAddress(parts[0], stoi(parts[1]));
+                    LOG_INFO << "Retrieved user node: " << _authAddress.load().toIpPort();
                 } else {
                     // TODO: Send an email if failed too many times.
                     LOG_WARN << "No user node available right now!";
@@ -86,21 +81,20 @@ HttpStatusCode AuthMaintainer::checkAccessToken(const string &accessToken, int64
     auto client = HttpClient::newHttpClient("http://" + _authAddress.load().toIpPort());
     auto req = HttpRequest::newHttpRequest();
     req->setPath("/tech/api/v2/auth/check");
+    req->addHeader("x-access-token", accessToken);
     auto[result, responsePtr] = client->sendRequest(req, 3);
     if (result != ReqResult::Ok) {
         _updateAuthAddress();
-        throw NetworkException("Node Down", result);
+        throw NetworkException("User node is down", result);
     }
     Json::Value response;
     string parseError = http::toJson(responsePtr, response);
     if (!parseError.empty()) {
         throw NetworkException("Invalid Json: " + parseError, ReqResult::BadResponse);
     }
-    if (!(
-            response.isMember("data") && response["data"].isInt64()
-    )) {
+    if (!response["data"].isInt64()) {
         throw NetworkException(
-                "Invalid Response: " + JsonHelper(response).stringify(),
+                "Invalid Response: " + BasicJson(response).stringify(),
                 ReqResult::BadResponse
         );
     }
