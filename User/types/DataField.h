@@ -4,10 +4,10 @@
 
 #pragma once
 
-namespace tech::structures {
+namespace tech::types {
     enum class DataField {
-        kPublic,
-        kProtected,
-        kPrivate
+        Public,
+        Protected,
+        Private
     };
 }
