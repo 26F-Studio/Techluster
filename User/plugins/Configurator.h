@@ -14,8 +14,6 @@ namespace tech::plugins {
         void initAndStart(const Json::Value &config) override;
 
         void shutdown() override;
-
-    private:
     };
 }
 
