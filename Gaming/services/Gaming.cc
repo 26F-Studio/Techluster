@@ -3,7 +3,7 @@
 //
 
 #include <plugins/RoomManager.h>
-#include <services/Room.h>
+#include <services/Gaming.h>
 #include <structures/Player.h>
 
 using namespace drogon;
@@ -12,7 +12,7 @@ using namespace tech::plugins;
 using namespace tech::services;
 using namespace tech::utils;
 
-void Room::establish(
+void Gaming::establish(
         const WebSocketConnectionPtr &wsConnPtr,
         const AttributesPtr &attributes
 ) {
@@ -24,7 +24,7 @@ void Room::establish(
     websocket::initPing(wsConnPtr, initMessage, chrono::seconds(10));
 }
 
-void Room::close(const WebSocketConnectionPtr &wsConnPtr) {
+void Gaming::close(const WebSocketConnectionPtr &wsConnPtr) {
     if (wsConnPtr->hasContext()) {
         try {
             app().getPlugin<RoomManager>()->leaveRoom(wsConnPtr);

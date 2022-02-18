@@ -8,7 +8,7 @@
 #include <services/BaseWebsocket.h>
 
 namespace tech::services {
-    class Room : public BaseWebsocket<plugins::HandlerManager> {
+    class Gaming : public BaseWebsocket<plugins::HandlerManager> {
     public:
         void establish(
                 const drogon::WebSocketConnectionPtr &wsConnPtr,
