@@ -23,7 +23,8 @@ EmailHelper::EmailHelper(
         string password,
         const string &senderEmail,
         const string &senderName
-) : _server(move(server)),
+) : I18nHelper(CMAKE_PROJECT_NAME),
+    _server(move(server)),
     _account(move(account)),
     _password(move(password)),
     _sender(senderName, senderEmail) {}
@@ -77,7 +78,7 @@ void EmailHelper::smtp(
     } catch (smtp_error &e) {
         LOG_WARN << "SMTP Error: " << e.what();
         throw ResponseException(
-                "emailError",
+                i18n("emailError"),
                 e,
                 ResultCode::emailError,
                 k503ServiceUnavailable
@@ -85,7 +86,7 @@ void EmailHelper::smtp(
     } catch (dialog_error &e) {
         LOG_WARN << "Dialog Error: " << e.what();
         throw ResponseException(
-                "emailError",
+                i18n("emailError"),
                 e,
                 ResultCode::emailError,
                 k503ServiceUnavailable
@@ -93,7 +94,7 @@ void EmailHelper::smtp(
     } catch (message_error &e) {
         LOG_WARN << "Message Error: " << e.what();
         throw ResponseException(
-                "emailError",
+                i18n("emailError"),
                 e,
                 ResultCode::emailError,
                 k503ServiceUnavailable

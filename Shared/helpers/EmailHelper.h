@@ -5,11 +5,12 @@
 #pragma once
 
 #include <drogon/drogon.h>
+#include <helpers/I18nHelper.h>
 #include <mailio/mailboxes.hpp>
 #include <mailio/message.hpp>
 
 namespace tech::helpers {
-    class EmailHelper : public trantor::NonCopyable {
+    class EmailHelper : public I18nHelper<EmailHelper> {
     public:
         EmailHelper(
                 std::string server,
@@ -29,8 +30,6 @@ namespace tech::helpers {
                 const std::string &subject,
                 const std::string &content
         );
-
-        virtual ~EmailHelper() = default;
 
     private:
         std::string _server;
