@@ -4,9 +4,9 @@
 
 #include <algorithm>
 #include <drogon/drogon.h>
+#include <helpers/BasicJson.h>
 #include <plugins/Authorizer.h>
 #include <plugins/Perfmon.h>
-#include <structures/JsonHelper.h>
 #include <utils/http.h>
 
 #if _WIN32
@@ -28,16 +28,15 @@
 
 using namespace drogon;
 using namespace std;
+using namespace tech::helpers;
 using namespace tech::plugins;
-using namespace tech::structures;
 using namespace tech::utils;
 
 void Perfmon::initAndStart(const Json::Value &config) {
     if (!(
-            config.isMember("perfmon") && config["perfmon"].isObject() &&
-            config["perfmon"].isMember("cpuInterval") && config["perfmon"]["cpuInterval"].isUInt() &&
+            config["perfmon"]["cpuInterval"].isUInt() &&
             config["perfmon"]["cpuInterval"].asUInt() <= 1000 &&
-            config["perfmon"].isMember("taskInterval") && config["perfmon"]["taskInterval"].isDouble() &&
+            config["perfmon"]["taskInterval"].isDouble() &&
             config["perfmon"]["taskInterval"].asDouble() >= 5.0
     )) {
         LOG_ERROR << R"("Invalid perfmon config")";
@@ -51,13 +50,15 @@ void Perfmon::initAndStart(const Json::Value &config) {
         _updateInfo();
     });
 
-    if (config.isMember("report") && config["report"].isObject() &&
-        config["report"].isMember("address") && config["report"]["address"].isString() &&
-        config["report"].isMember("localhost") && config["report"]["localhost"].isBool() &&
-        config["report"].isMember("type") && config["report"]["type"].isString() &&
-        config["report"].isMember("description") && config["report"]["description"].isString()) {
+    _updateInfo();
+
+    if (config["report"]["address"].isString() &&
+        config["report"]["localhost"].isBool() &&
+        config["report"]["type"].isString() &&
+        config["report"]["description"].isString()) {
 
         _reportAddress = config["report"]["address"].asString();
+        _nodeType = config["report"]["type"].asString();
 
         _heartbeatBody["ip"] = config["report"]["localhost"].asBool() ? "127.0.0.1" :
                                string(HttpClient::newHttpClient(
@@ -66,10 +67,8 @@ void Perfmon::initAndStart(const Json::Value &config) {
                                        HttpRequest::newHttpRequest()
                                ).second->body());
         _heartbeatBody["port"] = app().getListeners()[0].toPort();
-        _heartbeatBody["type"] = config["report"]["type"].asString();
         _heartbeatBody["taskInterval"] = _taskInterval.load();
         _heartbeatBody["description"] = config["report"]["description"].asString();
-        _heartbeatBody["credential"] = app().getPlugin<Authorizer>()->getCredential();
 
         app().getLoop()->runEvery(_taskInterval, [this]() {
             _report();
@@ -94,7 +93,6 @@ Json::Value Perfmon::parseInfo() const {
     result["disk"]["total"] = _diskTotal.load();
     result["network"]["upstream"] = _netUp.load();
     result["network"]["connections"] = _netConn.load();
-
     return result;
 }
 
@@ -104,6 +102,8 @@ void Perfmon::_report() {
     auto req = HttpRequest::newHttpJsonRequest(_heartbeatBody);
     req->setMethod(Post);
     req->setPath("/tech/api/v2/heartbeat/report");
+    req->addHeader("x-credential", app().getPlugin<Authorizer>()->getCredential());
+    req->setParameter("nodeType", _nodeType);
     client->sendRequest(req, [](ReqResult result, const HttpResponsePtr &responsePtr) {
         if (result == ReqResult::Ok) {
             Json::Value response;
@@ -113,7 +113,7 @@ void Perfmon::_report() {
                          << parseError;
             } else if (responsePtr->getStatusCode() != k200OK) {
                 LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
-                         << JsonHelper(response).stringify();
+                         << BasicJson(response).stringify();
             }
         } else {
             LOG_WARN << "Request failed (" << static_cast<int>(result) << ")";

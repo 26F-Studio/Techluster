@@ -20,7 +20,7 @@ namespace tech::plugins {
         [[nodiscard]] Json::Value parseInfo() const;
 
     private:
-        std::string _reportAddress{};
+        std::string _reportAddress{}, _nodeType{};
         Json::Value _heartbeatBody{};
         std::atomic<uint32_t> _cpuInterval{};
         std::atomic<uint64_t> _vMemTotal{}, _vMemAvail{}, _rMemTotal{}, _rMemAvail{},
