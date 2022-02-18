@@ -5,7 +5,6 @@
 #pragma once
 
 #include <drogon/plugins/Plugin.h>
-#include <unordered_set>
 
 namespace tech::plugins {
     class Authorizer : public drogon::Plugin<Authorizer> {
