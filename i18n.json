@@ -1,0 +1,78 @@
+{
+    "Connect": {
+        "NodeManager": {
+            "notAvailable": {
+                "all": "Not valid node type",
+                "connect": "No connect node available",
+                "gaming": "No gaming node available",
+                "message": "No message node available",
+                "transfer": "No transfer node available",
+                "user": "No user node available"
+            }
+        },
+        "HeartbeatReport": {
+            "invalidFormat": "Invalid JSON format",
+            "invalidArguments": "Invalid arguments",
+            "internalError": "Internal error"
+        }
+    },
+    "Shared": {
+        "CheckCredential": {
+            "invalidArguments": "Invalid arguments"
+        },
+        "CheckNodeType": {
+            "invalidNodeType": "Invalid node type"
+        },
+        "IdentifyUser": {
+            "invalidArguments": "Invalid arguments",
+            "invalidAccessToken": "Invalid access token",
+            "notAvailable": "User node not available"
+        },
+        "RequestJsonHandler": {
+            "invalidFormat": "Invalid JSON format",
+            "invalidArguments": "Invalid arguments",
+            "internalError": "Internal error"
+        }
+    },
+    "User": {
+        "Auth": {
+            "databaseError": "Database error",
+            "internalError": "Internal error"
+        },
+        "CheckAccessToken": {
+            "invalidArguments": "Invalid arguments"
+        },
+        "CheckDataField": {
+            "invalidDataField": "Invalid data field"
+        },
+        "CheckRefreshToken": {
+            "invalidArguments": "Invalid arguments"
+        },
+        "EmailThreshold": {
+            "tooFrequent": "Too frequent",
+            "internalError": "Internal error"
+        },
+        "IpThreshold": {
+            "tooFrequent": "Too frequent",
+            "internalError": "Internal error"
+        },
+        "DataManager": {
+            "emailExists": "Email exists",
+            "invalidAccessToken": "Invalid access token",
+            "invalidVerifyCode": "Invalid verify code",
+            "invalidVerifyEmail": "Invalid verify email",
+            "invalidRefreshToken": "Invalid refresh token",
+            "invalidEmailPass": "Invalid email & password pair",
+            "noPassword": "No password",
+            "noPermission": "No permission",
+            "userNotFound": "User not found"
+        },
+        "EmailHelper": {
+            "emailError": "Email error"
+        },
+        "User": {
+            "databaseError": "Database error",
+            "internalError": "Internal error"
+        }
+    }
+}
