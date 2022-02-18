@@ -6,14 +6,17 @@
  */
 
 #pragma once
+
 #include <drogon/orm/Result.h>
 #include <drogon/orm/Row.h>
 #include <drogon/orm/Field.h>
 #include <drogon/orm/SqlBinder.h>
 #include <drogon/orm/Mapper.h>
+
 #ifdef __cpp_impl_coroutine
 #include <drogon/orm/CoroMapper.h>
 #endif
+
 #include <trantor/utils/Date.h>
 #include <trantor/utils/Logger.h>
 #include <json/json.h>
@@ -47,6 +50,7 @@ namespace drogon_model {
                 static const std::string _avatar_hash;
                 static const std::string _avatar_frame;
                 static const std::string _clan;
+                static const std::string _is_new;
             };
 
             const static int primaryKeyNumber;
@@ -65,48 +69,38 @@ namespace drogon_model {
              * @note If the SQL is not a style of 'select * from table_name ...' (select all
              * columns by an asterisk), please set the offset to -1.
              */
-            explicit Player(const drogon::orm::Row &r, const ssize_t indexOffset = 0)
-
-            noexcept;
+            explicit Player(const drogon::orm::Row &r, const ssize_t indexOffset = 0) noexcept;
 
             /**
              * @brief constructor
              * @param pJson The json object to construct a new instance.
              */
-            explicit Player(const Json::Value &pJson)
-
-            noexcept(false);
+            explicit Player(const Json::Value &pJson) noexcept(false);
 
             /**
              * @brief constructor
              * @param pJson The json object to construct a new instance.
              * @param pMasqueradingVector The aliases of table columns.
              */
-            Player(const Json::Value &pJson, const std::vector <std::string> &pMasqueradingVector)
-
-            noexcept(false);
+            Player(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false);
 
             Player() = default;
 
-            void updateByJson(const Json::Value &pJson)
-
-            noexcept(false);
+            void updateByJson(const Json::Value &pJson) noexcept(false);
 
             void updateByMasqueradedJson(const Json::Value &pJson,
-                                         const std::vector <std::string> &pMasqueradingVector)
-
-            noexcept(false);
+                                         const std::vector<std::string> &pMasqueradingVector) noexcept(false);
 
             static bool validateJsonForCreation(const Json::Value &pJson, std::string &err);
 
             static bool validateMasqueradedJsonForCreation(const Json::Value &,
-                                                           const std::vector <std::string> &pMasqueradingVector,
+                                                           const std::vector<std::string> &pMasqueradingVector,
                                                            std::string &err);
 
             static bool validateJsonForUpdate(const Json::Value &pJson, std::string &err);
 
             static bool validateMasqueradedJsonForUpdate(const Json::Value &,
-                                                         const std::vector <std::string> &pMasqueradingVector,
+                                                         const std::vector<std::string> &pMasqueradingVector,
                                                          std::string &err);
 
             static bool validJsonOfField(size_t index,
@@ -117,224 +111,146 @@ namespace drogon_model {
 
             /**  For column id  */
             ///Get the value of the column id, returns the default value if the column is null
-            const int64_t &getValueOfId() const
-
-            noexcept;
+            const int64_t &getValueOfId() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <int64_t> &getId() const
-
-            noexcept;
+            const std::shared_ptr<int64_t> &getId() const noexcept;
 
             ///Set the value of the column id
-            void setId(const int64_t &pId)
-
-            noexcept;
+            void setId(const int64_t &pId) noexcept;
 
             /**  For column email  */
             ///Get the value of the column email, returns the default value if the column is null
-            const std::string &getValueOfEmail() const
-
-            noexcept;
+            const std::string &getValueOfEmail() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <std::string> &getEmail() const
-
-            noexcept;
+            const std::shared_ptr<std::string> &getEmail() const noexcept;
 
             ///Set the value of the column email
-            void setEmail(const std::string &pEmail)
+            void setEmail(const std::string &pEmail) noexcept;
 
-            noexcept;
-
-            void setEmail(std::string &&pEmail)
-
-            noexcept;
+            void setEmail(std::string &&pEmail) noexcept;
 
             /**  For column password  */
             ///Get the value of the column password, returns the default value if the column is null
-            const std::string &getValueOfPassword() const
-
-            noexcept;
+            const std::string &getValueOfPassword() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <std::string> &getPassword() const
-
-            noexcept;
+            const std::shared_ptr<std::string> &getPassword() const noexcept;
 
             ///Set the value of the column password
-            void setPassword(const std::string &pPassword)
+            void setPassword(const std::string &pPassword) noexcept;
 
-            noexcept;
+            void setPassword(std::string &&pPassword) noexcept;
 
-            void setPassword(std::string &&pPassword)
-
-            noexcept;
-
-            void setPasswordToNull()
-
-            noexcept;
+            void setPasswordToNull() noexcept;
 
             /**  For column username  */
             ///Get the value of the column username, returns the default value if the column is null
-            const std::string &getValueOfUsername() const
-
-            noexcept;
+            const std::string &getValueOfUsername() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <std::string> &getUsername() const
-
-            noexcept;
+            const std::shared_ptr<std::string> &getUsername() const noexcept;
 
             ///Set the value of the column username
-            void setUsername(const std::string &pUsername)
+            void setUsername(const std::string &pUsername) noexcept;
 
-            noexcept;
-
-            void setUsername(std::string &&pUsername)
-
-            noexcept;
+            void setUsername(std::string &&pUsername) noexcept;
 
             /**  For column motto  */
             ///Get the value of the column motto, returns the default value if the column is null
-            const std::string &getValueOfMotto() const
-
-            noexcept;
+            const std::string &getValueOfMotto() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <std::string> &getMotto() const
-
-            noexcept;
+            const std::shared_ptr<std::string> &getMotto() const noexcept;
 
             ///Set the value of the column motto
-            void setMotto(const std::string &pMotto)
+            void setMotto(const std::string &pMotto) noexcept;
 
-            noexcept;
+            void setMotto(std::string &&pMotto) noexcept;
 
-            void setMotto(std::string &&pMotto)
-
-            noexcept;
-
-            void setMottoToNull()
-
-            noexcept;
+            void setMottoToNull() noexcept;
 
             /**  For column region  */
             ///Get the value of the column region, returns the default value if the column is null
-            const int32_t &getValueOfRegion() const
-
-            noexcept;
+            const int32_t &getValueOfRegion() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <int32_t> &getRegion() const
-
-            noexcept;
+            const std::shared_ptr<int32_t> &getRegion() const noexcept;
 
             ///Set the value of the column region
-            void setRegion(const int32_t &pRegion)
-
-            noexcept;
+            void setRegion(const int32_t &pRegion) noexcept;
 
             /**  For column avatar  */
             ///Get the value of the column avatar, returns the default value if the column is null
-            const std::string &getValueOfAvatar() const
-
-            noexcept;
+            const std::string &getValueOfAvatar() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <std::string> &getAvatar() const
-
-            noexcept;
+            const std::shared_ptr<std::string> &getAvatar() const noexcept;
 
             ///Set the value of the column avatar
-            void setAvatar(const std::string &pAvatar)
+            void setAvatar(const std::string &pAvatar) noexcept;
 
-            noexcept;
+            void setAvatar(std::string &&pAvatar) noexcept;
 
-            void setAvatar(std::string &&pAvatar)
-
-            noexcept;
-
-            void setAvatarToNull()
-
-            noexcept;
+            void setAvatarToNull() noexcept;
 
             /**  For column avatar_hash  */
             ///Get the value of the column avatar_hash, returns the default value if the column is null
-            const std::string &getValueOfAvatarHash() const
-
-            noexcept;
+            const std::string &getValueOfAvatarHash() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <std::string> &getAvatarHash() const
-
-            noexcept;
+            const std::shared_ptr<std::string> &getAvatarHash() const noexcept;
 
             ///Set the value of the column avatar_hash
-            void setAvatarHash(const std::string &pAvatarHash)
+            void setAvatarHash(const std::string &pAvatarHash) noexcept;
 
-            noexcept;
+            void setAvatarHash(std::string &&pAvatarHash) noexcept;
 
-            void setAvatarHash(std::string &&pAvatarHash)
-
-            noexcept;
-
-            void setAvatarHashToNull()
-
-            noexcept;
+            void setAvatarHashToNull() noexcept;
 
             /**  For column avatar_frame  */
             ///Get the value of the column avatar_frame, returns the default value if the column is null
-            const int32_t &getValueOfAvatarFrame() const
-
-            noexcept;
+            const int32_t &getValueOfAvatarFrame() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <int32_t> &getAvatarFrame() const
-
-            noexcept;
+            const std::shared_ptr<int32_t> &getAvatarFrame() const noexcept;
 
             ///Set the value of the column avatar_frame
-            void setAvatarFrame(const int32_t &pAvatarFrame)
-
-            noexcept;
+            void setAvatarFrame(const int32_t &pAvatarFrame) noexcept;
 
             /**  For column clan  */
             ///Get the value of the column clan, returns the default value if the column is null
-            const std::string &getValueOfClan() const
-
-            noexcept;
+            const std::string &getValueOfClan() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <std::string> &getClan() const
-
-            noexcept;
+            const std::shared_ptr<std::string> &getClan() const noexcept;
 
             ///Set the value of the column clan
-            void setClan(const std::string &pClan)
+            void setClan(const std::string &pClan) noexcept;
 
-            noexcept;
+            void setClan(std::string &&pClan) noexcept;
 
-            void setClan(std::string &&pClan)
+            void setClanToNull() noexcept;
 
-            noexcept;
+            /**  For column is_new  */
+            ///Get the value of the column is_new, returns the default value if the column is null
+            const bool &getValueOfIsNew() const noexcept;
 
-            void setClanToNull()
+            ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+            const std::shared_ptr<bool> &getIsNew() const noexcept;
 
-            noexcept;
+            ///Set the value of the column is_new
+            void setIsNew(const bool &pIsNew) noexcept;
 
 
-            static size_t getColumnNumber()
+            static size_t getColumnNumber() noexcept { return 11; }
 
-            noexcept { return 10; }
-
-            static const std::string &getColumnName(size_t index)
-
-            noexcept(false);
+            static const std::string &getColumnName(size_t index) noexcept(false);
 
             Json::Value toJson() const;
 
-            Json::Value toMasqueradedJson(const std::vector <std::string> &pMasqueradingVector) const;
+            Json::Value toMasqueradedJson(const std::vector<std::string> &pMasqueradingVector) const;
             /// Relationship interfaces
         private:
             friend drogon::orm::Mapper<Player>;
@@ -342,29 +258,28 @@ namespace drogon_model {
             friend drogon::orm::CoroMapper<Player>;
 #endif
 
-            static const std::vector <std::string> &insertColumns()
-
-            noexcept;
+            static const std::vector<std::string> &insertColumns() noexcept;
 
             void outputArgs(drogon::orm::internal::SqlBinder &binder) const;
 
-            const std::vector <std::string> updateColumns() const;
+            const std::vector<std::string> updateColumns() const;
 
             void updateArgs(drogon::orm::internal::SqlBinder &binder) const;
 
             ///For mysql or sqlite3
             void updateId(const uint64_t id);
 
-            std::shared_ptr <int64_t> id_;
-            std::shared_ptr <std::string> email_;
-            std::shared_ptr <std::string> password_;
-            std::shared_ptr <std::string> username_;
-            std::shared_ptr <std::string> motto_;
-            std::shared_ptr <int32_t> region_;
-            std::shared_ptr <std::string> avatar_;
-            std::shared_ptr <std::string> avatarHash_;
-            std::shared_ptr <int32_t> avatarFrame_;
-            std::shared_ptr <std::string> clan_;
+            std::shared_ptr<int64_t> id_;
+            std::shared_ptr<std::string> email_;
+            std::shared_ptr<std::string> password_;
+            std::shared_ptr<std::string> username_;
+            std::shared_ptr<std::string> motto_;
+            std::shared_ptr<int32_t> region_;
+            std::shared_ptr<std::string> avatar_;
+            std::shared_ptr<std::string> avatarHash_;
+            std::shared_ptr<int32_t> avatarFrame_;
+            std::shared_ptr<std::string> clan_;
+            std::shared_ptr<bool> isNew_;
             struct MetaData {
                 const std::string colName_;
                 const std::string colType_;
@@ -374,8 +289,8 @@ namespace drogon_model {
                 const bool isPrimaryKey_;
                 const bool notNull_;
             };
-            static const std::vector <MetaData> metaData_;
-            bool dirtyFlag_[10] = {false};
+            static const std::vector<MetaData> metaData_;
+            bool dirtyFlag_[11] = {false};
         public:
             static const std::string &sqlForFindingByPrimaryKey() {
                 static const std::string sql = "select * from " + tableName + " where id = $1";
@@ -432,6 +347,11 @@ namespace drogon_model {
                     sql += "clan,";
                     ++parametersCount;
                 }
+                sql += "is_new,";
+                ++parametersCount;
+                if (!dirtyFlag_[10]) {
+                    needSelection = true;
+                }
                 needSelection = true;
                 if (parametersCount > 0) {
                     sql[sql.length() - 1] = ')';
@@ -484,6 +404,12 @@ namespace drogon_model {
                 if (dirtyFlag_[9]) {
                     n = sprintf(placeholderStr, "$%d,", placeholder++);
                     sql.append(placeholderStr, n);
+                }
+                if (dirtyFlag_[10]) {
+                    n = sprintf(placeholderStr, "$%d,", placeholder++);
+                    sql.append(placeholderStr, n);
+                } else {
+                    sql += "default,";
                 }
                 if (parametersCount > 0) {
                     sql.resize(sql.length() - 1);

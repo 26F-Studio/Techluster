@@ -6,14 +6,17 @@
  */
 
 #pragma once
+
 #include <drogon/orm/Result.h>
 #include <drogon/orm/Row.h>
 #include <drogon/orm/Field.h>
 #include <drogon/orm/SqlBinder.h>
 #include <drogon/orm/Mapper.h>
+
 #ifdef __cpp_impl_coroutine
 #include <drogon/orm/CoroMapper.h>
 #endif
+
 #include <trantor/utils/Date.h>
 #include <trantor/utils/Logger.h>
 #include <json/json.h>
@@ -59,48 +62,38 @@ namespace drogon_model {
              * @note If the SQL is not a style of 'select * from table_name ...' (select all
              * columns by an asterisk), please set the offset to -1.
              */
-            explicit Data(const drogon::orm::Row &r, const ssize_t indexOffset = 0)
-
-            noexcept;
+            explicit Data(const drogon::orm::Row &r, const ssize_t indexOffset = 0) noexcept;
 
             /**
              * @brief constructor
              * @param pJson The json object to construct a new instance.
              */
-            explicit Data(const Json::Value &pJson)
-
-            noexcept(false);
+            explicit Data(const Json::Value &pJson) noexcept(false);
 
             /**
              * @brief constructor
              * @param pJson The json object to construct a new instance.
              * @param pMasqueradingVector The aliases of table columns.
              */
-            Data(const Json::Value &pJson, const std::vector <std::string> &pMasqueradingVector)
-
-            noexcept(false);
+            Data(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false);
 
             Data() = default;
 
-            void updateByJson(const Json::Value &pJson)
-
-            noexcept(false);
+            void updateByJson(const Json::Value &pJson) noexcept(false);
 
             void updateByMasqueradedJson(const Json::Value &pJson,
-                                         const std::vector <std::string> &pMasqueradingVector)
-
-            noexcept(false);
+                                         const std::vector<std::string> &pMasqueradingVector) noexcept(false);
 
             static bool validateJsonForCreation(const Json::Value &pJson, std::string &err);
 
             static bool validateMasqueradedJsonForCreation(const Json::Value &,
-                                                           const std::vector <std::string> &pMasqueradingVector,
+                                                           const std::vector<std::string> &pMasqueradingVector,
                                                            std::string &err);
 
             static bool validateJsonForUpdate(const Json::Value &pJson, std::string &err);
 
             static bool validateMasqueradedJsonForUpdate(const Json::Value &,
-                                                         const std::vector <std::string> &pMasqueradingVector,
+                                                         const std::vector<std::string> &pMasqueradingVector,
                                                          std::string &err);
 
             static bool validJsonOfField(size_t index,
@@ -111,104 +104,64 @@ namespace drogon_model {
 
             /**  For column id  */
             ///Get the value of the column id, returns the default value if the column is null
-            const int64_t &getValueOfId() const
-
-            noexcept;
+            const int64_t &getValueOfId() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <int64_t> &getId() const
-
-            noexcept;
+            const std::shared_ptr<int64_t> &getId() const noexcept;
 
             ///Set the value of the column id
-            void setId(const int64_t &pId)
-
-            noexcept;
+            void setId(const int64_t &pId) noexcept;
 
             /**  For column public  */
             ///Get the value of the column public, returns the default value if the column is null
-            const std::string &getValueOfPublic() const
-
-            noexcept;
+            const std::string &getValueOfPublic() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <std::string> &getPublic() const
-
-            noexcept;
+            const std::shared_ptr<std::string> &getPublic() const noexcept;
 
             ///Set the value of the column public
-            void setPublic(const std::string &pPublic)
+            void setPublic(const std::string &pPublic) noexcept;
 
-            noexcept;
+            void setPublic(std::string &&pPublic) noexcept;
 
-            void setPublic(std::string &&pPublic)
-
-            noexcept;
-
-            void setPublicToNull()
-
-            noexcept;
+            void setPublicToNull() noexcept;
 
             /**  For column protected  */
             ///Get the value of the column protected, returns the default value if the column is null
-            const std::string &getValueOfProtected() const
-
-            noexcept;
+            const std::string &getValueOfProtected() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <std::string> &getProtected() const
-
-            noexcept;
+            const std::shared_ptr<std::string> &getProtected() const noexcept;
 
             ///Set the value of the column protected
-            void setProtected(const std::string &pProtected)
+            void setProtected(const std::string &pProtected) noexcept;
 
-            noexcept;
+            void setProtected(std::string &&pProtected) noexcept;
 
-            void setProtected(std::string &&pProtected)
-
-            noexcept;
-
-            void setProtectedToNull()
-
-            noexcept;
+            void setProtectedToNull() noexcept;
 
             /**  For column private  */
             ///Get the value of the column private, returns the default value if the column is null
-            const std::string &getValueOfPrivate() const
-
-            noexcept;
+            const std::string &getValueOfPrivate() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr <std::string> &getPrivate() const
-
-            noexcept;
+            const std::shared_ptr<std::string> &getPrivate() const noexcept;
 
             ///Set the value of the column private
-            void setPrivate(const std::string &pPrivate)
+            void setPrivate(const std::string &pPrivate) noexcept;
 
-            noexcept;
+            void setPrivate(std::string &&pPrivate) noexcept;
 
-            void setPrivate(std::string &&pPrivate)
-
-            noexcept;
-
-            void setPrivateToNull()
-
-            noexcept;
+            void setPrivateToNull() noexcept;
 
 
-            static size_t getColumnNumber()
+            static size_t getColumnNumber() noexcept { return 4; }
 
-            noexcept { return 4; }
-
-            static const std::string &getColumnName(size_t index)
-
-            noexcept(false);
+            static const std::string &getColumnName(size_t index) noexcept(false);
 
             Json::Value toJson() const;
 
-            Json::Value toMasqueradedJson(const std::vector <std::string> &pMasqueradingVector) const;
+            Json::Value toMasqueradedJson(const std::vector<std::string> &pMasqueradingVector) const;
             /// Relationship interfaces
         private:
             friend drogon::orm::Mapper<Data>;
@@ -216,23 +169,21 @@ namespace drogon_model {
             friend drogon::orm::CoroMapper<Data>;
 #endif
 
-            static const std::vector <std::string> &insertColumns()
-
-            noexcept;
+            static const std::vector<std::string> &insertColumns() noexcept;
 
             void outputArgs(drogon::orm::internal::SqlBinder &binder) const;
 
-            const std::vector <std::string> updateColumns() const;
+            const std::vector<std::string> updateColumns() const;
 
             void updateArgs(drogon::orm::internal::SqlBinder &binder) const;
 
             ///For mysql or sqlite3
             void updateId(const uint64_t id);
 
-            std::shared_ptr <int64_t> id_;
-            std::shared_ptr <std::string> public_;
-            std::shared_ptr <std::string> protected_;
-            std::shared_ptr <std::string> private_;
+            std::shared_ptr<int64_t> id_;
+            std::shared_ptr<std::string> public_;
+            std::shared_ptr<std::string> protected_;
+            std::shared_ptr<std::string> private_;
             struct MetaData {
                 const std::string colName_;
                 const std::string colType_;
@@ -242,7 +193,7 @@ namespace drogon_model {
                 const bool isPrimaryKey_;
                 const bool notNull_;
             };
-            static const std::vector <MetaData> metaData_;
+            static const std::vector<MetaData> metaData_;
             bool dirtyFlag_[4] = {false};
         public:
             static const std::string &sqlForFindingByPrimaryKey() {
@@ -261,17 +212,20 @@ namespace drogon_model {
                 needSelection = false;
                 sql += "id,";
                 ++parametersCount;
-                if (dirtyFlag_[1]) {
-                    sql += "public,";
-                    ++parametersCount;
+                sql += "public,";
+                ++parametersCount;
+                if (!dirtyFlag_[1]) {
+                    needSelection = true;
                 }
-                if (dirtyFlag_[2]) {
-                    sql += "protected,";
-                    ++parametersCount;
+                sql += "protected,";
+                ++parametersCount;
+                if (!dirtyFlag_[2]) {
+                    needSelection = true;
                 }
-                if (dirtyFlag_[3]) {
-                    sql += "private,";
-                    ++parametersCount;
+                sql += "private,";
+                ++parametersCount;
+                if (!dirtyFlag_[3]) {
+                    needSelection = true;
                 }
                 needSelection = true;
                 if (parametersCount > 0) {
@@ -287,14 +241,20 @@ namespace drogon_model {
                 if (dirtyFlag_[1]) {
                     n = sprintf(placeholderStr, "$%d,", placeholder++);
                     sql.append(placeholderStr, n);
+                } else {
+                    sql += "default,";
                 }
                 if (dirtyFlag_[2]) {
                     n = sprintf(placeholderStr, "$%d,", placeholder++);
                     sql.append(placeholderStr, n);
+                } else {
+                    sql += "default,";
                 }
                 if (dirtyFlag_[3]) {
                     n = sprintf(placeholderStr, "$%d,", placeholder++);
                     sql.append(placeholderStr, n);
+                } else {
+                    sql += "default,";
                 }
                 if (parametersCount > 0) {
                     sql.resize(sql.length() - 1);

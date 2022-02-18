@@ -23,6 +23,7 @@ const std::string Player::Cols::_avatar = "avatar";
 const std::string Player::Cols::_avatar_hash = "avatar_hash";
 const std::string Player::Cols::_avatar_frame = "avatar_frame";
 const std::string Player::Cols::_clan = "clan";
+const std::string Player::Cols::_is_new = "is_new";
 const std::string Player::primaryKeyName = "id";
 const bool Player::hasPrimaryKey = true;
 const std::string Player::tableName = "player";
@@ -37,884 +38,402 @@ const std::vector<typename Player::MetaData> Player::metaData_ = {
         {"avatar",       "std::string", "text",    0, 0, 0, 0},
         {"avatar_hash",  "std::string", "text",    0, 0, 0, 0},
         {"avatar_frame", "int32_t",     "integer", 4, 0, 0, 1},
-        {"clan",         "std::string", "text",    0, 0, 0, 0}
+        {"clan",         "std::string", "text",    0, 0, 0, 0},
+        {"is_new",       "bool",        "boolean", 1, 0, 0, 1}
 };
 
-const std::string &Player::getColumnName(size_t index)
-
-noexcept(false)
-{
-assert(index<metaData_
-.
-
-size()
-
-);
-return metaData_[index].
-colName_;
-}
-
-Player::Player(const Row &r, const ssize_t indexOffset)
-
-noexcept
-{
-if(indexOffset < 0)
-{
-if(!r["id"].
-
-isNull()
-
-)
-{
-id_ = std::make_shared<int64_t>(r["id"].as<int64_t>());
-}
-if(!r["email"].
-
-isNull()
-
-)
-{
-email_ = std::make_shared<std::string>(r["email"].as<std::string>());
-}
-if(!r["password"].
-
-isNull()
-
-)
-{
-password_ = std::make_shared<std::string>(r["password"].as<std::string>());
-}
-if(!r["username"].
-
-isNull()
-
-)
-{
-username_ = std::make_shared<std::string>(r["username"].as<std::string>());
-}
-if(!r["motto"].
-
-isNull()
-
-)
-{
-motto_ = std::make_shared<std::string>(r["motto"].as<std::string>());
-}
-if(!r["region"].
-
-isNull()
-
-)
-{
-region_ = std::make_shared<int32_t>(r["region"].as<int32_t>());
-}
-if(!r["avatar"].
-
-isNull()
-
-)
-{
-avatar_ = std::make_shared<std::string>(r["avatar"].as<std::string>());
-}
-if(!r["avatar_hash"].
-
-isNull()
-
-)
-{
-avatarHash_ = std::make_shared<std::string>(r["avatar_hash"].as<std::string>());
-}
-if(!r["avatar_frame"].
-
-isNull()
-
-)
-{
-avatarFrame_ = std::make_shared<int32_t>(r["avatar_frame"].as<int32_t>());
-}
-if(!r["clan"].
-
-isNull()
-
-)
-{
-clan_ = std::make_shared<std::string>(r["clan"].as<std::string>());
-}
-}
-else
-{
-size_t offset = (size_t) indexOffset;
-if(offset + 10 > r.
-
-size()
-
-)
-{
-LOG_FATAL << "Invalid SQL result for this model";
-return;
-}
-size_t index;
-index = offset + 0;
-if(!r[index].
-
-isNull()
-
-)
-{
-id_ = std::make_shared<int64_t>(r[index].as<int64_t>());
-}
-index = offset + 1;
-if(!r[index].
-
-isNull()
-
-)
-{
-email_ = std::make_shared<std::string>(r[index].as<std::string>());
-}
-index = offset + 2;
-if(!r[index].
-
-isNull()
-
-)
-{
-password_ = std::make_shared<std::string>(r[index].as<std::string>());
-}
-index = offset + 3;
-if(!r[index].
-
-isNull()
-
-)
-{
-username_ = std::make_shared<std::string>(r[index].as<std::string>());
-}
-index = offset + 4;
-if(!r[index].
-
-isNull()
-
-)
-{
-motto_ = std::make_shared<std::string>(r[index].as<std::string>());
-}
-index = offset + 5;
-if(!r[index].
-
-isNull()
-
-)
-{
-region_ = std::make_shared<int32_t>(r[index].as<int32_t>());
-}
-index = offset + 6;
-if(!r[index].
-
-isNull()
-
-)
-{
-avatar_ = std::make_shared<std::string>(r[index].as<std::string>());
-}
-index = offset + 7;
-if(!r[index].
-
-isNull()
-
-)
-{
-avatarHash_ = std::make_shared<std::string>(r[index].as<std::string>());
-}
-index = offset + 8;
-if(!r[index].
-
-isNull()
-
-)
-{
-avatarFrame_ = std::make_shared<int32_t>(r[index].as<int32_t>());
-}
-index = offset + 9;
-if(!r[index].
-
-isNull()
-
-)
-{
-clan_ = std::make_shared<std::string>(r[index].as<std::string>());
-}
-}
-
-}
-
-Player::Player(const Json::Value &pJson, const std::vector <std::string> &pMasqueradingVector)
-
-noexcept(false)
-{
-if(pMasqueradingVector.
-
-size()
-
-!= 10)
-{
-LOG_ERROR << "Bad masquerading vector";
-return;
-}
-if(!pMasqueradingVector[0].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[0])
-)
-{
-dirtyFlag_[0] = true;
-if(!pJson[pMasqueradingVector[0]].
-
-isNull()
-
-)
-{
-id_ = std::make_shared<int64_t>((int64_t) pJson[pMasqueradingVector[0]].asInt64());
-}
-}
-if(!pMasqueradingVector[1].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[1])
-)
-{
-dirtyFlag_[1] = true;
-if(!pJson[pMasqueradingVector[1]].
-
-isNull()
-
-)
-{
-email_ = std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
-}
-}
-if(!pMasqueradingVector[2].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[2])
-)
-{
-dirtyFlag_[2] = true;
-if(!pJson[pMasqueradingVector[2]].
-
-isNull()
-
-)
-{
-password_ = std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
-}
-}
-if(!pMasqueradingVector[3].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[3])
-)
-{
-dirtyFlag_[3] = true;
-if(!pJson[pMasqueradingVector[3]].
-
-isNull()
-
-)
-{
-username_ = std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
-}
-}
-if(!pMasqueradingVector[4].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[4])
-)
-{
-dirtyFlag_[4] = true;
-if(!pJson[pMasqueradingVector[4]].
-
-isNull()
-
-)
-{
-motto_ = std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
-}
-}
-if(!pMasqueradingVector[5].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[5])
-)
-{
-dirtyFlag_[5] = true;
-if(!pJson[pMasqueradingVector[5]].
-
-isNull()
-
-)
-{
-region_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[5]].asInt64());
-}
-}
-if(!pMasqueradingVector[6].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[6])
-)
-{
-dirtyFlag_[6] = true;
-if(!pJson[pMasqueradingVector[6]].
-
-isNull()
-
-)
-{
-avatar_ = std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
-}
-}
-if(!pMasqueradingVector[7].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[7])
-)
-{
-dirtyFlag_[7] = true;
-if(!pJson[pMasqueradingVector[7]].
-
-isNull()
-
-)
-{
-avatarHash_ = std::make_shared<std::string>(pJson[pMasqueradingVector[7]].asString());
-}
-}
-if(!pMasqueradingVector[8].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[8])
-)
-{
-dirtyFlag_[8] = true;
-if(!pJson[pMasqueradingVector[8]].
-
-isNull()
-
-)
-{
-avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[8]].asInt64());
-}
-}
-if(!pMasqueradingVector[9].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[9])
-)
-{
-dirtyFlag_[9] = true;
-if(!pJson[pMasqueradingVector[9]].
-
-isNull()
-
-)
-{
-clan_ = std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
-}
-}
-}
-
-Player::Player(const Json::Value &pJson)
-
-noexcept(false)
-{
-if(pJson.isMember("id"))
-{
-dirtyFlag_[0]=true;
-if(!pJson["id"].
-
-isNull()
-
-)
-{
-id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
-}
-}
-if(pJson.isMember("email"))
-{
-dirtyFlag_[1]=true;
-if(!pJson["email"].
-
-isNull()
-
-)
-{
-email_ = std::make_shared<std::string>(pJson["email"].asString());
-}
-}
-if(pJson.isMember("password"))
-{
-dirtyFlag_[2]=true;
-if(!pJson["password"].
-
-isNull()
-
-)
-{
-password_ = std::make_shared<std::string>(pJson["password"].asString());
-}
-}
-if(pJson.isMember("username"))
-{
-dirtyFlag_[3]=true;
-if(!pJson["username"].
-
-isNull()
-
-)
-{
-username_ = std::make_shared<std::string>(pJson["username"].asString());
-}
-}
-if(pJson.isMember("motto"))
-{
-dirtyFlag_[4]=true;
-if(!pJson["motto"].
-
-isNull()
-
-)
-{
-motto_ = std::make_shared<std::string>(pJson["motto"].asString());
-}
-}
-if(pJson.isMember("region"))
-{
-dirtyFlag_[5]=true;
-if(!pJson["region"].
-
-isNull()
-
-)
-{
-region_ = std::make_shared<int32_t>((int32_t) pJson["region"].asInt64());
-}
-}
-if(pJson.isMember("avatar"))
-{
-dirtyFlag_[6]=true;
-if(!pJson["avatar"].
-
-isNull()
-
-)
-{
-avatar_ = std::make_shared<std::string>(pJson["avatar"].asString());
-}
-}
-if(pJson.isMember("avatar_hash"))
-{
-dirtyFlag_[7]=true;
-if(!pJson["avatar_hash"].
-
-isNull()
-
-)
-{
-avatarHash_ = std::make_shared<std::string>(pJson["avatar_hash"].asString());
-}
-}
-if(pJson.isMember("avatar_frame"))
-{
-dirtyFlag_[8]=true;
-if(!pJson["avatar_frame"].
-
-isNull()
-
-)
-{
-avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson["avatar_frame"].asInt64());
-}
-}
-if(pJson.isMember("clan"))
-{
-dirtyFlag_[9]=true;
-if(!pJson["clan"].
-
-isNull()
-
-)
-{
-clan_ = std::make_shared<std::string>(pJson["clan"].asString());
-}
-}
+const std::string &Player::getColumnName(size_t index) noexcept(false) {
+    assert(index < metaData_.size());
+    return metaData_[index].colName_;
+}
+
+Player::Player(const Row &r, const ssize_t indexOffset) noexcept {
+    if (indexOffset < 0) {
+        if (!r["id"].isNull()) {
+            id_ = std::make_shared<int64_t>(r["id"].as<int64_t>());
+        }
+        if (!r["email"].isNull()) {
+            email_ = std::make_shared<std::string>(r["email"].as<std::string>());
+        }
+        if (!r["password"].isNull()) {
+            password_ = std::make_shared<std::string>(r["password"].as<std::string>());
+        }
+        if (!r["username"].isNull()) {
+            username_ = std::make_shared<std::string>(r["username"].as<std::string>());
+        }
+        if (!r["motto"].isNull()) {
+            motto_ = std::make_shared<std::string>(r["motto"].as<std::string>());
+        }
+        if (!r["region"].isNull()) {
+            region_ = std::make_shared<int32_t>(r["region"].as<int32_t>());
+        }
+        if (!r["avatar"].isNull()) {
+            avatar_ = std::make_shared<std::string>(r["avatar"].as<std::string>());
+        }
+        if (!r["avatar_hash"].isNull()) {
+            avatarHash_ = std::make_shared<std::string>(r["avatar_hash"].as<std::string>());
+        }
+        if (!r["avatar_frame"].isNull()) {
+            avatarFrame_ = std::make_shared<int32_t>(r["avatar_frame"].as<int32_t>());
+        }
+        if (!r["clan"].isNull()) {
+            clan_ = std::make_shared<std::string>(r["clan"].as<std::string>());
+        }
+        if (!r["is_new"].isNull()) {
+            isNew_ = std::make_shared<bool>(r["is_new"].as<bool>());
+        }
+    } else {
+        size_t offset = (size_t) indexOffset;
+        if (offset + 11 > r.size()) {
+            LOG_FATAL << "Invalid SQL result for this model";
+            return;
+        }
+        size_t index;
+        index = offset + 0;
+        if (!r[index].isNull()) {
+            id_ = std::make_shared<int64_t>(r[index].as<int64_t>());
+        }
+        index = offset + 1;
+        if (!r[index].isNull()) {
+            email_ = std::make_shared<std::string>(r[index].as<std::string>());
+        }
+        index = offset + 2;
+        if (!r[index].isNull()) {
+            password_ = std::make_shared<std::string>(r[index].as<std::string>());
+        }
+        index = offset + 3;
+        if (!r[index].isNull()) {
+            username_ = std::make_shared<std::string>(r[index].as<std::string>());
+        }
+        index = offset + 4;
+        if (!r[index].isNull()) {
+            motto_ = std::make_shared<std::string>(r[index].as<std::string>());
+        }
+        index = offset + 5;
+        if (!r[index].isNull()) {
+            region_ = std::make_shared<int32_t>(r[index].as<int32_t>());
+        }
+        index = offset + 6;
+        if (!r[index].isNull()) {
+            avatar_ = std::make_shared<std::string>(r[index].as<std::string>());
+        }
+        index = offset + 7;
+        if (!r[index].isNull()) {
+            avatarHash_ = std::make_shared<std::string>(r[index].as<std::string>());
+        }
+        index = offset + 8;
+        if (!r[index].isNull()) {
+            avatarFrame_ = std::make_shared<int32_t>(r[index].as<int32_t>());
+        }
+        index = offset + 9;
+        if (!r[index].isNull()) {
+            clan_ = std::make_shared<std::string>(r[index].as<std::string>());
+        }
+        index = offset + 10;
+        if (!r[index].isNull()) {
+            isNew_ = std::make_shared<bool>(r[index].as<bool>());
+        }
+    }
+
+}
+
+Player::Player(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false) {
+    if (pMasqueradingVector.size() != 11) {
+        LOG_ERROR << "Bad masquerading vector";
+        return;
+    }
+    if (!pMasqueradingVector[0].empty() && pJson.isMember(pMasqueradingVector[0])) {
+        dirtyFlag_[0] = true;
+        if (!pJson[pMasqueradingVector[0]].isNull()) {
+            id_ = std::make_shared<int64_t>((int64_t) pJson[pMasqueradingVector[0]].asInt64());
+        }
+    }
+    if (!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1])) {
+        dirtyFlag_[1] = true;
+        if (!pJson[pMasqueradingVector[1]].isNull()) {
+            email_ = std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
+        }
+    }
+    if (!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2])) {
+        dirtyFlag_[2] = true;
+        if (!pJson[pMasqueradingVector[2]].isNull()) {
+            password_ = std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
+        }
+    }
+    if (!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3])) {
+        dirtyFlag_[3] = true;
+        if (!pJson[pMasqueradingVector[3]].isNull()) {
+            username_ = std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
+        }
+    }
+    if (!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4])) {
+        dirtyFlag_[4] = true;
+        if (!pJson[pMasqueradingVector[4]].isNull()) {
+            motto_ = std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
+        }
+    }
+    if (!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5])) {
+        dirtyFlag_[5] = true;
+        if (!pJson[pMasqueradingVector[5]].isNull()) {
+            region_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[5]].asInt64());
+        }
+    }
+    if (!pMasqueradingVector[6].empty() && pJson.isMember(pMasqueradingVector[6])) {
+        dirtyFlag_[6] = true;
+        if (!pJson[pMasqueradingVector[6]].isNull()) {
+            avatar_ = std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
+        }
+    }
+    if (!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7])) {
+        dirtyFlag_[7] = true;
+        if (!pJson[pMasqueradingVector[7]].isNull()) {
+            avatarHash_ = std::make_shared<std::string>(pJson[pMasqueradingVector[7]].asString());
+        }
+    }
+    if (!pMasqueradingVector[8].empty() && pJson.isMember(pMasqueradingVector[8])) {
+        dirtyFlag_[8] = true;
+        if (!pJson[pMasqueradingVector[8]].isNull()) {
+            avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[8]].asInt64());
+        }
+    }
+    if (!pMasqueradingVector[9].empty() && pJson.isMember(pMasqueradingVector[9])) {
+        dirtyFlag_[9] = true;
+        if (!pJson[pMasqueradingVector[9]].isNull()) {
+            clan_ = std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
+        }
+    }
+    if (!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10])) {
+        dirtyFlag_[10] = true;
+        if (!pJson[pMasqueradingVector[10]].isNull()) {
+            isNew_ = std::make_shared<bool>(pJson[pMasqueradingVector[10]].asBool());
+        }
+    }
+}
+
+Player::Player(const Json::Value &pJson) noexcept(false) {
+    if (pJson.isMember("id")) {
+        dirtyFlag_[0] = true;
+        if (!pJson["id"].isNull()) {
+            id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
+        }
+    }
+    if (pJson.isMember("email")) {
+        dirtyFlag_[1] = true;
+        if (!pJson["email"].isNull()) {
+            email_ = std::make_shared<std::string>(pJson["email"].asString());
+        }
+    }
+    if (pJson.isMember("password")) {
+        dirtyFlag_[2] = true;
+        if (!pJson["password"].isNull()) {
+            password_ = std::make_shared<std::string>(pJson["password"].asString());
+        }
+    }
+    if (pJson.isMember("username")) {
+        dirtyFlag_[3] = true;
+        if (!pJson["username"].isNull()) {
+            username_ = std::make_shared<std::string>(pJson["username"].asString());
+        }
+    }
+    if (pJson.isMember("motto")) {
+        dirtyFlag_[4] = true;
+        if (!pJson["motto"].isNull()) {
+            motto_ = std::make_shared<std::string>(pJson["motto"].asString());
+        }
+    }
+    if (pJson.isMember("region")) {
+        dirtyFlag_[5] = true;
+        if (!pJson["region"].isNull()) {
+            region_ = std::make_shared<int32_t>((int32_t) pJson["region"].asInt64());
+        }
+    }
+    if (pJson.isMember("avatar")) {
+        dirtyFlag_[6] = true;
+        if (!pJson["avatar"].isNull()) {
+            avatar_ = std::make_shared<std::string>(pJson["avatar"].asString());
+        }
+    }
+    if (pJson.isMember("avatar_hash")) {
+        dirtyFlag_[7] = true;
+        if (!pJson["avatar_hash"].isNull()) {
+            avatarHash_ = std::make_shared<std::string>(pJson["avatar_hash"].asString());
+        }
+    }
+    if (pJson.isMember("avatar_frame")) {
+        dirtyFlag_[8] = true;
+        if (!pJson["avatar_frame"].isNull()) {
+            avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson["avatar_frame"].asInt64());
+        }
+    }
+    if (pJson.isMember("clan")) {
+        dirtyFlag_[9] = true;
+        if (!pJson["clan"].isNull()) {
+            clan_ = std::make_shared<std::string>(pJson["clan"].asString());
+        }
+    }
+    if (pJson.isMember("is_new")) {
+        dirtyFlag_[10] = true;
+        if (!pJson["is_new"].isNull()) {
+            isNew_ = std::make_shared<bool>(pJson["is_new"].asBool());
+        }
+    }
 }
 
 void Player::updateByMasqueradedJson(const Json::Value &pJson,
-                                     const std::vector <std::string> &pMasqueradingVector)
-
-noexcept(false)
-{
-if(pMasqueradingVector.
-
-size()
-
-!= 10)
-{
-LOG_ERROR << "Bad masquerading vector";
-return;
-}
-if(!pMasqueradingVector[0].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[0])
-)
-{
-if(!pJson[pMasqueradingVector[0]].
-
-isNull()
-
-)
-{
-id_ = std::make_shared<int64_t>((int64_t) pJson[pMasqueradingVector[0]].asInt64());
-}
-}
-if(!pMasqueradingVector[1].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[1])
-)
-{
-dirtyFlag_[1] = true;
-if(!pJson[pMasqueradingVector[1]].
-
-isNull()
-
-)
-{
-email_ = std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
-}
-}
-if(!pMasqueradingVector[2].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[2])
-)
-{
-dirtyFlag_[2] = true;
-if(!pJson[pMasqueradingVector[2]].
-
-isNull()
-
-)
-{
-password_ = std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
-}
-}
-if(!pMasqueradingVector[3].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[3])
-)
-{
-dirtyFlag_[3] = true;
-if(!pJson[pMasqueradingVector[3]].
-
-isNull()
-
-)
-{
-username_ = std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
-}
-}
-if(!pMasqueradingVector[4].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[4])
-)
-{
-dirtyFlag_[4] = true;
-if(!pJson[pMasqueradingVector[4]].
-
-isNull()
-
-)
-{
-motto_ = std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
-}
-}
-if(!pMasqueradingVector[5].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[5])
-)
-{
-dirtyFlag_[5] = true;
-if(!pJson[pMasqueradingVector[5]].
-
-isNull()
-
-)
-{
-region_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[5]].asInt64());
-}
-}
-if(!pMasqueradingVector[6].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[6])
-)
-{
-dirtyFlag_[6] = true;
-if(!pJson[pMasqueradingVector[6]].
-
-isNull()
-
-)
-{
-avatar_ = std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
-}
-}
-if(!pMasqueradingVector[7].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[7])
-)
-{
-dirtyFlag_[7] = true;
-if(!pJson[pMasqueradingVector[7]].
-
-isNull()
-
-)
-{
-avatarHash_ = std::make_shared<std::string>(pJson[pMasqueradingVector[7]].asString());
-}
-}
-if(!pMasqueradingVector[8].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[8])
-)
-{
-dirtyFlag_[8] = true;
-if(!pJson[pMasqueradingVector[8]].
-
-isNull()
-
-)
-{
-avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[8]].asInt64());
-}
-}
-if(!pMasqueradingVector[9].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[9])
-)
-{
-dirtyFlag_[9] = true;
-if(!pJson[pMasqueradingVector[9]].
-
-isNull()
-
-)
-{
-clan_ = std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
-}
-}
+                                     const std::vector<std::string> &pMasqueradingVector) noexcept(false) {
+    if (pMasqueradingVector.size() != 11) {
+        LOG_ERROR << "Bad masquerading vector";
+        return;
+    }
+    if (!pMasqueradingVector[0].empty() && pJson.isMember(pMasqueradingVector[0])) {
+        if (!pJson[pMasqueradingVector[0]].isNull()) {
+            id_ = std::make_shared<int64_t>((int64_t) pJson[pMasqueradingVector[0]].asInt64());
+        }
+    }
+    if (!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1])) {
+        dirtyFlag_[1] = true;
+        if (!pJson[pMasqueradingVector[1]].isNull()) {
+            email_ = std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
+        }
+    }
+    if (!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2])) {
+        dirtyFlag_[2] = true;
+        if (!pJson[pMasqueradingVector[2]].isNull()) {
+            password_ = std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
+        }
+    }
+    if (!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3])) {
+        dirtyFlag_[3] = true;
+        if (!pJson[pMasqueradingVector[3]].isNull()) {
+            username_ = std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
+        }
+    }
+    if (!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4])) {
+        dirtyFlag_[4] = true;
+        if (!pJson[pMasqueradingVector[4]].isNull()) {
+            motto_ = std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
+        }
+    }
+    if (!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5])) {
+        dirtyFlag_[5] = true;
+        if (!pJson[pMasqueradingVector[5]].isNull()) {
+            region_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[5]].asInt64());
+        }
+    }
+    if (!pMasqueradingVector[6].empty() && pJson.isMember(pMasqueradingVector[6])) {
+        dirtyFlag_[6] = true;
+        if (!pJson[pMasqueradingVector[6]].isNull()) {
+            avatar_ = std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
+        }
+    }
+    if (!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7])) {
+        dirtyFlag_[7] = true;
+        if (!pJson[pMasqueradingVector[7]].isNull()) {
+            avatarHash_ = std::make_shared<std::string>(pJson[pMasqueradingVector[7]].asString());
+        }
+    }
+    if (!pMasqueradingVector[8].empty() && pJson.isMember(pMasqueradingVector[8])) {
+        dirtyFlag_[8] = true;
+        if (!pJson[pMasqueradingVector[8]].isNull()) {
+            avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[8]].asInt64());
+        }
+    }
+    if (!pMasqueradingVector[9].empty() && pJson.isMember(pMasqueradingVector[9])) {
+        dirtyFlag_[9] = true;
+        if (!pJson[pMasqueradingVector[9]].isNull()) {
+            clan_ = std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
+        }
+    }
+    if (!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10])) {
+        dirtyFlag_[10] = true;
+        if (!pJson[pMasqueradingVector[10]].isNull()) {
+            isNew_ = std::make_shared<bool>(pJson[pMasqueradingVector[10]].asBool());
+        }
+    }
 }
 
-void Player::updateByJson(const Json::Value &pJson)
-
-noexcept(false)
-{
-if(pJson.isMember("id"))
-{
-if(!pJson["id"].
-
-isNull()
-
-)
-{
-id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
-}
-}
-if(pJson.isMember("email"))
-{
-dirtyFlag_[1] = true;
-if(!pJson["email"].
-
-isNull()
-
-)
-{
-email_ = std::make_shared<std::string>(pJson["email"].asString());
-}
-}
-if(pJson.isMember("password"))
-{
-dirtyFlag_[2] = true;
-if(!pJson["password"].
-
-isNull()
-
-)
-{
-password_ = std::make_shared<std::string>(pJson["password"].asString());
-}
-}
-if(pJson.isMember("username"))
-{
-dirtyFlag_[3] = true;
-if(!pJson["username"].
-
-isNull()
-
-)
-{
-username_ = std::make_shared<std::string>(pJson["username"].asString());
-}
-}
-if(pJson.isMember("motto"))
-{
-dirtyFlag_[4] = true;
-if(!pJson["motto"].
-
-isNull()
-
-)
-{
-motto_ = std::make_shared<std::string>(pJson["motto"].asString());
-}
-}
-if(pJson.isMember("region"))
-{
-dirtyFlag_[5] = true;
-if(!pJson["region"].
-
-isNull()
-
-)
-{
-region_ = std::make_shared<int32_t>((int32_t) pJson["region"].asInt64());
-}
-}
-if(pJson.isMember("avatar"))
-{
-dirtyFlag_[6] = true;
-if(!pJson["avatar"].
-
-isNull()
-
-)
-{
-avatar_ = std::make_shared<std::string>(pJson["avatar"].asString());
-}
-}
-if(pJson.isMember("avatar_hash"))
-{
-dirtyFlag_[7] = true;
-if(!pJson["avatar_hash"].
-
-isNull()
-
-)
-{
-avatarHash_ = std::make_shared<std::string>(pJson["avatar_hash"].asString());
-}
-}
-if(pJson.isMember("avatar_frame"))
-{
-dirtyFlag_[8] = true;
-if(!pJson["avatar_frame"].
-
-isNull()
-
-)
-{
-avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson["avatar_frame"].asInt64());
-}
-}
-if(pJson.isMember("clan"))
-{
-dirtyFlag_[9] = true;
-if(!pJson["clan"].
-
-isNull()
-
-)
-{
-clan_ = std::make_shared<std::string>(pJson["clan"].asString());
-}
-}
+void Player::updateByJson(const Json::Value &pJson) noexcept(false) {
+    if (pJson.isMember("id")) {
+        if (!pJson["id"].isNull()) {
+            id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
+        }
+    }
+    if (pJson.isMember("email")) {
+        dirtyFlag_[1] = true;
+        if (!pJson["email"].isNull()) {
+            email_ = std::make_shared<std::string>(pJson["email"].asString());
+        }
+    }
+    if (pJson.isMember("password")) {
+        dirtyFlag_[2] = true;
+        if (!pJson["password"].isNull()) {
+            password_ = std::make_shared<std::string>(pJson["password"].asString());
+        }
+    }
+    if (pJson.isMember("username")) {
+        dirtyFlag_[3] = true;
+        if (!pJson["username"].isNull()) {
+            username_ = std::make_shared<std::string>(pJson["username"].asString());
+        }
+    }
+    if (pJson.isMember("motto")) {
+        dirtyFlag_[4] = true;
+        if (!pJson["motto"].isNull()) {
+            motto_ = std::make_shared<std::string>(pJson["motto"].asString());
+        }
+    }
+    if (pJson.isMember("region")) {
+        dirtyFlag_[5] = true;
+        if (!pJson["region"].isNull()) {
+            region_ = std::make_shared<int32_t>((int32_t) pJson["region"].asInt64());
+        }
+    }
+    if (pJson.isMember("avatar")) {
+        dirtyFlag_[6] = true;
+        if (!pJson["avatar"].isNull()) {
+            avatar_ = std::make_shared<std::string>(pJson["avatar"].asString());
+        }
+    }
+    if (pJson.isMember("avatar_hash")) {
+        dirtyFlag_[7] = true;
+        if (!pJson["avatar_hash"].isNull()) {
+            avatarHash_ = std::make_shared<std::string>(pJson["avatar_hash"].asString());
+        }
+    }
+    if (pJson.isMember("avatar_frame")) {
+        dirtyFlag_[8] = true;
+        if (!pJson["avatar_frame"].isNull()) {
+            avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson["avatar_frame"].asInt64());
+        }
+    }
+    if (pJson.isMember("clan")) {
+        dirtyFlag_[9] = true;
+        if (!pJson["clan"].isNull()) {
+            clan_ = std::make_shared<std::string>(pJson["clan"].asString());
+        }
+    }
+    if (pJson.isMember("is_new")) {
+        dirtyFlag_[10] = true;
+        if (!pJson["is_new"].isNull()) {
+            isNew_ = std::make_shared<bool>(pJson["is_new"].asBool());
+        }
+    }
 }
 
-const int64_t &Player::getValueOfId() const
-
-noexcept
-{
-const static int64_t defaultValue = int64_t();
-if(id_)
-return *
-id_;
-return
-defaultValue;
+const int64_t &Player::getValueOfId() const noexcept {
+    const static int64_t defaultValue = int64_t();
+    if (id_)
+        return *id_;
+    return defaultValue;
 }
 
-const std::shared_ptr <int64_t> &Player::getId() const
-
-noexcept
-{
-return
-id_;
+const std::shared_ptr<int64_t> &Player::getId() const noexcept {
+    return id_;
 }
 
-void Player::setId(const int64_t &pId)
-
-noexcept
-{
-id_ = std::make_shared<int64_t>(pId);
-dirtyFlag_[0] = true;
+void Player::setId(const int64_t &pId) noexcept {
+    id_ = std::make_shared<int64_t>(pId);
+    dirtyFlag_[0] = true;
 }
 
 const typename Player::PrimaryKeyType &Player::getPrimaryKey() const {
@@ -922,389 +441,243 @@ const typename Player::PrimaryKeyType &Player::getPrimaryKey() const {
     return *id_;
 }
 
-const std::string &Player::getValueOfEmail() const
-
-noexcept
-{
-const static std::string defaultValue = std::string();
-if(email_)
-return *
-email_;
-return
-defaultValue;
+const std::string &Player::getValueOfEmail() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (email_)
+        return *email_;
+    return defaultValue;
 }
 
-const std::shared_ptr <std::string> &Player::getEmail() const
-
-noexcept
-{
-return
-email_;
+const std::shared_ptr<std::string> &Player::getEmail() const noexcept {
+    return email_;
 }
 
-void Player::setEmail(const std::string &pEmail)
-
-noexcept
-{
-email_ = std::make_shared<std::string>(pEmail);
-dirtyFlag_[1] = true;
+void Player::setEmail(const std::string &pEmail) noexcept {
+    email_ = std::make_shared<std::string>(pEmail);
+    dirtyFlag_[1] = true;
 }
 
-void Player::setEmail(std::string &&pEmail)
-
-noexcept
-{
-email_ = std::make_shared<std::string>(std::move(pEmail));
-dirtyFlag_[1] = true;
+void Player::setEmail(std::string &&pEmail) noexcept {
+    email_ = std::make_shared<std::string>(std::move(pEmail));
+    dirtyFlag_[1] = true;
 }
 
-const std::string &Player::getValueOfPassword() const
-
-noexcept
-{
-const static std::string defaultValue = std::string();
-if(password_)
-return *
-password_;
-return
-defaultValue;
+const std::string &Player::getValueOfPassword() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (password_)
+        return *password_;
+    return defaultValue;
 }
 
-const std::shared_ptr <std::string> &Player::getPassword() const
-
-noexcept
-{
-return
-password_;
+const std::shared_ptr<std::string> &Player::getPassword() const noexcept {
+    return password_;
 }
 
-void Player::setPassword(const std::string &pPassword)
-
-noexcept
-{
-password_ = std::make_shared<std::string>(pPassword);
-dirtyFlag_[2] = true;
+void Player::setPassword(const std::string &pPassword) noexcept {
+    password_ = std::make_shared<std::string>(pPassword);
+    dirtyFlag_[2] = true;
 }
 
-void Player::setPassword(std::string &&pPassword)
-
-noexcept
-{
-password_ = std::make_shared<std::string>(std::move(pPassword));
-dirtyFlag_[2] = true;
+void Player::setPassword(std::string &&pPassword) noexcept {
+    password_ = std::make_shared<std::string>(std::move(pPassword));
+    dirtyFlag_[2] = true;
 }
 
-void Player::setPasswordToNull()
-
-noexcept
-{
-password_.
-
-reset();
-
-dirtyFlag_[2] = true;
+void Player::setPasswordToNull() noexcept {
+    password_.reset();
+    dirtyFlag_[2] = true;
 }
 
-const std::string &Player::getValueOfUsername() const
-
-noexcept
-{
-const static std::string defaultValue = std::string();
-if(username_)
-return *
-username_;
-return
-defaultValue;
+const std::string &Player::getValueOfUsername() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (username_)
+        return *username_;
+    return defaultValue;
 }
 
-const std::shared_ptr <std::string> &Player::getUsername() const
-
-noexcept
-{
-return
-username_;
+const std::shared_ptr<std::string> &Player::getUsername() const noexcept {
+    return username_;
 }
 
-void Player::setUsername(const std::string &pUsername)
-
-noexcept
-{
-username_ = std::make_shared<std::string>(pUsername);
-dirtyFlag_[3] = true;
+void Player::setUsername(const std::string &pUsername) noexcept {
+    username_ = std::make_shared<std::string>(pUsername);
+    dirtyFlag_[3] = true;
 }
 
-void Player::setUsername(std::string &&pUsername)
-
-noexcept
-{
-username_ = std::make_shared<std::string>(std::move(pUsername));
-dirtyFlag_[3] = true;
+void Player::setUsername(std::string &&pUsername) noexcept {
+    username_ = std::make_shared<std::string>(std::move(pUsername));
+    dirtyFlag_[3] = true;
 }
 
-const std::string &Player::getValueOfMotto() const
-
-noexcept
-{
-const static std::string defaultValue = std::string();
-if(motto_)
-return *
-motto_;
-return
-defaultValue;
+const std::string &Player::getValueOfMotto() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (motto_)
+        return *motto_;
+    return defaultValue;
 }
 
-const std::shared_ptr <std::string> &Player::getMotto() const
-
-noexcept
-{
-return
-motto_;
+const std::shared_ptr<std::string> &Player::getMotto() const noexcept {
+    return motto_;
 }
 
-void Player::setMotto(const std::string &pMotto)
-
-noexcept
-{
-motto_ = std::make_shared<std::string>(pMotto);
-dirtyFlag_[4] = true;
+void Player::setMotto(const std::string &pMotto) noexcept {
+    motto_ = std::make_shared<std::string>(pMotto);
+    dirtyFlag_[4] = true;
 }
 
-void Player::setMotto(std::string &&pMotto)
-
-noexcept
-{
-motto_ = std::make_shared<std::string>(std::move(pMotto));
-dirtyFlag_[4] = true;
+void Player::setMotto(std::string &&pMotto) noexcept {
+    motto_ = std::make_shared<std::string>(std::move(pMotto));
+    dirtyFlag_[4] = true;
 }
 
-void Player::setMottoToNull()
-
-noexcept
-{
-motto_.
-
-reset();
-
-dirtyFlag_[4] = true;
+void Player::setMottoToNull() noexcept {
+    motto_.reset();
+    dirtyFlag_[4] = true;
 }
 
-const int32_t &Player::getValueOfRegion() const
-
-noexcept
-{
-const static int32_t defaultValue = int32_t();
-if(region_)
-return *
-region_;
-return
-defaultValue;
+const int32_t &Player::getValueOfRegion() const noexcept {
+    const static int32_t defaultValue = int32_t();
+    if (region_)
+        return *region_;
+    return defaultValue;
 }
 
-const std::shared_ptr <int32_t> &Player::getRegion() const
-
-noexcept
-{
-return
-region_;
+const std::shared_ptr<int32_t> &Player::getRegion() const noexcept {
+    return region_;
 }
 
-void Player::setRegion(const int32_t &pRegion)
-
-noexcept
-{
-region_ = std::make_shared<int32_t>(pRegion);
-dirtyFlag_[5] = true;
+void Player::setRegion(const int32_t &pRegion) noexcept {
+    region_ = std::make_shared<int32_t>(pRegion);
+    dirtyFlag_[5] = true;
 }
 
-const std::string &Player::getValueOfAvatar() const
-
-noexcept
-{
-const static std::string defaultValue = std::string();
-if(avatar_)
-return *
-avatar_;
-return
-defaultValue;
+const std::string &Player::getValueOfAvatar() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (avatar_)
+        return *avatar_;
+    return defaultValue;
 }
 
-const std::shared_ptr <std::string> &Player::getAvatar() const
-
-noexcept
-{
-return
-avatar_;
+const std::shared_ptr<std::string> &Player::getAvatar() const noexcept {
+    return avatar_;
 }
 
-void Player::setAvatar(const std::string &pAvatar)
-
-noexcept
-{
-avatar_ = std::make_shared<std::string>(pAvatar);
-dirtyFlag_[6] = true;
+void Player::setAvatar(const std::string &pAvatar) noexcept {
+    avatar_ = std::make_shared<std::string>(pAvatar);
+    dirtyFlag_[6] = true;
 }
 
-void Player::setAvatar(std::string &&pAvatar)
-
-noexcept
-{
-avatar_ = std::make_shared<std::string>(std::move(pAvatar));
-dirtyFlag_[6] = true;
+void Player::setAvatar(std::string &&pAvatar) noexcept {
+    avatar_ = std::make_shared<std::string>(std::move(pAvatar));
+    dirtyFlag_[6] = true;
 }
 
-void Player::setAvatarToNull()
-
-noexcept
-{
-avatar_.
-
-reset();
-
-dirtyFlag_[6] = true;
+void Player::setAvatarToNull() noexcept {
+    avatar_.reset();
+    dirtyFlag_[6] = true;
 }
 
-const std::string &Player::getValueOfAvatarHash() const
-
-noexcept
-{
-const static std::string defaultValue = std::string();
-if(avatarHash_)
-return *
-avatarHash_;
-return
-defaultValue;
+const std::string &Player::getValueOfAvatarHash() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (avatarHash_)
+        return *avatarHash_;
+    return defaultValue;
 }
 
-const std::shared_ptr <std::string> &Player::getAvatarHash() const
-
-noexcept
-{
-return
-avatarHash_;
+const std::shared_ptr<std::string> &Player::getAvatarHash() const noexcept {
+    return avatarHash_;
 }
 
-void Player::setAvatarHash(const std::string &pAvatarHash)
-
-noexcept
-{
-avatarHash_ = std::make_shared<std::string>(pAvatarHash);
-dirtyFlag_[7] = true;
+void Player::setAvatarHash(const std::string &pAvatarHash) noexcept {
+    avatarHash_ = std::make_shared<std::string>(pAvatarHash);
+    dirtyFlag_[7] = true;
 }
 
-void Player::setAvatarHash(std::string &&pAvatarHash)
-
-noexcept
-{
-avatarHash_ = std::make_shared<std::string>(std::move(pAvatarHash));
-dirtyFlag_[7] = true;
+void Player::setAvatarHash(std::string &&pAvatarHash) noexcept {
+    avatarHash_ = std::make_shared<std::string>(std::move(pAvatarHash));
+    dirtyFlag_[7] = true;
 }
 
-void Player::setAvatarHashToNull()
-
-noexcept
-{
-avatarHash_.
-
-reset();
-
-dirtyFlag_[7] = true;
+void Player::setAvatarHashToNull() noexcept {
+    avatarHash_.reset();
+    dirtyFlag_[7] = true;
 }
 
-const int32_t &Player::getValueOfAvatarFrame() const
-
-noexcept
-{
-const static int32_t defaultValue = int32_t();
-if(avatarFrame_)
-return *
-avatarFrame_;
-return
-defaultValue;
+const int32_t &Player::getValueOfAvatarFrame() const noexcept {
+    const static int32_t defaultValue = int32_t();
+    if (avatarFrame_)
+        return *avatarFrame_;
+    return defaultValue;
 }
 
-const std::shared_ptr <int32_t> &Player::getAvatarFrame() const
-
-noexcept
-{
-return
-avatarFrame_;
+const std::shared_ptr<int32_t> &Player::getAvatarFrame() const noexcept {
+    return avatarFrame_;
 }
 
-void Player::setAvatarFrame(const int32_t &pAvatarFrame)
-
-noexcept
-{
-avatarFrame_ = std::make_shared<int32_t>(pAvatarFrame);
-dirtyFlag_[8] = true;
+void Player::setAvatarFrame(const int32_t &pAvatarFrame) noexcept {
+    avatarFrame_ = std::make_shared<int32_t>(pAvatarFrame);
+    dirtyFlag_[8] = true;
 }
 
-const std::string &Player::getValueOfClan() const
-
-noexcept
-{
-const static std::string defaultValue = std::string();
-if(clan_)
-return *
-clan_;
-return
-defaultValue;
+const std::string &Player::getValueOfClan() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (clan_)
+        return *clan_;
+    return defaultValue;
 }
 
-const std::shared_ptr <std::string> &Player::getClan() const
-
-noexcept
-{
-return
-clan_;
+const std::shared_ptr<std::string> &Player::getClan() const noexcept {
+    return clan_;
 }
 
-void Player::setClan(const std::string &pClan)
-
-noexcept
-{
-clan_ = std::make_shared<std::string>(pClan);
-dirtyFlag_[9] = true;
+void Player::setClan(const std::string &pClan) noexcept {
+    clan_ = std::make_shared<std::string>(pClan);
+    dirtyFlag_[9] = true;
 }
 
-void Player::setClan(std::string &&pClan)
-
-noexcept
-{
-clan_ = std::make_shared<std::string>(std::move(pClan));
-dirtyFlag_[9] = true;
+void Player::setClan(std::string &&pClan) noexcept {
+    clan_ = std::make_shared<std::string>(std::move(pClan));
+    dirtyFlag_[9] = true;
 }
 
-void Player::setClanToNull()
+void Player::setClanToNull() noexcept {
+    clan_.reset();
+    dirtyFlag_[9] = true;
+}
 
-noexcept
-{
-clan_.
+const bool &Player::getValueOfIsNew() const noexcept {
+    const static bool defaultValue = bool();
+    if (isNew_)
+        return *isNew_;
+    return defaultValue;
+}
 
-reset();
+const std::shared_ptr<bool> &Player::getIsNew() const noexcept {
+    return isNew_;
+}
 
-dirtyFlag_[9] = true;
+void Player::setIsNew(const bool &pIsNew) noexcept {
+    isNew_ = std::make_shared<bool>(pIsNew);
+    dirtyFlag_[10] = true;
 }
 
 void Player::updateId(const uint64_t id) {
 }
 
-const std::vector <std::string> &Player::insertColumns()
-
-noexcept
-{
-static const std::vector <std::string> inCols = {
-        "email",
-        "password",
-        "username",
-        "motto",
-        "region",
-        "avatar",
-        "avatar_hash",
-        "avatar_frame",
-        "clan"
-};
-return
-inCols;
+const std::vector<std::string> &Player::insertColumns() noexcept {
+    static const std::vector<std::string> inCols = {
+            "email",
+            "password",
+            "username",
+            "motto",
+            "region",
+            "avatar",
+            "avatar_hash",
+            "avatar_frame",
+            "clan",
+            "is_new"
+    };
+    return inCols;
 }
 
 void Player::outputArgs(drogon::orm::internal::SqlBinder &binder) const {
@@ -1371,10 +744,17 @@ void Player::outputArgs(drogon::orm::internal::SqlBinder &binder) const {
             binder << nullptr;
         }
     }
+    if (dirtyFlag_[10]) {
+        if (getIsNew()) {
+            binder << getValueOfIsNew();
+        } else {
+            binder << nullptr;
+        }
+    }
 }
 
-const std::vector <std::string> Player::updateColumns() const {
-    std::vector <std::string> ret;
+const std::vector<std::string> Player::updateColumns() const {
+    std::vector<std::string> ret;
     if (dirtyFlag_[1]) {
         ret.push_back(getColumnName(1));
     }
@@ -1401,6 +781,9 @@ const std::vector <std::string> Player::updateColumns() const {
     }
     if (dirtyFlag_[9]) {
         ret.push_back(getColumnName(9));
+    }
+    if (dirtyFlag_[10]) {
+        ret.push_back(getColumnName(10));
     }
     return ret;
 }
@@ -1469,6 +852,13 @@ void Player::updateArgs(drogon::orm::internal::SqlBinder &binder) const {
             binder << nullptr;
         }
     }
+    if (dirtyFlag_[10]) {
+        if (getIsNew()) {
+            binder << getValueOfIsNew();
+        } else {
+            binder << nullptr;
+        }
+    }
 }
 
 Json::Value Player::toJson() const {
@@ -1523,13 +913,18 @@ Json::Value Player::toJson() const {
     } else {
         ret["clan"] = Json::Value();
     }
+    if (getIsNew()) {
+        ret["is_new"] = getValueOfIsNew();
+    } else {
+        ret["is_new"] = Json::Value();
+    }
     return ret;
 }
 
 Json::Value Player::toMasqueradedJson(
-        const std::vector <std::string> &pMasqueradingVector) const {
+        const std::vector<std::string> &pMasqueradingVector) const {
     Json::Value ret;
-    if (pMasqueradingVector.size() == 10) {
+    if (pMasqueradingVector.size() == 11) {
         if (!pMasqueradingVector[0].empty()) {
             if (getId()) {
                 ret[pMasqueradingVector[0]] = (Json::Int64) getValueOfId();
@@ -1600,6 +995,13 @@ Json::Value Player::toMasqueradedJson(
                 ret[pMasqueradingVector[9]] = Json::Value();
             }
         }
+        if (!pMasqueradingVector[10].empty()) {
+            if (getIsNew()) {
+                ret[pMasqueradingVector[10]] = getValueOfIsNew();
+            } else {
+                ret[pMasqueradingVector[10]] = Json::Value();
+            }
+        }
         return ret;
     }
     LOG_ERROR << "Masquerade failed";
@@ -1653,6 +1055,11 @@ Json::Value Player::toMasqueradedJson(
     } else {
         ret["clan"] = Json::Value();
     }
+    if (getIsNew()) {
+        ret["is_new"] = getValueOfIsNew();
+    } else {
+        ret["is_new"] = Json::Value();
+    }
     return ret;
 }
 
@@ -1700,13 +1107,17 @@ bool Player::validateJsonForCreation(const Json::Value &pJson, std::string &err)
         if (!validJsonOfField(9, "clan", pJson["clan"], err, true))
             return false;
     }
+    if (pJson.isMember("is_new")) {
+        if (!validJsonOfField(10, "is_new", pJson["is_new"], err, true))
+            return false;
+    }
     return true;
 }
 
 bool Player::validateMasqueradedJsonForCreation(const Json::Value &pJson,
-                                                const std::vector <std::string> &pMasqueradingVector,
+                                                const std::vector<std::string> &pMasqueradingVector,
                                                 std::string &err) {
-    if (pMasqueradingVector.size() != 10) {
+    if (pMasqueradingVector.size() != 11) {
         err = "Bad masquerading vector";
         return false;
     }
@@ -1774,6 +1185,12 @@ bool Player::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                     return false;
             }
         }
+        if (!pMasqueradingVector[10].empty()) {
+            if (pJson.isMember(pMasqueradingVector[10])) {
+                if (!validJsonOfField(10, pMasqueradingVector[10], pJson[pMasqueradingVector[10]], err, true))
+                    return false;
+            }
+        }
     }
     catch (const Json::LogicError &e) {
         err = e.what();
@@ -1826,13 +1243,17 @@ bool Player::validateJsonForUpdate(const Json::Value &pJson, std::string &err) {
         if (!validJsonOfField(9, "clan", pJson["clan"], err, false))
             return false;
     }
+    if (pJson.isMember("is_new")) {
+        if (!validJsonOfField(10, "is_new", pJson["is_new"], err, false))
+            return false;
+    }
     return true;
 }
 
 bool Player::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
-                                              const std::vector <std::string> &pMasqueradingVector,
+                                              const std::vector<std::string> &pMasqueradingVector,
                                               std::string &err) {
-    if (pMasqueradingVector.size() != 10) {
+    if (pMasqueradingVector.size() != 11) {
         err = "Bad masquerading vector";
         return false;
     }
@@ -1878,6 +1299,10 @@ bool Player::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
         }
         if (!pMasqueradingVector[9].empty() && pJson.isMember(pMasqueradingVector[9])) {
             if (!validJsonOfField(9, pMasqueradingVector[9], pJson[pMasqueradingVector[9]], err, false))
+                return false;
+        }
+        if (!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10])) {
+            if (!validJsonOfField(10, pMasqueradingVector[10], pJson[pMasqueradingVector[10]], err, false))
                 return false;
         }
     }
@@ -1989,6 +1414,16 @@ bool Player::validJsonOfField(size_t index,
                 return true;
             }
             if (!pJson.isString()) {
+                err = "Type error in the " + fieldName + " field";
+                return false;
+            }
+            break;
+        case 10:
+            if (pJson.isNull()) {
+                err = "The " + fieldName + " column cannot be null";
+                return false;
+            }
+            if (!pJson.isBool()) {
                 err = "Type error in the " + fieldName + " field";
                 return false;
             }

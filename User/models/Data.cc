@@ -28,419 +28,181 @@ const std::vector<typename Data::MetaData> Data::metaData_ = {
         {"private",   "std::string", "text",   0, 0, 0, 0}
 };
 
-const std::string &Data::getColumnName(size_t index)
-
-noexcept(false)
-{
-assert(index<metaData_
-.
-
-size()
-
-);
-return metaData_[index].
-colName_;
+const std::string &Data::getColumnName(size_t index) noexcept(false) {
+    assert(index < metaData_.size());
+    return metaData_[index].colName_;
 }
 
-Data::Data(const Row &r, const ssize_t indexOffset)
-
-noexcept
-{
-if(indexOffset < 0)
-{
-if(!r["id"].
-
-isNull()
-
-)
-{
-id_ = std::make_shared<int64_t>(r["id"].as<int64_t>());
-}
-if(!r["public"].
-
-isNull()
-
-)
-{
-public_ = std::make_shared<std::string>(r["public"].as<std::string>());
-}
-if(!r["protected"].
-
-isNull()
-
-)
-{
-protected_ = std::make_shared<std::string>(r["protected"].as<std::string>());
-}
-if(!r["private"].
-
-isNull()
-
-)
-{
-private_ = std::make_shared<std::string>(r["private"].as<std::string>());
-}
-}
-else
-{
-size_t offset = (size_t) indexOffset;
-if(offset + 4 > r.
-
-size()
-
-)
-{
-LOG_FATAL << "Invalid SQL result for this model";
-return;
-}
-size_t index;
-index = offset + 0;
-if(!r[index].
-
-isNull()
-
-)
-{
-id_ = std::make_shared<int64_t>(r[index].as<int64_t>());
-}
-index = offset + 1;
-if(!r[index].
-
-isNull()
-
-)
-{
-public_ = std::make_shared<std::string>(r[index].as<std::string>());
-}
-index = offset + 2;
-if(!r[index].
-
-isNull()
-
-)
-{
-protected_ = std::make_shared<std::string>(r[index].as<std::string>());
-}
-index = offset + 3;
-if(!r[index].
-
-isNull()
-
-)
-{
-private_ = std::make_shared<std::string>(r[index].as<std::string>());
-}
-}
+Data::Data(const Row &r, const ssize_t indexOffset) noexcept {
+    if (indexOffset < 0) {
+        if (!r["id"].isNull()) {
+            id_ = std::make_shared<int64_t>(r["id"].as<int64_t>());
+        }
+        if (!r["public"].isNull()) {
+            public_ = std::make_shared<std::string>(r["public"].as<std::string>());
+        }
+        if (!r["protected"].isNull()) {
+            protected_ = std::make_shared<std::string>(r["protected"].as<std::string>());
+        }
+        if (!r["private"].isNull()) {
+            private_ = std::make_shared<std::string>(r["private"].as<std::string>());
+        }
+    } else {
+        size_t offset = (size_t) indexOffset;
+        if (offset + 4 > r.size()) {
+            LOG_FATAL << "Invalid SQL result for this model";
+            return;
+        }
+        size_t index;
+        index = offset + 0;
+        if (!r[index].isNull()) {
+            id_ = std::make_shared<int64_t>(r[index].as<int64_t>());
+        }
+        index = offset + 1;
+        if (!r[index].isNull()) {
+            public_ = std::make_shared<std::string>(r[index].as<std::string>());
+        }
+        index = offset + 2;
+        if (!r[index].isNull()) {
+            protected_ = std::make_shared<std::string>(r[index].as<std::string>());
+        }
+        index = offset + 3;
+        if (!r[index].isNull()) {
+            private_ = std::make_shared<std::string>(r[index].as<std::string>());
+        }
+    }
 
 }
 
-Data::Data(const Json::Value &pJson, const std::vector <std::string> &pMasqueradingVector)
-
-noexcept(false)
-{
-if(pMasqueradingVector.
-
-size()
-
-!= 4)
-{
-LOG_ERROR << "Bad masquerading vector";
-return;
-}
-if(!pMasqueradingVector[0].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[0])
-)
-{
-dirtyFlag_[0] = true;
-if(!pJson[pMasqueradingVector[0]].
-
-isNull()
-
-)
-{
-id_ = std::make_shared<int64_t>((int64_t) pJson[pMasqueradingVector[0]].asInt64());
-}
-}
-if(!pMasqueradingVector[1].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[1])
-)
-{
-dirtyFlag_[1] = true;
-if(!pJson[pMasqueradingVector[1]].
-
-isNull()
-
-)
-{
-public_ = std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
-}
-}
-if(!pMasqueradingVector[2].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[2])
-)
-{
-dirtyFlag_[2] = true;
-if(!pJson[pMasqueradingVector[2]].
-
-isNull()
-
-)
-{
-protected_ = std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
-}
-}
-if(!pMasqueradingVector[3].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[3])
-)
-{
-dirtyFlag_[3] = true;
-if(!pJson[pMasqueradingVector[3]].
-
-isNull()
-
-)
-{
-private_ = std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
-}
-}
+Data::Data(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false) {
+    if (pMasqueradingVector.size() != 4) {
+        LOG_ERROR << "Bad masquerading vector";
+        return;
+    }
+    if (!pMasqueradingVector[0].empty() && pJson.isMember(pMasqueradingVector[0])) {
+        dirtyFlag_[0] = true;
+        if (!pJson[pMasqueradingVector[0]].isNull()) {
+            id_ = std::make_shared<int64_t>((int64_t) pJson[pMasqueradingVector[0]].asInt64());
+        }
+    }
+    if (!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1])) {
+        dirtyFlag_[1] = true;
+        if (!pJson[pMasqueradingVector[1]].isNull()) {
+            public_ = std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
+        }
+    }
+    if (!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2])) {
+        dirtyFlag_[2] = true;
+        if (!pJson[pMasqueradingVector[2]].isNull()) {
+            protected_ = std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
+        }
+    }
+    if (!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3])) {
+        dirtyFlag_[3] = true;
+        if (!pJson[pMasqueradingVector[3]].isNull()) {
+            private_ = std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
+        }
+    }
 }
 
-Data::Data(const Json::Value &pJson)
-
-noexcept(false)
-{
-if(pJson.isMember("id"))
-{
-dirtyFlag_[0]=true;
-if(!pJson["id"].
-
-isNull()
-
-)
-{
-id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
-}
-}
-if(pJson.isMember("public"))
-{
-dirtyFlag_[1]=true;
-if(!pJson["public"].
-
-isNull()
-
-)
-{
-public_ = std::make_shared<std::string>(pJson["public"].asString());
-}
-}
-if(pJson.isMember("protected"))
-{
-dirtyFlag_[2]=true;
-if(!pJson["protected"].
-
-isNull()
-
-)
-{
-protected_ = std::make_shared<std::string>(pJson["protected"].asString());
-}
-}
-if(pJson.isMember("private"))
-{
-dirtyFlag_[3]=true;
-if(!pJson["private"].
-
-isNull()
-
-)
-{
-private_ = std::make_shared<std::string>(pJson["private"].asString());
-}
-}
+Data::Data(const Json::Value &pJson) noexcept(false) {
+    if (pJson.isMember("id")) {
+        dirtyFlag_[0] = true;
+        if (!pJson["id"].isNull()) {
+            id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
+        }
+    }
+    if (pJson.isMember("public")) {
+        dirtyFlag_[1] = true;
+        if (!pJson["public"].isNull()) {
+            public_ = std::make_shared<std::string>(pJson["public"].asString());
+        }
+    }
+    if (pJson.isMember("protected")) {
+        dirtyFlag_[2] = true;
+        if (!pJson["protected"].isNull()) {
+            protected_ = std::make_shared<std::string>(pJson["protected"].asString());
+        }
+    }
+    if (pJson.isMember("private")) {
+        dirtyFlag_[3] = true;
+        if (!pJson["private"].isNull()) {
+            private_ = std::make_shared<std::string>(pJson["private"].asString());
+        }
+    }
 }
 
 void Data::updateByMasqueradedJson(const Json::Value &pJson,
-                                   const std::vector <std::string> &pMasqueradingVector)
-
-noexcept(false)
-{
-if(pMasqueradingVector.
-
-size()
-
-!= 4)
-{
-LOG_ERROR << "Bad masquerading vector";
-return;
-}
-if(!pMasqueradingVector[0].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[0])
-)
-{
-if(!pJson[pMasqueradingVector[0]].
-
-isNull()
-
-)
-{
-id_ = std::make_shared<int64_t>((int64_t) pJson[pMasqueradingVector[0]].asInt64());
-}
-}
-if(!pMasqueradingVector[1].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[1])
-)
-{
-dirtyFlag_[1] = true;
-if(!pJson[pMasqueradingVector[1]].
-
-isNull()
-
-)
-{
-public_ = std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
-}
-}
-if(!pMasqueradingVector[2].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[2])
-)
-{
-dirtyFlag_[2] = true;
-if(!pJson[pMasqueradingVector[2]].
-
-isNull()
-
-)
-{
-protected_ = std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
-}
-}
-if(!pMasqueradingVector[3].
-
-empty() &&
-
-pJson.
-isMember(pMasqueradingVector[3])
-)
-{
-dirtyFlag_[3] = true;
-if(!pJson[pMasqueradingVector[3]].
-
-isNull()
-
-)
-{
-private_ = std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
-}
-}
+                                   const std::vector<std::string> &pMasqueradingVector) noexcept(false) {
+    if (pMasqueradingVector.size() != 4) {
+        LOG_ERROR << "Bad masquerading vector";
+        return;
+    }
+    if (!pMasqueradingVector[0].empty() && pJson.isMember(pMasqueradingVector[0])) {
+        if (!pJson[pMasqueradingVector[0]].isNull()) {
+            id_ = std::make_shared<int64_t>((int64_t) pJson[pMasqueradingVector[0]].asInt64());
+        }
+    }
+    if (!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1])) {
+        dirtyFlag_[1] = true;
+        if (!pJson[pMasqueradingVector[1]].isNull()) {
+            public_ = std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
+        }
+    }
+    if (!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2])) {
+        dirtyFlag_[2] = true;
+        if (!pJson[pMasqueradingVector[2]].isNull()) {
+            protected_ = std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
+        }
+    }
+    if (!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3])) {
+        dirtyFlag_[3] = true;
+        if (!pJson[pMasqueradingVector[3]].isNull()) {
+            private_ = std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
+        }
+    }
 }
 
-void Data::updateByJson(const Json::Value &pJson)
-
-noexcept(false)
-{
-if(pJson.isMember("id"))
-{
-if(!pJson["id"].
-
-isNull()
-
-)
-{
-id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
-}
-}
-if(pJson.isMember("public"))
-{
-dirtyFlag_[1] = true;
-if(!pJson["public"].
-
-isNull()
-
-)
-{
-public_ = std::make_shared<std::string>(pJson["public"].asString());
-}
-}
-if(pJson.isMember("protected"))
-{
-dirtyFlag_[2] = true;
-if(!pJson["protected"].
-
-isNull()
-
-)
-{
-protected_ = std::make_shared<std::string>(pJson["protected"].asString());
-}
-}
-if(pJson.isMember("private"))
-{
-dirtyFlag_[3] = true;
-if(!pJson["private"].
-
-isNull()
-
-)
-{
-private_ = std::make_shared<std::string>(pJson["private"].asString());
-}
-}
+void Data::updateByJson(const Json::Value &pJson) noexcept(false) {
+    if (pJson.isMember("id")) {
+        if (!pJson["id"].isNull()) {
+            id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
+        }
+    }
+    if (pJson.isMember("public")) {
+        dirtyFlag_[1] = true;
+        if (!pJson["public"].isNull()) {
+            public_ = std::make_shared<std::string>(pJson["public"].asString());
+        }
+    }
+    if (pJson.isMember("protected")) {
+        dirtyFlag_[2] = true;
+        if (!pJson["protected"].isNull()) {
+            protected_ = std::make_shared<std::string>(pJson["protected"].asString());
+        }
+    }
+    if (pJson.isMember("private")) {
+        dirtyFlag_[3] = true;
+        if (!pJson["private"].isNull()) {
+            private_ = std::make_shared<std::string>(pJson["private"].asString());
+        }
+    }
 }
 
-const int64_t &Data::getValueOfId() const
-
-noexcept
-{
-const static int64_t defaultValue = int64_t();
-if(id_)
-return *
-id_;
-return
-defaultValue;
+const int64_t &Data::getValueOfId() const noexcept {
+    const static int64_t defaultValue = int64_t();
+    if (id_)
+        return *id_;
+    return defaultValue;
 }
 
-const std::shared_ptr <int64_t> &Data::getId() const
-
-noexcept
-{
-return
-id_;
+const std::shared_ptr<int64_t> &Data::getId() const noexcept {
+    return id_;
 }
 
-void Data::setId(const int64_t &pId)
-
-noexcept
-{
-id_ = std::make_shared<int64_t>(pId);
-dirtyFlag_[0] = true;
+void Data::setId(const int64_t &pId) noexcept {
+    id_ = std::make_shared<int64_t>(pId);
+    dirtyFlag_[0] = true;
 }
 
 const typename Data::PrimaryKeyType &Data::getPrimaryKey() const {
@@ -448,161 +210,94 @@ const typename Data::PrimaryKeyType &Data::getPrimaryKey() const {
     return *id_;
 }
 
-const std::string &Data::getValueOfPublic() const
-
-noexcept
-{
-const static std::string defaultValue = std::string();
-if(public_)
-return *
-public_;
-return
-defaultValue;
+const std::string &Data::getValueOfPublic() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (public_)
+        return *public_;
+    return defaultValue;
 }
 
-const std::shared_ptr <std::string> &Data::getPublic() const
-
-noexcept
-{
-return
-public_;
+const std::shared_ptr<std::string> &Data::getPublic() const noexcept {
+    return public_;
 }
 
-void Data::setPublic(const std::string &pPublic)
-
-noexcept
-{
-public_ = std::make_shared<std::string>(pPublic);
-dirtyFlag_[1] = true;
+void Data::setPublic(const std::string &pPublic) noexcept {
+    public_ = std::make_shared<std::string>(pPublic);
+    dirtyFlag_[1] = true;
 }
 
-void Data::setPublic(std::string &&pPublic)
-
-noexcept
-{
-public_ = std::make_shared<std::string>(std::move(pPublic));
-dirtyFlag_[1] = true;
+void Data::setPublic(std::string &&pPublic) noexcept {
+    public_ = std::make_shared<std::string>(std::move(pPublic));
+    dirtyFlag_[1] = true;
 }
 
-void Data::setPublicToNull()
-
-noexcept
-{
-public_.
-
-reset();
-
-dirtyFlag_[1] = true;
+void Data::setPublicToNull() noexcept {
+    public_.reset();
+    dirtyFlag_[1] = true;
 }
 
-const std::string &Data::getValueOfProtected() const
-
-noexcept
-{
-const static std::string defaultValue = std::string();
-if(protected_)
-return *
-protected_;
-return
-defaultValue;
+const std::string &Data::getValueOfProtected() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (protected_)
+        return *protected_;
+    return defaultValue;
 }
 
-const std::shared_ptr <std::string> &Data::getProtected() const
-
-noexcept
-{
-return
-protected_;
+const std::shared_ptr<std::string> &Data::getProtected() const noexcept {
+    return protected_;
 }
 
-void Data::setProtected(const std::string &pProtected)
-
-noexcept
-{
-protected_ = std::make_shared<std::string>(pProtected);
-dirtyFlag_[2] = true;
+void Data::setProtected(const std::string &pProtected) noexcept {
+    protected_ = std::make_shared<std::string>(pProtected);
+    dirtyFlag_[2] = true;
 }
 
-void Data::setProtected(std::string &&pProtected)
-
-noexcept
-{
-protected_ = std::make_shared<std::string>(std::move(pProtected));
-dirtyFlag_[2] = true;
+void Data::setProtected(std::string &&pProtected) noexcept {
+    protected_ = std::make_shared<std::string>(std::move(pProtected));
+    dirtyFlag_[2] = true;
 }
 
-void Data::setProtectedToNull()
-
-noexcept
-{
-protected_.
-
-reset();
-
-dirtyFlag_[2] = true;
+void Data::setProtectedToNull() noexcept {
+    protected_.reset();
+    dirtyFlag_[2] = true;
 }
 
-const std::string &Data::getValueOfPrivate() const
-
-noexcept
-{
-const static std::string defaultValue = std::string();
-if(private_)
-return *
-private_;
-return
-defaultValue;
+const std::string &Data::getValueOfPrivate() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (private_)
+        return *private_;
+    return defaultValue;
 }
 
-const std::shared_ptr <std::string> &Data::getPrivate() const
-
-noexcept
-{
-return
-private_;
+const std::shared_ptr<std::string> &Data::getPrivate() const noexcept {
+    return private_;
 }
 
-void Data::setPrivate(const std::string &pPrivate)
-
-noexcept
-{
-private_ = std::make_shared<std::string>(pPrivate);
-dirtyFlag_[3] = true;
+void Data::setPrivate(const std::string &pPrivate) noexcept {
+    private_ = std::make_shared<std::string>(pPrivate);
+    dirtyFlag_[3] = true;
 }
 
-void Data::setPrivate(std::string &&pPrivate)
-
-noexcept
-{
-private_ = std::make_shared<std::string>(std::move(pPrivate));
-dirtyFlag_[3] = true;
+void Data::setPrivate(std::string &&pPrivate) noexcept {
+    private_ = std::make_shared<std::string>(std::move(pPrivate));
+    dirtyFlag_[3] = true;
 }
 
-void Data::setPrivateToNull()
-
-noexcept
-{
-private_.
-
-reset();
-
-dirtyFlag_[3] = true;
+void Data::setPrivateToNull() noexcept {
+    private_.reset();
+    dirtyFlag_[3] = true;
 }
 
 void Data::updateId(const uint64_t id) {
 }
 
-const std::vector <std::string> &Data::insertColumns()
-
-noexcept
-{
-static const std::vector <std::string> inCols = {
-        "public",
-        "protected",
-        "private"
-};
-return
-inCols;
+const std::vector<std::string> &Data::insertColumns() noexcept {
+    static const std::vector<std::string> inCols = {
+            "public",
+            "protected",
+            "private"
+    };
+    return inCols;
 }
 
 void Data::outputArgs(drogon::orm::internal::SqlBinder &binder) const {
@@ -629,8 +324,8 @@ void Data::outputArgs(drogon::orm::internal::SqlBinder &binder) const {
     }
 }
 
-const std::vector <std::string> Data::updateColumns() const {
-    std::vector <std::string> ret;
+const std::vector<std::string> Data::updateColumns() const {
+    std::vector<std::string> ret;
     if (dirtyFlag_[1]) {
         ret.push_back(getColumnName(1));
     }
@@ -693,7 +388,7 @@ Json::Value Data::toJson() const {
 }
 
 Json::Value Data::toMasqueradedJson(
-        const std::vector <std::string> &pMasqueradingVector) const {
+        const std::vector<std::string> &pMasqueradingVector) const {
     Json::Value ret;
     if (pMasqueradingVector.size() == 4) {
         if (!pMasqueradingVector[0].empty()) {
@@ -771,7 +466,7 @@ bool Data::validateJsonForCreation(const Json::Value &pJson, std::string &err) {
 }
 
 bool Data::validateMasqueradedJsonForCreation(const Json::Value &pJson,
-                                              const std::vector <std::string> &pMasqueradingVector,
+                                              const std::vector<std::string> &pMasqueradingVector,
                                               std::string &err) {
     if (pMasqueradingVector.size() != 4) {
         err = "Bad masquerading vector";
@@ -834,7 +529,7 @@ bool Data::validateJsonForUpdate(const Json::Value &pJson, std::string &err) {
 }
 
 bool Data::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
-                                            const std::vector <std::string> &pMasqueradingVector,
+                                            const std::vector<std::string> &pMasqueradingVector,
                                             std::string &err) {
     if (pMasqueradingVector.size() != 4) {
         err = "Bad masquerading vector";
