@@ -6,7 +6,6 @@
 #include <helpers/RequestJson.h>
 #include <helpers/ResponseJson.h>
 #include <structures/Exceptions.h>
-#include <utils/http.h>
 
 using namespace drogon;
 using namespace std;
@@ -15,25 +14,24 @@ using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::structures;
 using namespace tech::types;
-using namespace tech::utils;
 
 Auth::Auth() :
         ResponseJsonHandler(
-                [](const ResponseException &e, ResponseJson &response, HttpStatusCode &code) {
-                    code = e.statusCode();
+                [](const ResponseException &e, ResponseJson &response) {
+                    response.setStatusCode(e.statusCode());
                     // TODO: Check if this causes too much copying
                     response(e.toJson());
                 },
-                [this](const orm::DrogonDbException &e, ResponseJson &response, HttpStatusCode &code) {
+                [this](const orm::DrogonDbException &e, ResponseJson &response) {
                     LOG_ERROR << e.base().what();
-                    code = k500InternalServerError;
-                    response.setResult(ResultCode::databaseError);
+                    response.setStatusCode(k500InternalServerError);
+                    response.setResultCode(ResultCode::databaseError);
                     response.setMessage(i18n("databaseError"));
                 },
-                [this](const exception &e, ResponseJson &response, HttpStatusCode &code) {
+                [this](const exception &e, ResponseJson &response) {
                     LOG_ERROR << e.what();
-                    code = drogon::k500InternalServerError;
-                    response.setResult(ResultCode::internalError);
+                    response.setStatusCode(k500InternalServerError);
+                    response.setResultCode(ResultCode::internalError);
                     response.setMessage(i18n("internalError"));
                     response.setReason(e);
                 }
@@ -42,40 +40,36 @@ Auth::Auth() :
         _dataManager(app().getPlugin<DataManager>()) {}
 
 void Auth::check(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
-    HttpStatusCode code = k200OK;
     ResponseJson response;
     handleExceptions([&]() {
         response.setData(_dataManager->getUserId(
                 req->attributes()->get<string>("accessToken")
         ));
-    }, response, code);
-    http::fromJson(code, response.ref(), callback);
+    }, response);
+    response.httpCallback(callback);
 }
 
 void Auth::refresh(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
-    HttpStatusCode code = k200OK;
     ResponseJson response;
     handleExceptions([&]() {
         response.setData(move(_dataManager->refresh(
                 req->attributes()->get<string>("refreshToken")
         ).parse()));
-    }, response, code);
-    http::fromJson(code, response.ref(), callback);
+    }, response);
+    response.httpCallback(callback);
 }
 
 void Auth::verifyEmail(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
-    HttpStatusCode code = k200OK;
     ResponseJson response;
     handleExceptions([&]() {
         _dataManager->verifyEmail(
                 req->attributes()->get<RequestJson>("requestJson")["email"].asString()
         );
-    }, response, code);
-    http::fromJson(code, response.ref(), callback);
+    }, response);
+    response.httpCallback(callback);
 }
 
 void Auth::loginEmail(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
-    HttpStatusCode code = k200OK;
     ResponseJson response;
     handleExceptions([&]() {
         auto request = req->attributes()->get<RequestJson>("requestJson");
@@ -84,7 +78,7 @@ void Auth::loginEmail(const HttpRequestPtr &req, function<void(const HttpRespons
                     request["email"].asString(),
                     request["code"].asString()
             );
-            if (isNew) { response.setResult(ResultCode::continued); }
+            if (isNew) { response.setResultCode(ResultCode::continued); }
             response.setData(move(tokens.parse()));
         } else {
             const auto &tokens = _dataManager->loginEmailPassword(
@@ -93,12 +87,11 @@ void Auth::loginEmail(const HttpRequestPtr &req, function<void(const HttpRespons
             );
             response.setData(move(tokens.parse()));
         }
-    }, response, code);
-    http::fromJson(code, response.ref(), callback);
+    }, response);
+    response.httpCallback(callback);
 }
 
 void Auth::resetEmail(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
-    HttpStatusCode code = k200OK;
     ResponseJson response;
     handleExceptions([&]() {
         auto request = req->attributes()->get<RequestJson>("requestJson");
@@ -107,12 +100,11 @@ void Auth::resetEmail(const HttpRequestPtr &req, function<void(const HttpRespons
                 request["code"].asString(),
                 request["newPassword"].asString()
         );
-    }, response, code);
-    http::fromJson(code, response.ref(), callback);
+    }, response);
+    response.httpCallback(callback);
 }
 
 void Auth::migrateEmail(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
-    HttpStatusCode code = k200OK;
     ResponseJson response;
     handleExceptions([&]() {
         auto request = req->attributes()->get<RequestJson>("requestJson");
@@ -121,6 +113,6 @@ void Auth::migrateEmail(const HttpRequestPtr &req, function<void(const HttpRespo
                 request["newEmail"].asString(),
                 request["code"].asString()
         );
-    }, response, code);
-    http::fromJson(code, response.ref(), callback);
+    }, response);
+    response.httpCallback(callback);
 }

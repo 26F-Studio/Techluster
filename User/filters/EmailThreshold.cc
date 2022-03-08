@@ -7,7 +7,6 @@
 #include <helpers/ResponseJson.h>
 #include <plugins/DataManager.h>
 #include <structures/Exceptions.h>
-#include <utils/http.h>
 
 using namespace drogon;
 using namespace std;
@@ -16,7 +15,6 @@ using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::structures;
 using namespace tech::types;
-using namespace tech::utils;
 
 EmailThreshold::EmailThreshold() : I18nHelper(CMAKE_PROJECT_NAME) {}
 
@@ -29,17 +27,19 @@ void tech::filters::EmailThreshold::doFilter(
     try {
         if (!app().getPlugin<DataManager>()->emailLimit(requestJson["email"].asString())) {
             ResponseJson response;
-            response.setResult(ResultCode::tooFrequent);
+            response.setStatusCode(k429TooManyRequests);
+            response.setResultCode(ResultCode::tooFrequent);
             response.setMessage(i18n("tooFrequent"));
-            http::fromJson(k429TooManyRequests, response.ref(), failedCb);
+            response.httpCallback(failedCb);
             return;
         }
     } catch (const exception &e) {
         LOG_ERROR << e.what();
         ResponseJson response;
-        response.setResult(ResultCode::internalError);
+        response.setStatusCode(k500InternalServerError);
+        response.setResultCode(ResultCode::internalError);
         response.setMessage(i18n("internalError"));
-        http::fromJson(k500InternalServerError, response.ref(), failedCb);
+        response.httpCallback(failedCb);
         return;
     }
     nextCb();
