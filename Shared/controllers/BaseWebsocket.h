@@ -5,54 +5,85 @@
 #pragma once
 
 #include <helpers/BasicJson.h>
+#include <magic_enum.hpp>
+#include <structures/HandlerManagerBase.h>
 #include <structures/MessageHandlerBase.h>
 #include <utils/websocket.h>
 
-namespace tech::socket::v2 {
-    template<class controllerImpl, class serviceImpl>
+namespace tech::ws::v2 {
+    template<class controllerImpl, class handlerManagerImpl>
     class BaseWebsocket : public drogon::WebSocketController<controllerImpl> {
     public:
-        virtual void handleNewMessage(
+        BaseWebsocket() : _handlerManager(
+                drogon::app().getPlugin<handlerManagerImpl>()
+        ) {};
+
+        void handleNewMessage(
                 const drogon::WebSocketConnectionPtr &wsConnPtr,
                 std::string &&message,
                 const drogon::WebSocketMessageType &type
-        ) {
+        ) final {
             using namespace drogon;
             using namespace tech::helpers;
             using namespace tech::structures;
             using namespace tech::utils;
 
-            if (type == WebSocketMessageType::Ping) {
-                wsConnPtr->send(message, WebSocketMessageType::Pong);
-            } else if (type == WebSocketMessageType::Text || type == WebSocketMessageType::Binary) {
-                Json::Value request = BasicJson(message).stringify(), response;
-                CloseCode code;
-                auto result = _service.requestHandler(wsConnPtr, request, response, code);
-                if (result == Result::success || result == Result::failed) {
-                    wsConnPtr->send(BasicJson(response).stringify());
-                } else if (result == Result::error) {
-                    wsConnPtr->shutdown(code, BasicJson(response).stringify());
+            switch (type) {
+                case WebSocketMessageType::Text:
+                case WebSocketMessageType::Binary: {
+                    Json::Value request = BasicJson(message).stringify(), response;
+                    CloseCode code;
+                    auto result = requestHandler(wsConnPtr, request, response, code);
+                    if (result == Result::success || result == Result::failed) {
+                        wsConnPtr->send(BasicJson(response).stringify());
+                    } else if (result == Result::error) {
+                        wsConnPtr->shutdown(code, BasicJson(response).stringify());
+                    }
+                    break;
                 }
-            } else if (type == WebSocketMessageType::Close) {
-                wsConnPtr->forceClose();
-            } else if (type == WebSocketMessageType::Unknown) {
-                LOG_WARN << "Message from " << wsConnPtr->peerAddr().toIpPort() << " is Unknown";
-            } else if (type != WebSocketMessageType::Pong) {
-                LOG_WARN << "Message from " << wsConnPtr->peerAddr().toIpPort() << " is (" << static_cast<int>(type) << "):" << message;
+                case WebSocketMessageType::Ping:
+                    wsConnPtr->send(message, WebSocketMessageType::Pong);
+                    break;
+                case WebSocketMessageType::Pong:
+                    LOG_WARN << "Message from " << wsConnPtr->peerAddr().toIpPort()
+                             << " is (" << magic_enum::enum_name(type) << "):" << message;
+                    break;
+                case WebSocketMessageType::Close:
+                    wsConnPtr->forceClose();
+                    break;
+                case WebSocketMessageType::Unknown:
+                    LOG_WARN << "Message from " << wsConnPtr->peerAddr().toIpPort()
+                             << " is Unknown";
+                    break;
             }
-        }
-
-        virtual void handleNewConnection(const drogon::HttpRequestPtr &req, const drogon::WebSocketConnectionPtr &wsConnPtr) {
-            _service.establish(wsConnPtr, req->getAttributes());
-        }
-
-        virtual void handleConnectionClosed(const drogon::WebSocketConnectionPtr &wsConnPtr) {
-            _service.close(wsConnPtr);
         }
 
         virtual ~BaseWebsocket() = default;
 
     protected:
-        serviceImpl _service{};
+        virtual structures::Result requestHandler(
+                const drogon::WebSocketConnectionPtr &wsConnPtr,
+                const Json::Value &request,
+                Json::Value &response,
+                drogon::CloseCode &code
+        ) {
+            if (!(
+                    request.isMember("action") && request["action"].isUInt()
+            )) {
+                response["type"] = "Failed";
+                response["reason"] = "Missing param 'action'";
+                return structures::Result::failed;
+            }
+            return _handlerManager->process(
+                    wsConnPtr,
+                    request["action"].asUInt(),
+                    request,
+                    response,
+                    code
+            );
+        }
+
+    private:
+        structures::HandlerManagerBase<handlerManagerImpl> *_handlerManager;
     };
 }
