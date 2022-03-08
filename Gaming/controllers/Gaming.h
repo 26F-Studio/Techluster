@@ -6,15 +6,20 @@
 
 #include <controllers/BaseWebsocket.h>
 #include <filters/IdentifyUser.h>
-#include <services/Gaming.h>
+#include <plugins/HandlerManager.h>
 
-namespace tech::socket::v2 {
-    class Gaming : public BaseWebsocket<Gaming, tech::services::Gaming> {
+namespace tech::ws::v2 {
+    class Gaming : public BaseWebsocket<Gaming, plugins::HandlerManager> {
     public:
         WS_PATH_LIST_BEGIN
-            WS_PATH_ADD("/tech/ws/v2/gaming", "tech::filters::CheckAccessToken")
+            WS_PATH_ADD("/tech/ws/v2/gaming", "tech::filters::IdentifyUser")
         WS_PATH_LIST_END
 
-        Gaming();
+        void handleNewConnection(
+                const drogon::HttpRequestPtr &req,
+                const drogon::WebSocketConnectionPtr &wsConnPtr
+        ) override;
+
+        void handleConnectionClosed(const drogon::WebSocketConnectionPtr &wsConnPtr) override;
     };
 }
