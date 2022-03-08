@@ -3,6 +3,8 @@
 //
 
 #include <helpers/BasicJson.h>
+#include <helpers/ResponseJson.h>
+#include <magic_enum.hpp>
 #include <plugins/AuthMaintainer.h>
 #include <plugins/Authorizer.h>
 #include <strategies/Action.h>
@@ -10,9 +12,9 @@
 #include <structures/Player.h>
 #include <structures/Room.h>
 #include <utils/crypto.h>
-#include <utils/http.h>
 
 using namespace drogon;
+using namespace magic_enum;
 using namespace std;
 using namespace tech::helpers;
 using namespace tech::plugins;
@@ -406,36 +408,36 @@ string Room::_getTransferNode() {
     req->addHeader("x-credential", app().getPlugin<Authorizer>()->getCredential());
 
     auto[reqResult, responsePtr] = client->sendRequest(req, 5);
-    if (reqResult == ReqResult::Ok) {
-        Json::Value response;
-        string parseError = http::toJson(responsePtr, response);
-        if (!parseError.empty()) {
-            throw NetworkException(
-                    "Parsing failed(" +
-                    to_string(static_cast<int>(responsePtr->getStatusCode())) +
-                    "): " + parseError,
-                    ReqResult::BadResponse
-            );
-        } else if (responsePtr->getStatusCode() != k200OK) {
+    if (reqResult != ReqResult::Ok) {
+        throw NetworkException("Request failed", reqResult);
+    }
+    try {
+        ResponseJson response(responsePtr);
+        if (responsePtr->getStatusCode() != k200OK) {
             throw NetworkException(
                     "Invalid response(" +
                     to_string(static_cast<int>(responsePtr->getStatusCode())) +
-                    "): " + BasicJson(response).stringify(),
+                    "): " + response.stringify(),
                     ReqResult::BadResponse
             );
-        } else {
-            const auto &address = response["data"].asString();
-            auto parts = drogon::utils::splitString(address, ":");
-            if (parts.size() == 2) {
-                _transferNode = InetAddress(parts[0], stoi(parts[1]));
-                return address;
-            }
+        }
+        const auto &address = response["data"].asString();
+        auto parts = drogon::utils::splitString(address, ":");
+        if (parts.size() != 2) {
             throw NetworkException(
                     "Invalid address: " + address,
                     ReqResult::BadResponse
             );
         }
-    } else {
-        throw NetworkException("Request failed", reqResult);
+        _transferNode = InetAddress(parts[0], stoi(parts[1]));
+        return address;
+    } catch (const json_exception::InvalidFormat &e) {
+        throw NetworkException(
+                "Parsing failed(" +
+                string(enum_name(responsePtr->getStatusCode())) +
+                "): " + e.what(),
+                ReqResult::BadResponse
+        );
     }
+
 }
