@@ -20,14 +20,14 @@ namespace tech::structures {
                 drogon::FilterCallback &failedCb
         );
 
-        virtual ~RequestJsonHandler() = default;
+        ~RequestJsonHandler() override = default;
     };
 
     class ResponseJsonHandler {
     private:
-        using ResponseExceptionHandler = std::function<void(const ResponseException &, helpers::ResponseJson &, drogon::HttpStatusCode &)>;
-        using DbExceptionHandler = std::function<void(const drogon::orm::DrogonDbException &, helpers::ResponseJson &, drogon::HttpStatusCode &)>;
-        using GenericExceptionHandler = std::function<void(const std::exception &, helpers::ResponseJson &, drogon::HttpStatusCode &)>;
+        using ResponseExceptionHandler = std::function<void(const ResponseException &, helpers::ResponseJson &)>;
+        using DbExceptionHandler = std::function<void(const drogon::orm::DrogonDbException &, helpers::ResponseJson &)>;
+        using GenericExceptionHandler = std::function<void(const std::exception &, helpers::ResponseJson &)>;
 
     public:
         ResponseJsonHandler() = delete;
@@ -44,8 +44,7 @@ namespace tech::structures {
 
         void handleExceptions(
                 const std::function<void()> &mainFunction,
-                helpers::ResponseJson &response,
-                drogon::HttpStatusCode &code
+                helpers::ResponseJson &response
         );
 
         virtual ~ResponseJsonHandler() = default;

@@ -4,10 +4,9 @@
 
 #include <charconv>
 #include <drogon/drogon.h>
-#include <helpers/BasicJson.h>
+#include <helpers/ResponseJson.h>
 #include <plugins/AuthMaintainer.h>
 #include <structures/Exceptions.h>
-#include <utils/http.h>
 
 using namespace drogon;
 using namespace std;
@@ -15,7 +14,6 @@ using namespace trantor;
 using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::structures;
-using namespace tech::utils;
 
 void AuthMaintainer::initAndStart(const Json::Value &config) {
     if (!(
@@ -52,27 +50,28 @@ void AuthMaintainer::_updateAuthAddress() {
     auto req = HttpRequest::newHttpRequest();
     req->setPath("/tech/api/v2/allocator/user");
     client->sendRequest(req, [this](ReqResult result, const HttpResponsePtr &responsePtr) {
-        if (result == ReqResult::Ok) {
-            Json::Value response;
-            string parseError = http::toJson(responsePtr, response);
-            if (!parseError.empty()) {
-                LOG_WARN << "Invalid response body (" << responsePtr->getStatusCode() << "): \n"
-                         << parseError;
-            } else if (responsePtr->getStatusCode() != k200OK) {
-                LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
-                         << BasicJson(response).stringify();
-            } else {
-                auto parts = drogon::utils::splitString(response["data"].asString(), ":");
-                if (parts.size() == 2) {
-                    _authAddress = InetAddress(parts[0], stoi(parts[1]));
-                    LOG_INFO << "Retrieved user node: " << _authAddress.load().toIpPort();
-                } else {
-                    // TODO: Send an email if failed too many times.
-                    LOG_WARN << "No user node available right now!";
-                }
-            }
-        } else {
+        if (result != ReqResult::Ok) {
             LOG_ERROR << "Request failed (" << static_cast<int>(result) << ")";
+            return;
+        }
+        try {
+            ResponseJson response(responsePtr);
+            if (responsePtr->getStatusCode() != k200OK) {
+                LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
+                         << response.stringify();
+                return;
+            }
+            auto parts = drogon::utils::splitString(response["data"].asString(), ":");
+            if (parts.size() == 2) {
+                _authAddress = InetAddress(parts[0], stoi(parts[1]));
+                LOG_INFO << "Retrieved user node: " << _authAddress.load().toIpPort();
+            } else {
+                // TODO: Send an email if failed too many times.
+                LOG_WARN << "No user node available right now!";
+            }
+        } catch (const json_exception::InvalidFormat &e) {
+            LOG_WARN << "Invalid response body (" << responsePtr->getStatusCode() << "): \n"
+                     << e.what();
         }
     }, 3);
 }
@@ -87,17 +86,14 @@ HttpStatusCode AuthMaintainer::checkAccessToken(const string &accessToken, int64
         _updateAuthAddress();
         throw NetworkException("User node is down", result);
     }
-    Json::Value response;
-    string parseError = http::toJson(responsePtr, response);
-    if (!parseError.empty()) {
-        throw NetworkException("Invalid Json: " + parseError, ReqResult::BadResponse);
+    try {
+        ResponseJson response(responsePtr);
+        if (!response["data"].isInt64()) {
+            throw NetworkException("Invalid Response: " + response.stringify(), ReqResult::BadResponse);
+        }
+        id = response["data"].asInt64();
+        return responsePtr->statusCode();
+    } catch (const json_exception::InvalidFormat &e) {
+        throw NetworkException("Invalid Json: "s + e.what(), ReqResult::BadResponse);
     }
-    if (!response["data"].isInt64()) {
-        throw NetworkException(
-                "Invalid Response: " + BasicJson(response).stringify(),
-                ReqResult::BadResponse
-        );
-    }
-    id = response["data"].asInt64();
-    return responsePtr->statusCode();
 }

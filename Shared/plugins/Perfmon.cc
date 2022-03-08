@@ -4,10 +4,10 @@
 
 #include <algorithm>
 #include <drogon/drogon.h>
-#include <helpers/BasicJson.h>
+#include <helpers/ResponseJson.h>
 #include <plugins/Authorizer.h>
 #include <plugins/Perfmon.h>
-#include <utils/http.h>
+#include <structures/Exceptions.h>
 
 #if _WIN32
 
@@ -30,7 +30,7 @@ using namespace drogon;
 using namespace std;
 using namespace tech::helpers;
 using namespace tech::plugins;
-using namespace tech::utils;
+using namespace tech::structures;
 
 void Perfmon::initAndStart(const Json::Value &config) {
     if (!(
@@ -105,18 +105,19 @@ void Perfmon::_report() {
     req->addHeader("x-credential", app().getPlugin<Authorizer>()->getCredential());
     req->setParameter("nodeType", _nodeType);
     client->sendRequest(req, [](ReqResult result, const HttpResponsePtr &responsePtr) {
-        if (result == ReqResult::Ok) {
-            Json::Value response;
-            string parseError = http::toJson(responsePtr, response);
-            if (!parseError.empty()) {
-                LOG_WARN << "Invalid response body (" << responsePtr->getStatusCode() << "): \n"
-                         << parseError;
-            } else if (responsePtr->getStatusCode() != k200OK) {
+        if (result != ReqResult::Ok) {
+            LOG_ERROR << "Request failed (" << static_cast<int>(result) << ")";
+            return;
+        }
+        try {
+            ResponseJson response(responsePtr);
+            if (responsePtr->getStatusCode() != k200OK) {
                 LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
-                         << BasicJson(response).stringify();
+                         << response.stringify();
             }
-        } else {
-            LOG_WARN << "Request failed (" << static_cast<int>(result) << ")";
+        } catch (const json_exception::InvalidFormat &e) {
+            LOG_WARN << "Invalid response body (" << responsePtr->getStatusCode() << "): \n"
+                     << e.what();
         }
     }, 3);
 }

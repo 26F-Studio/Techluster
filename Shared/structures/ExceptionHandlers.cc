@@ -3,14 +3,12 @@
 //
 
 #include <structures/ExceptionHandlers.h>
-#include <utils/http.h>
 
 using namespace drogon;
 using namespace std;
 using namespace tech::helpers;
 using namespace tech::structures;
 using namespace tech::types;
-using namespace tech::utils;
 
 RequestJsonHandler::RequestJsonHandler() : I18nHelper(CMAKE_PROJECT_NAME) {}
 
@@ -22,34 +20,25 @@ void RequestJsonHandler::handleExceptions(
         mainFunction();
     } catch (const json_exception::InvalidFormat &e) {
         ResponseJson response;
-        response.setResult(ResultCode::invalidFormat);
+        response.setStatusCode(k400BadRequest);
+        response.setResultCode(ResultCode::invalidFormat);
         response.setMessage(i18n("invalidFormat"));
         response.setReason(e);
-        http::fromJson(
-                k400BadRequest,
-                response.ref(),
-                failedCb
-        );
+        response.httpCallback(failedCb);
     } catch (const json_exception::WrongType &e) {
         ResponseJson response;
-        response.setResult(ResultCode::invalidArguments);
+        response.setStatusCode(k400BadRequest);
+        response.setResultCode(ResultCode::invalidArguments);
         response.setMessage(i18n("invalidArguments"));
-        http::fromJson(
-                k400BadRequest,
-                response.ref(),
-                failedCb
-        );
+        response.httpCallback(failedCb);
     } catch (const exception &e) {
-        ResponseJson response;
         LOG_ERROR << e.what();
-        response.setResult(ResultCode::internalError);
+        ResponseJson response;
+        response.setStatusCode(k500InternalServerError);
+        response.setResultCode(ResultCode::internalError);
         response.setMessage(i18n("internalError"));
         response.setReason(e);
-        http::fromJson(
-                k500InternalServerError,
-                response.ref(),
-                failedCb
-        );
+        response.httpCallback(failedCb);
     }
 }
 
@@ -63,16 +52,15 @@ ResponseJsonHandler::ResponseJsonHandler(
 
 void ResponseJsonHandler::handleExceptions(
         const function<void()> &mainFunction,
-        ResponseJson &response,
-        drogon::HttpStatusCode &code
+        ResponseJson &response
 ) {
     try {
         mainFunction();
     } catch (const ResponseException &e) {
-        _responseExceptionHandler(e, response, code);
+        _responseExceptionHandler(e, response);
     } catch (const orm::DrogonDbException &e) {
-        _dbExceptionHandler(e, response, code);
+        _dbExceptionHandler(e, response);
     } catch (const exception &e) {
-        _genericExceptionHandler(e, response, code);
+        _genericExceptionHandler(e, response);
     }
 }
