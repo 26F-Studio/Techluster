@@ -6,10 +6,12 @@
 
 #include <drogon/HttpController.h>
 #include <plugins/NodeManager.h>
+#include <structures/ExceptionHandlers.h>
 
 namespace tech::api::v2 {
     class Allocator :
             public drogon::HttpController<Allocator>,
+            public structures::ResponseJsonHandler,
             public helpers::I18nHelper<Allocator> {
     public:
         Allocator();

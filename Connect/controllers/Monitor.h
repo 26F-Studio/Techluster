@@ -8,10 +8,12 @@
 #include <helpers/I18nHelper.h>
 #include <plugins/NodeManager.h>
 #include <plugins/Perfmon.h>
+#include <structures/ExceptionHandlers.h>
 
 namespace tech::api::v2 {
     class Monitor :
             public drogon::HttpController<Monitor>,
+            public structures::ResponseJsonHandler,
             public helpers::I18nHelper<Monitor> {
     public:
         Monitor();

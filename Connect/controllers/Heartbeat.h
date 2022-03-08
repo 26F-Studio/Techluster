@@ -6,10 +6,12 @@
 
 #include <drogon/HttpController.h>
 #include <plugins/NodeManager.h>
+#include <structures/ExceptionHandlers.h>
 
 namespace tech::api::v2 {
     class Heartbeat :
             public drogon::HttpController<Heartbeat>,
+            public structures::ResponseJsonHandler,
             public helpers::I18nHelper<Heartbeat> {
     public:
         Heartbeat();

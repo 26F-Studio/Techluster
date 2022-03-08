@@ -16,13 +16,34 @@ using namespace tech::structures;
 using namespace tech::types;
 
 Heartbeat::Heartbeat() :
+        ResponseJsonHandler(
+                [](const ResponseException &e, ResponseJson &response) {
+                    response.setStatusCode(e.statusCode());
+                    // TODO: Check if this causes too much copying
+                    response(e.toJson());
+                },
+                [this](const orm::DrogonDbException &e, ResponseJson &response) {
+                    LOG_ERROR << e.base().what();
+                    response.setStatusCode(k500InternalServerError);
+                    response.setResultCode(ResultCode::databaseError);
+                    response.setMessage(i18n("databaseError"));
+                },
+                [this](const exception &e, ResponseJson &response) {
+                    LOG_ERROR << e.what();
+                    response.setStatusCode(k500InternalServerError);
+                    response.setResultCode(ResultCode::internalError);
+                    response.setMessage(i18n("internalError"));
+                    response.setReason(e);
+                }
+        ),
         I18nHelper(CMAKE_PROJECT_NAME),
         _nodeManager(app().getPlugin<NodeManager>()) {}
 
 void Heartbeat::report(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
-    auto nodeType = req->attributes()->get<NodeType>("nodeType");
-    auto request = req->attributes()->get<RequestJson>("requestJson");
-    try {
+    ResponseJson response;
+    handleExceptions([&]() {
+        auto nodeType = req->attributes()->get<NodeType>("nodeType");
+        auto request = req->attributes()->get<RequestJson>("requestJson");
         auto nodeServer = NodeServer(
                 nodeType,
                 request["ip"].asString(),
@@ -33,11 +54,12 @@ void Heartbeat::report(const HttpRequestPtr &req, function<void(const HttpRespon
         );
         _nodeManager->updateNode(move(nodeServer));
         ResponseJson().httpCallback(callback);
-    } catch (const exception &e) {
-        ResponseJson response;
-        response.setStatusCode(k406NotAcceptable);
-        response.setResultCode(ResultCode::invalidArguments);
-        response.setMessage(e.what());
-        response.httpCallback(callback);
-    }
+    }, response);
+    response.httpCallback(callback);
+
+    // TODO: Move this into NodeManager
+    // response.setStatusCode(k406NotAcceptable);
+    // response.setResultCode(ResultCode::invalidArguments);
+    // response.setMessage(e.what());
+    // response.httpCallback(callback);
 }
