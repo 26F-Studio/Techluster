@@ -2,16 +2,16 @@
 // Created by Parti on 2021/2/4.
 //
 
+#include <magic_enum.hpp>
 #include <plugins/ConnectTester.h>
 #include <plugins/Perfmon.h>
 #include <types/ResultCode.h>
-#include <utils/data.h>
 
 using namespace drogon;
+using namespace magic_enum;
 using namespace std;
 using namespace tech::plugins;
 using namespace tech::types;
-using namespace tech::utils::data;
 
 void ConnectTester::processConfig(const Json::Value &config) {
     _heartbeatBody = config["heartbeat"];
@@ -38,7 +38,7 @@ bool ConnectTester::heartbeat(const string &type, const uint32_t &port) {
             {make_pair("nodeType", type)},
             _credentialHeaders,
             body
-    )["code"].asUInt() == +ResultCode::completed;
+    )["code"].asUInt() == enum_integer(ResultCode::completed);
 }
 
 std::string ConnectTester::toHost(const uint32_t &port) {
