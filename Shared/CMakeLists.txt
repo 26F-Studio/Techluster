@@ -17,7 +17,6 @@ aux_source_directory(filters FILTER_SRC)
 aux_source_directory(helpers HELPER_SRC)
 aux_source_directory(plugins PLUGIN_SRC)
 aux_source_directory(structures STRUCT_SRC)
-aux_source_directory(services SVC_SRC)
 aux_source_directory(types TYPE_SRC)
 aux_source_directory(utils UTIL_SRC)
 
@@ -26,7 +25,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         ${FILTER_SRC}
         ${PLUGIN_SRC}
         ${STRUCT_SRC}
-        ${SVC_SRC}
         ${TYPE_SRC}
         ${UTIL_SRC}
         ${HELPER_SRC})
