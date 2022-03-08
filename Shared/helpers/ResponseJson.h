@@ -10,15 +10,21 @@
 namespace tech::helpers {
     class ResponseJson : public BasicJson {
     public:
-        ResponseJson() : BasicJson() { setResult(types::ResultCode::completed); }
+        typedef std::function<void(const drogon::HttpResponsePtr &)> HttpCallback;
 
-        explicit ResponseJson(Json::Value json) : BasicJson(std::move(json)) {}
+        ResponseJson();
 
-        explicit ResponseJson(const std::string &raw) : BasicJson(raw) {}
+        explicit ResponseJson(Json::Value json);
 
-        void setResult(const types::ResultCode &code);
+        explicit ResponseJson(const std::string &raw);
 
-        void setResult(const uint32_t &code);
+        explicit ResponseJson(const drogon::HttpResponsePtr &res);
+
+        void setResultCode(const types::ResultCode &code);
+
+        void setResultCode(const uint32_t &code);
+
+        void setStatusCode(drogon::HttpStatusCode code);
 
         void setMessage(const std::string &message);
 
@@ -26,9 +32,19 @@ namespace tech::helpers {
 
         void setReason(const std::exception &e);
 
-        void setReason(const drogon::orm::DrogonDbException &e);
+        [[maybe_unused]] void setReason(const drogon::orm::DrogonDbException &e);
 
         void setReason(const std::string &reason);
+
+        void httpCallback(const HttpCallback &callback);
+
+        void httpCallback(
+                const HttpCallback &callback,
+                const std::string &cors
+        );
+
+    private:
+        drogon::HttpStatusCode _statusCode = drogon::k200OK;
     };
 }
 
