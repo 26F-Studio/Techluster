@@ -5,7 +5,6 @@
 #include <helpers/ResponseJson.h>
 #include <magic_enum.hpp>
 #include <structures/Exceptions.h>
-#include <utils/data.h>
 
 using namespace drogon;
 using namespace magic_enum;
@@ -14,7 +13,6 @@ using namespace tech::helpers;
 using namespace tech::internal;
 using namespace tech::structures;
 using namespace tech::types;
-using namespace tech::utils::data;
 
 BaseException::BaseException(string message) : _message(move(message)) {}
 
@@ -28,7 +26,7 @@ const int &CodeException::code() const noexcept { return _code; }
 NetworkException::NetworkException(
         string message,
         const ReqResult &result
-) : CodeException(move(message), TypePrefix::request + result) {}
+) : CodeException(move(message), enum_integer(TypePrefix::request) + enum_integer(result)) {}
 
 ResponseException::ResponseException(
         string message,
@@ -49,7 +47,7 @@ const drogon::HttpStatusCode &ResponseException::statusCode() const noexcept { r
 
 Json::Value ResponseException::toJson() const noexcept {
     ResponseJson result;
-    result.setResult(_code);
+    result.setResultCode(_code);
     result.setMessage(_message);
     if (!_reason.empty()) {
         result.setReason(_reason);
