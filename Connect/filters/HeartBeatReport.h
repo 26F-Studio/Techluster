@@ -5,7 +5,7 @@
 #pragma once
 
 #include <drogon/HttpFilter.h>
-#include <helpers/I18nHelper.h>
+#include <structures/ExceptionHandlers.h>
 
 /**
  * @brief This filter checks "Heartbeat::report" request body.
@@ -21,10 +21,8 @@
 namespace tech::filters {
     class HeartBeatReport :
             public drogon::HttpFilter<HeartBeatReport>,
-            public helpers::I18nHelper<HeartBeatReport> {
+            public structures::RequestJsonHandler {
     public:
-        HeartBeatReport();
-
         void doFilter(
                 const drogon::HttpRequestPtr &req,
                 drogon::FilterCallback &&failedCb,
