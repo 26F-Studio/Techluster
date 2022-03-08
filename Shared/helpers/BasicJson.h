@@ -23,6 +23,14 @@ namespace tech::helpers {
 
         void operator()(Json::Value &&another);
 
+        const Json::Value &operator[](Json::ArrayIndex index) const;
+
+        const Json::Value &operator[](int index) const;
+
+        const Json::Value &operator[](const char *key) const;
+
+        const Json::Value &operator[](const Json::String &key) const;
+
         virtual ~BasicJson() = default;
 
     protected:

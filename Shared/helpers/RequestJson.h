@@ -12,8 +12,6 @@
 namespace tech::helpers {
     class RequestJson : public BasicJson {
     public:
-
-
         RequestJson() = default;
 
         RequestJson(const RequestJson &json);
@@ -71,14 +69,6 @@ namespace tech::helpers {
             }
             return _value[key].as<T>() != value;
         }
-
-        const Json::Value &operator[](Json::ArrayIndex index) const;
-
-        const Json::Value &operator[](int index) const;
-
-        const Json::Value &operator[](const char *key) const;
-
-        const Json::Value &operator[](const Json::String &key) const;
 
     private:
         static bool _check(

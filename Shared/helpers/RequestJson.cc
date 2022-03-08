@@ -62,14 +62,6 @@ void RequestJson::require(
     }
 }
 
-const Json::Value &RequestJson::operator[](Json::ArrayIndex index) const { return _value[index]; }
-
-const Json::Value &RequestJson::operator[](int index) const { return _value[index]; }
-
-const Json::Value &RequestJson::operator[](const char *key) const { return _value[key]; }
-
-const Json::Value &RequestJson::operator[](const Json::String &key) const { return _value[key]; }
-
 bool RequestJson::_check(
         const Json::Value &json,
         const JsonValue &valueType

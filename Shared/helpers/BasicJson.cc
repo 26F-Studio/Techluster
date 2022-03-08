@@ -28,3 +28,10 @@ Json::Value BasicJson::copy() const { return _value; }
 
 void BasicJson::operator()(Json::Value &&another) { _value = move(another); }
 
+const Json::Value &BasicJson::operator[](Json::ArrayIndex index) const { return _value[index]; }
+
+const Json::Value &BasicJson::operator[](int index) const { return _value[index]; }
+
+const Json::Value &BasicJson::operator[](const char *key) const { return _value[key]; }
+
+const Json::Value &BasicJson::operator[](const Json::String &key) const { return _value[key]; }
