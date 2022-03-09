@@ -87,6 +87,7 @@ void DataManager::initAndStart(const Json::Value &config) {
 
     _dataMapper = make_unique<orm::Mapper<techluster::Data>>(app().getDbClient());
     _playerMapper = make_unique<orm::Mapper<techluster::Player>>(app().getDbClient());
+    _removedMapper = make_unique<orm::Mapper<techluster::Removed>>(app().getDbClient());
 
     LOG_INFO << "DataManager loaded.";
 }
@@ -262,6 +263,60 @@ void DataManager::migrateEmail(
         }
         player.setEmail(newEmail);
         _playerMapper->update(player);
+    } catch (const redis_exception::KeyNotFound &e) {
+        LOG_DEBUG << "Key not found:" << e.what();
+        throw ResponseException(
+                i18n("invalidAccessToken"),
+                ResultCode::notAcceptable,
+                k401Unauthorized
+        );
+    } catch (const orm::UnexpectedRows &e) {
+        LOG_DEBUG << "Unexpected rows: " << e.what();
+        throw ResponseException(
+                i18n("userNotFound"),
+                ResultCode::notFound,
+                k404NotFound
+        );
+    }
+}
+
+void DataManager::deactivateEmail(
+        const string &accessToken,
+        const string &code
+) {
+    try {
+        auto player = _playerMapper->findOne(orm::Criteria(
+                techluster::Player::Cols::_id,
+                orm::CompareOperator::EQ,
+                _userRedis->getIdByAccessToken(accessToken)
+        ));
+        _checkEmailCode(player.getValueOfEmail(), code);
+        auto data = _dataMapper->findOne(orm::Criteria(
+                techluster::Data::Cols::_id,
+                orm::CompareOperator::EQ,
+                player.getValueOfId()
+        ));
+
+        techluster::Removed removed;
+        removed.setId(player.getValueOfId());
+        removed.setEmail(player.getValueOfEmail());
+        removed.setUsername(player.getValueOfUsername());
+        removed.setMotto(player.getValueOfMotto());
+        removed.setRegion(player.getValueOfRegion());
+        removed.setAvatar(player.getValueOfAvatar());
+        removed.setAvatarHash(player.getValueOfAvatarHash());
+        removed.setAvatarFrame(player.getValueOfAvatarFrame());
+        // TODO: Determine whether we should keep the following field
+        removed.setClan(player.getValueOfClan());
+
+        Json::Value dataJson;
+        dataJson["public"] = data.getValueOfPublic();
+        dataJson["protected"] = data.getValueOfProtected();
+        dataJson["private"] = data.getValueOfPrivate();
+        removed.setData(BasicJson(dataJson).stringify());
+
+        _removedMapper->insert(removed);
+        _playerMapper->deleteOne(player);
     } catch (const redis_exception::KeyNotFound &e) {
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(

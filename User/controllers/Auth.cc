@@ -116,3 +116,15 @@ void Auth::migrateEmail(const HttpRequestPtr &req, function<void(const HttpRespo
     }, response);
     response.httpCallback(callback);
 }
+
+void Auth::deactivateEmail(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
+    ResponseJson response;
+    handleExceptions([&]() {
+        auto request = req->attributes()->get<RequestJson>("requestJson");
+        _dataManager->deactivateEmail(
+                req->attributes()->get<string>("accessToken"),
+                request["code"].asString()
+        );
+    }, response);
+    response.httpCallback(callback);
+}

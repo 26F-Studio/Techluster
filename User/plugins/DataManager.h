@@ -10,6 +10,7 @@
 #include <helpers/RequestJson.h>
 #include <models/Data.h>
 #include <models/Player.h>
+#include <models/Removed.h>
 #include <structures/UserRedis.h>
 #include <types/DataField.h>
 
@@ -49,6 +50,11 @@ namespace tech::plugins {
         void migrateEmail(
                 const std::string &accessToken,
                 const std::string &newEmail,
+                const std::string &code
+        );
+
+        void deactivateEmail(
+                const std::string &accessToken,
                 const std::string &code
         );
 
@@ -92,6 +98,7 @@ namespace tech::plugins {
         std::unique_ptr<tech::structures::UserRedis> _userRedis;
         std::unique_ptr<drogon::orm::Mapper<drogon_model::techluster::Data>> _dataMapper;
         std::unique_ptr<drogon::orm::Mapper<drogon_model::techluster::Player>> _playerMapper;
+        std::unique_ptr<drogon::orm::Mapper<drogon_model::techluster::Removed>> _removedMapper;
 
         void _checkEmailCode(
                 const std::string &email,
