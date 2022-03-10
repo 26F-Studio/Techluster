@@ -6,17 +6,14 @@
  */
 
 #pragma once
-
 #include <drogon/orm/Result.h>
 #include <drogon/orm/Row.h>
 #include <drogon/orm/Field.h>
 #include <drogon/orm/SqlBinder.h>
 #include <drogon/orm/Mapper.h>
-
 #ifdef __cpp_impl_coroutine
 #include <drogon/orm/CoroMapper.h>
 #endif
-
 #include <trantor/utils/Date.h>
 #include <trantor/utils/Logger.h>
 #include <json/json.h>
@@ -51,18 +48,16 @@ namespace drogon_model {
                 static const std::string _clan;
                 static const std::string _data;
                 static const std::string _timestamp;
+                static const std::string _recoverable;
             };
 
             const static int primaryKeyNumber;
             const static std::string tableName;
             const static bool hasPrimaryKey;
             const static std::string primaryKeyName;
-            using PrimaryKeyType = void;
+            using PrimaryKeyType = int64_t;
 
-            int getPrimaryKey() const {
-                assert(false);
-                return 0;
-            }
+            const PrimaryKeyType &getPrimaryKey() const;
 
             /**
              * @brief constructor
@@ -252,8 +247,18 @@ namespace drogon_model {
             ///Set the value of the column timestamp
             void setTimestamp(const ::trantor::Date &pTimestamp) noexcept;
 
+            /**  For column recoverable  */
+            ///Get the value of the column recoverable, returns the default value if the column is null
+            const bool &getValueOfRecoverable() const noexcept;
 
-            static size_t getColumnNumber() noexcept { return 11; }
+            ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+            const std::shared_ptr<bool> &getRecoverable() const noexcept;
+
+            ///Set the value of the column recoverable
+            void setRecoverable(const bool &pRecoverable) noexcept;
+
+
+            static size_t getColumnNumber() noexcept { return 12; }
 
             static const std::string &getColumnName(size_t index) noexcept(false);
 
@@ -289,6 +294,7 @@ namespace drogon_model {
             std::shared_ptr<std::string> clan_;
             std::shared_ptr<std::string> data_;
             std::shared_ptr<::trantor::Date> timestamp_;
+            std::shared_ptr<bool> recoverable_;
             struct MetaData {
                 const std::string colName_;
                 const std::string colType_;
@@ -299,15 +305,15 @@ namespace drogon_model {
                 const bool notNull_;
             };
             static const std::vector<MetaData> metaData_;
-            bool dirtyFlag_[11] = {false};
+            bool dirtyFlag_[12] = {false};
         public:
             static const std::string &sqlForFindingByPrimaryKey() {
-                static const std::string sql = "";
+                static const std::string sql = "select * from " + tableName + " where id = $1";
                 return sql;
             }
 
             static const std::string &sqlForDeletingByPrimaryKey() {
-                static const std::string sql = "";
+                static const std::string sql = "delete from " + tableName + " where id = $1";
                 return sql;
             }
 
@@ -359,6 +365,11 @@ namespace drogon_model {
                 sql += "timestamp,";
                 ++parametersCount;
                 if (!dirtyFlag_[10]) {
+                    needSelection = true;
+                }
+                sql += "recoverable,";
+                ++parametersCount;
+                if (!dirtyFlag_[11]) {
                     needSelection = true;
                 }
                 if (parametersCount > 0) {
@@ -413,6 +424,12 @@ namespace drogon_model {
                     sql += "default,";
                 }
                 if (dirtyFlag_[10]) {
+                    n = sprintf(placeholderStr, "$%d,", placeholder++);
+                    sql.append(placeholderStr, n);
+                } else {
+                    sql += "default,";
+                }
+                if (dirtyFlag_[11]) {
                     n = sprintf(placeholderStr, "$%d,", placeholder++);
                     sql.append(placeholderStr, n);
                 } else {

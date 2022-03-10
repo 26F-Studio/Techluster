@@ -24,12 +24,13 @@ const std::string Removed::Cols::_avatar_frame = "avatar_frame";
 const std::string Removed::Cols::_clan = "clan";
 const std::string Removed::Cols::_data = "data";
 const std::string Removed::Cols::_timestamp = "timestamp";
-const std::string Removed::primaryKeyName = "";
-const bool Removed::hasPrimaryKey = false;
+const std::string Removed::Cols::_recoverable = "recoverable";
+const std::string Removed::primaryKeyName = "id";
+const bool Removed::hasPrimaryKey = true;
 const std::string Removed::tableName = "removed";
 
 const std::vector<typename Removed::MetaData> Removed::metaData_ = {
-        {"id",           "int64_t",         "bigint",  8, 0, 0, 1},
+        {"id",           "int64_t",         "bigint",  8, 0, 1, 1},
         {"email",        "std::string",     "text",    0, 0, 0, 0},
         {"username",     "std::string",     "text",    0, 0, 0, 0},
         {"motto",        "std::string",     "text",    0, 0, 0, 0},
@@ -39,7 +40,8 @@ const std::vector<typename Removed::MetaData> Removed::metaData_ = {
         {"avatar_frame", "int32_t",         "integer", 4, 0, 0, 0},
         {"clan",         "std::string",     "text",    0, 0, 0, 0},
         {"data",         "std::string",     "text",    0, 0, 0, 1},
-        {"timestamp",    "::trantor::Date", "date",    0, 0, 0, 1}
+        {"timestamp",    "::trantor::Date", "date",    0, 0, 0, 1},
+        {"recoverable",  "bool",            "boolean", 1, 0, 0, 1}
 };
 
 const std::string &Removed::getColumnName(size_t index) noexcept(false) {
@@ -87,9 +89,12 @@ Removed::Removed(const Row &r, const ssize_t indexOffset) noexcept {
             time_t t = mktime(&stm);
             timestamp_ = std::make_shared<::trantor::Date>(t * 1000000);
         }
+        if (!r["recoverable"].isNull()) {
+            recoverable_ = std::make_shared<bool>(r["recoverable"].as<bool>());
+        }
     } else {
         size_t offset = (size_t) indexOffset;
-        if (offset + 11 > r.size()) {
+        if (offset + 12 > r.size()) {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
         }
@@ -143,12 +148,16 @@ Removed::Removed(const Row &r, const ssize_t indexOffset) noexcept {
             time_t t = mktime(&stm);
             timestamp_ = std::make_shared<::trantor::Date>(t * 1000000);
         }
+        index = offset + 11;
+        if (!r[index].isNull()) {
+            recoverable_ = std::make_shared<bool>(r[index].as<bool>());
+        }
     }
 
 }
 
 Removed::Removed(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false) {
-    if (pMasqueradingVector.size() != 11) {
+    if (pMasqueradingVector.size() != 12) {
         LOG_ERROR << "Bad masquerading vector";
         return;
     }
@@ -221,6 +230,12 @@ Removed::Removed(const Json::Value &pJson, const std::vector<std::string> &pMasq
             strptime(daysStr.c_str(), "%Y-%m-%d", &stm);
             time_t t = mktime(&stm);
             timestamp_ = std::make_shared<::trantor::Date>(t * 1000000);
+        }
+    }
+    if (!pMasqueradingVector[11].empty() && pJson.isMember(pMasqueradingVector[11])) {
+        dirtyFlag_[11] = true;
+        if (!pJson[pMasqueradingVector[11]].isNull()) {
+            recoverable_ = std::make_shared<bool>(pJson[pMasqueradingVector[11]].asBool());
         }
     }
 }
@@ -297,16 +312,21 @@ Removed::Removed(const Json::Value &pJson) noexcept(false) {
             timestamp_ = std::make_shared<::trantor::Date>(t * 1000000);
         }
     }
+    if (pJson.isMember("recoverable")) {
+        dirtyFlag_[11] = true;
+        if (!pJson["recoverable"].isNull()) {
+            recoverable_ = std::make_shared<bool>(pJson["recoverable"].asBool());
+        }
+    }
 }
 
 void Removed::updateByMasqueradedJson(const Json::Value &pJson,
                                       const std::vector<std::string> &pMasqueradingVector) noexcept(false) {
-    if (pMasqueradingVector.size() != 11) {
+    if (pMasqueradingVector.size() != 12) {
         LOG_ERROR << "Bad masquerading vector";
         return;
     }
     if (!pMasqueradingVector[0].empty() && pJson.isMember(pMasqueradingVector[0])) {
-        dirtyFlag_[0] = true;
         if (!pJson[pMasqueradingVector[0]].isNull()) {
             id_ = std::make_shared<int64_t>((int64_t) pJson[pMasqueradingVector[0]].asInt64());
         }
@@ -376,11 +396,16 @@ void Removed::updateByMasqueradedJson(const Json::Value &pJson,
             timestamp_ = std::make_shared<::trantor::Date>(t * 1000000);
         }
     }
+    if (!pMasqueradingVector[11].empty() && pJson.isMember(pMasqueradingVector[11])) {
+        dirtyFlag_[11] = true;
+        if (!pJson[pMasqueradingVector[11]].isNull()) {
+            recoverable_ = std::make_shared<bool>(pJson[pMasqueradingVector[11]].asBool());
+        }
+    }
 }
 
 void Removed::updateByJson(const Json::Value &pJson) noexcept(false) {
     if (pJson.isMember("id")) {
-        dirtyFlag_[0] = true;
         if (!pJson["id"].isNull()) {
             id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
         }
@@ -450,6 +475,12 @@ void Removed::updateByJson(const Json::Value &pJson) noexcept(false) {
             timestamp_ = std::make_shared<::trantor::Date>(t * 1000000);
         }
     }
+    if (pJson.isMember("recoverable")) {
+        dirtyFlag_[11] = true;
+        if (!pJson["recoverable"].isNull()) {
+            recoverable_ = std::make_shared<bool>(pJson["recoverable"].asBool());
+        }
+    }
 }
 
 const int64_t &Removed::getValueOfId() const noexcept {
@@ -466,6 +497,11 @@ const std::shared_ptr<int64_t> &Removed::getId() const noexcept {
 void Removed::setId(const int64_t &pId) noexcept {
     id_ = std::make_shared<int64_t>(pId);
     dirtyFlag_[0] = true;
+}
+
+const typename Removed::PrimaryKeyType &Removed::getPrimaryKey() const {
+    assert(id_);
+    return *id_;
 }
 
 const std::string &Removed::getValueOfEmail() const noexcept {
@@ -703,6 +739,22 @@ void Removed::setTimestamp(const ::trantor::Date &pTimestamp) noexcept {
     dirtyFlag_[10] = true;
 }
 
+const bool &Removed::getValueOfRecoverable() const noexcept {
+    const static bool defaultValue = bool();
+    if (recoverable_)
+        return *recoverable_;
+    return defaultValue;
+}
+
+const std::shared_ptr<bool> &Removed::getRecoverable() const noexcept {
+    return recoverable_;
+}
+
+void Removed::setRecoverable(const bool &pRecoverable) noexcept {
+    recoverable_ = std::make_shared<bool>(pRecoverable);
+    dirtyFlag_[11] = true;
+}
+
 void Removed::updateId(const uint64_t id) {
 }
 
@@ -718,7 +770,8 @@ const std::vector<std::string> &Removed::insertColumns() noexcept {
             "avatar_frame",
             "clan",
             "data",
-            "timestamp"
+            "timestamp",
+            "recoverable"
     };
     return inCols;
 }
@@ -801,6 +854,13 @@ void Removed::outputArgs(drogon::orm::internal::SqlBinder &binder) const {
             binder << nullptr;
         }
     }
+    if (dirtyFlag_[11]) {
+        if (getRecoverable()) {
+            binder << getValueOfRecoverable();
+        } else {
+            binder << nullptr;
+        }
+    }
 }
 
 const std::vector<std::string> Removed::updateColumns() const {
@@ -837,6 +897,9 @@ const std::vector<std::string> Removed::updateColumns() const {
     }
     if (dirtyFlag_[10]) {
         ret.push_back(getColumnName(10));
+    }
+    if (dirtyFlag_[11]) {
+        ret.push_back(getColumnName(11));
     }
     return ret;
 }
@@ -919,6 +982,13 @@ void Removed::updateArgs(drogon::orm::internal::SqlBinder &binder) const {
             binder << nullptr;
         }
     }
+    if (dirtyFlag_[11]) {
+        if (getRecoverable()) {
+            binder << getValueOfRecoverable();
+        } else {
+            binder << nullptr;
+        }
+    }
 }
 
 Json::Value Removed::toJson() const {
@@ -978,13 +1048,18 @@ Json::Value Removed::toJson() const {
     } else {
         ret["timestamp"] = Json::Value();
     }
+    if (getRecoverable()) {
+        ret["recoverable"] = getValueOfRecoverable();
+    } else {
+        ret["recoverable"] = Json::Value();
+    }
     return ret;
 }
 
 Json::Value Removed::toMasqueradedJson(
         const std::vector<std::string> &pMasqueradingVector) const {
     Json::Value ret;
-    if (pMasqueradingVector.size() == 11) {
+    if (pMasqueradingVector.size() == 12) {
         if (!pMasqueradingVector[0].empty()) {
             if (getId()) {
                 ret[pMasqueradingVector[0]] = (Json::Int64) getValueOfId();
@@ -1062,6 +1137,13 @@ Json::Value Removed::toMasqueradedJson(
                 ret[pMasqueradingVector[10]] = Json::Value();
             }
         }
+        if (!pMasqueradingVector[11].empty()) {
+            if (getRecoverable()) {
+                ret[pMasqueradingVector[11]] = getValueOfRecoverable();
+            } else {
+                ret[pMasqueradingVector[11]] = Json::Value();
+            }
+        }
         return ret;
     }
     LOG_ERROR << "Masquerade failed";
@@ -1120,6 +1202,11 @@ Json::Value Removed::toMasqueradedJson(
     } else {
         ret["timestamp"] = Json::Value();
     }
+    if (getRecoverable()) {
+        ret["recoverable"] = getValueOfRecoverable();
+    } else {
+        ret["recoverable"] = Json::Value();
+    }
     return ret;
 }
 
@@ -1171,13 +1258,17 @@ bool Removed::validateJsonForCreation(const Json::Value &pJson, std::string &err
         if (!validJsonOfField(10, "timestamp", pJson["timestamp"], err, true))
             return false;
     }
+    if (pJson.isMember("recoverable")) {
+        if (!validJsonOfField(11, "recoverable", pJson["recoverable"], err, true))
+            return false;
+    }
     return true;
 }
 
 bool Removed::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                                  const std::vector<std::string> &pMasqueradingVector,
                                                  std::string &err) {
-    if (pMasqueradingVector.size() != 11) {
+    if (pMasqueradingVector.size() != 12) {
         err = "Bad masquerading vector";
         return false;
     }
@@ -1251,6 +1342,12 @@ bool Removed::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                     return false;
             }
         }
+        if (!pMasqueradingVector[11].empty()) {
+            if (pJson.isMember(pMasqueradingVector[11])) {
+                if (!validJsonOfField(11, pMasqueradingVector[11], pJson[pMasqueradingVector[11]], err, true))
+                    return false;
+            }
+        }
     }
     catch (const Json::LogicError &e) {
         err = e.what();
@@ -1263,6 +1360,9 @@ bool Removed::validateJsonForUpdate(const Json::Value &pJson, std::string &err) 
     if (pJson.isMember("id")) {
         if (!validJsonOfField(0, "id", pJson["id"], err, false))
             return false;
+    } else {
+        err = "The value of primary key must be set in the json object for update";
+        return false;
     }
     if (pJson.isMember("email")) {
         if (!validJsonOfField(1, "email", pJson["email"], err, false))
@@ -1304,13 +1404,17 @@ bool Removed::validateJsonForUpdate(const Json::Value &pJson, std::string &err) 
         if (!validJsonOfField(10, "timestamp", pJson["timestamp"], err, false))
             return false;
     }
+    if (pJson.isMember("recoverable")) {
+        if (!validJsonOfField(11, "recoverable", pJson["recoverable"], err, false))
+            return false;
+    }
     return true;
 }
 
 bool Removed::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                                const std::vector<std::string> &pMasqueradingVector,
                                                std::string &err) {
-    if (pMasqueradingVector.size() != 11) {
+    if (pMasqueradingVector.size() != 12) {
         err = "Bad masquerading vector";
         return false;
     }
@@ -1318,6 +1422,9 @@ bool Removed::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
         if (!pMasqueradingVector[0].empty() && pJson.isMember(pMasqueradingVector[0])) {
             if (!validJsonOfField(0, pMasqueradingVector[0], pJson[pMasqueradingVector[0]], err, false))
                 return false;
+        } else {
+            err = "The value of primary key must be set in the json object for update";
+            return false;
         }
         if (!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1])) {
             if (!validJsonOfField(1, pMasqueradingVector[1], pJson[pMasqueradingVector[1]], err, false))
@@ -1357,6 +1464,10 @@ bool Removed::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
         }
         if (!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10])) {
             if (!validJsonOfField(10, pMasqueradingVector[10], pJson[pMasqueradingVector[10]], err, false))
+                return false;
+        }
+        if (!pMasqueradingVector[11].empty() && pJson.isMember(pMasqueradingVector[11])) {
+            if (!validJsonOfField(11, pMasqueradingVector[11], pJson[pMasqueradingVector[11]], err, false))
                 return false;
         }
     }
@@ -1471,6 +1582,16 @@ bool Removed::validJsonOfField(size_t index,
                 return false;
             }
             if (!pJson.isString()) {
+                err = "Type error in the " + fieldName + " field";
+                return false;
+            }
+            break;
+        case 11:
+            if (pJson.isNull()) {
+                err = "The " + fieldName + " column cannot be null";
+                return false;
+            }
+            if (!pJson.isBool()) {
                 err = "Type error in the " + fieldName + " field";
                 return false;
             }
