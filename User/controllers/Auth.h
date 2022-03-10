@@ -41,6 +41,17 @@ namespace tech::api::v2 {
                     drogon::Post,
                     "tech::filters::CheckAccessToken",
                     "tech::filters::AuthDeactivateEmail");
+            METHOD_ADD(
+                    Auth::searchRemoved,
+                    "/removed/search",
+                    drogon::Post,
+                    "tech::filters::AuthSearchRemoved");
+            METHOD_ADD(
+                    Auth::restoreRemoved,
+                    "/removed/restore",
+                    drogon::Post,
+                    "tech::filters::CheckAccessToken",
+                    "tech::filters::AuthRestoreRemoved");
         METHOD_LIST_END
 
         void check(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
@@ -56,6 +67,10 @@ namespace tech::api::v2 {
         void migrateEmail(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
 
         void deactivateEmail(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
+
+        void searchRemoved(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
+
+        void restoreRemoved(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
 
     private:
         plugins::DataManager *_dataManager;

@@ -58,6 +58,13 @@ namespace tech::plugins {
                 const std::string &code
         );
 
+        [[nodiscard]] Json::Value searchRemoved(const helpers::RequestJson &request);
+
+        void restoreRemoved(
+                const std::string &email,
+                const std::string &code
+        );
+
         [[nodiscard]] Json::Value getUserInfo(
                 const std::string &accessToken,
                 const int64_t &userId
@@ -91,7 +98,7 @@ namespace tech::plugins {
         [[nodiscard]] bool emailLimit(const std::string &email) const;
 
     private:
-        std::chrono::seconds _ipInterval{}, _emailInterval{};
+        std::chrono::seconds _ipInterval{}, _emailInterval{}, _removedInterval{};
         uint64_t _ipMaxCount{}, _emailMaxCount{};
 
         std::unique_ptr<helpers::EmailHelper> _emailHelper;

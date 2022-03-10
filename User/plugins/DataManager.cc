@@ -8,6 +8,7 @@
 #include <structures/Exceptions.h>
 #include <utils/crypto.h>
 #include <utils/data.h>
+#include <utils/datetime.h>
 #include <utils/io.h>
 
 using namespace drogon;
@@ -84,6 +85,14 @@ void DataManager::initAndStart(const Json::Value &config) {
         LOG_ERROR << e.what();
         abort();
     }
+
+    if (!(
+            config["sql"]["expirations"]["removed"].isUInt64()
+    )) {
+        LOG_ERROR << R"("Invalid sql config")";
+        abort();
+    }
+    _removedInterval = chrono::minutes(config["sql"]["expirations"]["removed"].asUInt64());
 
     _dataMapper = make_unique<orm::Mapper<techluster::Data>>(app().getDbClient());
     _playerMapper = make_unique<orm::Mapper<techluster::Player>>(app().getDbClient());
@@ -308,6 +317,7 @@ void DataManager::deactivateEmail(
         removed.setAvatarFrame(player.getValueOfAvatarFrame());
         // TODO: Determine whether we should keep the following field
         removed.setClan(player.getValueOfClan());
+        removed.setTimestamp(trantor::Date::date());
 
         Json::Value dataJson;
         dataJson["public"] = data.getValueOfPublic();
@@ -324,6 +334,120 @@ void DataManager::deactivateEmail(
                 ResultCode::notAcceptable,
                 k401Unauthorized
         );
+    } catch (const orm::UnexpectedRows &e) {
+        LOG_DEBUG << "Unexpected rows: " << e.what();
+        throw ResponseException(
+                i18n("userNotFound"),
+                ResultCode::notFound,
+                k404NotFound
+        );
+    }
+}
+
+Json::Value DataManager::searchRemoved(const RequestJson &request) {
+    using namespace chrono;
+    orm::Criteria criteria;
+    if (request.check("id", JsonValue::Int64)) {
+        criteria = criteria || orm::Criteria(
+                techluster::Removed::Cols::_id,
+                orm::CompareOperator::EQ,
+                request["id"].asInt64()
+        );
+    }
+    if (request.check("email", JsonValue::String)) {
+        criteria = criteria || orm::Criteria(
+                techluster::Removed::Cols::_email,
+                orm::CompareOperator::EQ,
+                request["email"].asString()
+        );
+    }
+    if (request.check("username", JsonValue::String)) {
+        criteria = criteria || orm::Criteria(
+                techluster::Removed::Cols::_username,
+                orm::CompareOperator::EQ,
+                request["username"].asString()
+        );
+    }
+    if (request.check("clan", JsonValue::String)) {
+        criteria = criteria || orm::Criteria(
+                techluster::Removed::Cols::_clan,
+                orm::CompareOperator::EQ,
+                request["clan"].asString()
+        );
+    }
+    try {
+        auto rows = _removedMapper->findBy(criteria);
+        Json::Value result(Json::arrayValue);
+        for (auto &removed: rows) {
+            Json::Value row;
+            row["id"] = removed.getValueOfId();
+            row["username"] = removed.getValueOfUsername();
+            row["motto"] = removed.getValueOfMotto();
+            row["clan"] = removed.getValueOfClan();
+
+            auto email = removed.getValueOfEmail();
+            auto prefixLength = email.find('@');
+            email.replace(3, prefixLength - 4, "***");
+            row["email"] = email;
+
+            auto removeTime = removed.getValueOfTimestamp();
+            if (removed.getValueOfRecoverable()) {
+                if (removeTime.after(
+                        static_cast<double>(_removedInterval.count())
+                ) < trantor::Date::date()) {
+                    removed.setRegionToNull();
+                    removed.setAvatarToNull();
+                    removed.setAvatarHashToNull();
+                    removed.setAvatarFrameToNull();
+                    removed.setData(R"({"public":{},"protected":{},"private":{}})");
+                    removed.setRecoverable(false);
+                    _removedMapper->update(removed);
+                    row["region"];
+                    row["avatar"];
+                    row["avatarFrame"];
+                } else {
+                    row["region"] = removed.getValueOfRegion();
+                    row["avatar"] = removed.getValueOfAvatar();
+                    row["avatarFrame"] = removed.getValueOfAvatarFrame();
+                }
+            } else {
+                row["region"];
+                row["avatar"];
+                row["avatarFrame"];
+            }
+            result.append(row);
+        }
+        return result;
+    } catch (const orm::UnexpectedRows &e) {
+        LOG_DEBUG << "Unexpected rows: " << e.what();
+        throw ResponseException(
+                i18n("userNotFound"),
+                ResultCode::notFound,
+                k404NotFound
+        );
+    }
+}
+
+void DataManager::restoreRemoved(
+        const string &email,
+        const string &code
+) {
+    _checkEmailCode(email, code);
+    try {
+        auto removedJson = _removedMapper->findOne(orm::Criteria(
+                techluster::Removed::Cols::_email,
+                orm::CompareOperator::EQ,
+                email
+        )).toJson();
+
+        techluster::Player player;
+        player.updateByJson(removedJson);
+        _playerMapper->insert(player);
+
+        techluster::Data data;
+        data.setId(player.getValueOfId());
+        data.updateByJson(removedJson["data"]);
+        _dataMapper->insert(data);
     } catch (const orm::UnexpectedRows &e) {
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(

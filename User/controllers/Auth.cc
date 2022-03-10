@@ -128,3 +128,24 @@ void Auth::deactivateEmail(const HttpRequestPtr &req, function<void(const HttpRe
     }, response);
     response.httpCallback(callback);
 }
+
+void Auth::searchRemoved(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
+    ResponseJson response;
+    handleExceptions([&]() {
+        auto request = req->attributes()->get<RequestJson>("requestJson");
+        response.setData(_dataManager->searchRemoved(request));
+    }, response);
+    response.httpCallback(callback);
+}
+
+void Auth::restoreRemoved(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
+    ResponseJson response;
+    handleExceptions([&]() {
+        auto request = req->attributes()->get<RequestJson>("requestJson");
+        _dataManager->restoreRemoved(
+                request["email"].asString(),
+                request["code"].asString()
+        );
+    }, response);
+    response.httpCallback(callback);
+}
