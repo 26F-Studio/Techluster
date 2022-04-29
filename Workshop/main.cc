@@ -1,9 +1,8 @@
 #include <drogon/drogon.h>
 
 // TODO: Think another way to trick the linker to link these headers
-#include <plugins/AuthMaintainer.h>
-#include <plugins/Authorizer.h>
-#include <plugins/Perfmon.h>
+#include <filters/CheckCredential.h>
+#include <filters/CheckNodeType.h>
 
 using namespace drogon;
 
