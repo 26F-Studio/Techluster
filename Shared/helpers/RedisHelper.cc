@@ -18,76 +18,59 @@ RedisHelper::RedisHelper(std::string BaseKey) : _baseKey(std::move(BaseKey)) {}
 
 void RedisHelper::connect(
         const string &host,
-        const size_t &port,
-        const uint32_t &timeout,
-        const int32_t &retries,
-        const uint32_t &interval
+        size_t port,
+        int db,
+        uint32_t timeout,
+        int32_t retries,
+        uint32_t interval
 ) {
     _redisClient.connect(
             host,
             port,
-            [this, timeout, retries, interval](const string &host, size_t port, client::connect_state status) {
+            [=, this](const string &host, size_t port, client::connect_state status) {
                 if (status == client::connect_state::dropped) {
                     LOG_ERROR << "client disconnected from " << host << ":" << port;
-                    connect(host, port, timeout, retries, interval);
+                    connect(host, port, db, timeout, retries, interval);
+                } else if (status == client::connect_state::ok) {
+                    _redisClient.select(db);
+                    _redisClient.sync_commit();
                 }
             },
             timeout,
             retries,
             interval
     );
-    LOG_INFO << "Redis connected.";
+    LOG_INFO << _baseKey << " redis connected.";
 }
 
 void RedisHelper::disconnect() {
     if (_redisClient.is_connected()) {
         _redisClient.disconnect();
-        LOG_INFO << "Redis disconnected.";
+        LOG_INFO << _baseKey << " redis disconnected.";
     }
 }
 
-// Make this method safe and efficient.
 bool RedisHelper::tokenBucket(
         const string &key,
         const chrono::microseconds &restoreInterval,
-        const uint64_t &maxCount
+        uint64_t maxCount
 ) {
+    const auto countKey = _baseKey + ":tokenBucket:count:" + key;
+    const auto updatedKey = _baseKey + ":tokenBucket:updated:" + key;
     auto maxTtl = chrono::duration_cast<chrono::seconds>(restoreInterval * maxCount);
-
-    auto setCount = [this, &key](const uint64_t &count) {
-        _redisClient.set(
-                _baseKey + ":tokenBucket:count:" + key,
-                to_string(count)
-        );
-    };
-
-    auto setDate = [this, &key](const string &dateStr) {
-        _redisClient.set(
-                _baseKey + ":tokenBucket:updated:" + key,
-                dateStr
-        );
-    };
-
-    auto checkCount = [this, &key](const uint64_t &count) -> bool {
-        if (count > 0) {
-            _redisClient.decr(_baseKey + ":tokenBucket:count:" + key);
-            return true;
-        }
-        return false;
-    };
 
     uint64_t countValue;
     try {
-        auto bucketCount = get(_baseKey + ":tokenBucket:count:" + key);
+        auto bucketCount = get(countKey);
         countValue = stoull(bucketCount);
     } catch (...) {
-        setCount(maxCount - 1);
+        _redisClient.set(countKey, to_string(maxCount - 1));
         countValue = maxCount;
     }
 
     bool hasToken = true;
     try {
-        auto lastUpdated = get(_baseKey + ":tokenBucket:updated:" + key);
+        auto lastUpdated = get(updatedKey);
         auto nowMicroseconds = datetime::toDate().microSecondsSinceEpoch();
         auto generatedCount =
                 (nowMicroseconds -
@@ -95,63 +78,81 @@ bool RedisHelper::tokenBucket(
                 ) / restoreInterval.count() - 1;
 
         if (generatedCount >= 1) {
-            setDate(datetime::toString(nowMicroseconds));
-            _redisClient.incrby(_baseKey + ":tokenBucket:count:" + key, static_cast<int>(generatedCount) - 1);
+            _redisClient.set(updatedKey, datetime::toString(nowMicroseconds));
+            _redisClient.incrby(countKey, static_cast<int>(generatedCount) - 1);
+            hasToken = true;
+        } else if (countValue > 0) {
+            _redisClient.decr(countKey);
             hasToken = true;
         } else {
-            hasToken = checkCount(countValue);
+            hasToken = false;
         }
     } catch (...) {
-        setDate(datetime::toString());
-        setCount(maxCount - 1);
+        _redisClient.set(updatedKey, datetime::toString());
+        _redisClient.set(countKey, to_string(maxCount - 1));
     }
 
-    expire(_baseKey + ":tokenBucket:count:" + key, maxTtl);
-    expire(_baseKey + ":tokenBucket:updated:" + key, maxTtl);
+    // Use sync methods to make sure the operation is completed.
+    expire({{countKey,   maxTtl},
+            {updatedKey, maxTtl}});
     return hasToken;
 }
 
-void RedisHelper::compare(
-        const string &key,
-        const string &value
-) {
-    if (get(key) != value) {
-        throw redis_exception::NotEqual("key = " + key);
-    }
-}
-
 void RedisHelper::del(const string &key) {
-    _redisClient.del({key});
+    const auto tempKey = _baseKey + ":" + key;
+    _redisClient.del({tempKey});
     _redisClient.sync_commit();
 }
 
-void RedisHelper::expire(
-        const string &key,
-        const chrono::seconds &ttl
-) {
-    auto future = _redisClient.expire(key, static_cast<int>(ttl.count()));
+void RedisHelper::expire(const string &key, const chrono::seconds &ttl) {
+    const auto tempKey = _baseKey + ":" + key;
+    auto future = _redisClient.expire(tempKey, static_cast<int>(ttl.count()));
     _redisClient.sync_commit();
     auto reply = future.get();
     if (reply.is_null()) {
-        throw redis_exception::KeyNotFound("Key = " + key);
+        throw redis_exception::KeyNotFound(tempKey);
+    }
+}
+
+void RedisHelper::expire(const vector<tuple<string, chrono::seconds>> &params) {
+    vector<future<reply>> futures;
+    for (const auto &[key, ttl]: params) {
+        const auto tempKey = _baseKey + ":" + key;
+        futures.push_back(_redisClient.expire(tempKey, static_cast<int>(ttl.count())));
+    }
+    _redisClient.sync_commit();
+    for (auto index = 0; index < futures.size(); ++index) {
+        auto reply = futures[index].get();
+        if (reply.is_null()) {
+            const auto &[key, _] = params[index];
+            throw redis_exception::KeyNotFound(key);
+        }
     }
 }
 
 string RedisHelper::get(const string &key) {
-    auto future = _redisClient.get(key);
+    const auto tempKey = _baseKey + ":" + key;
+    auto future = _redisClient.get(tempKey);
     _redisClient.sync_commit();
     auto reply = future.get();
     if (reply.is_null()) {
-        throw redis_exception::KeyNotFound("Key = " + key);
+        throw redis_exception::KeyNotFound(tempKey);
     }
     return reply.as_string();
 }
 
 void RedisHelper::setEx(
         const string &key,
-        const int &ttl,
+        int ttl,
         const string &value
 ) {
-    _redisClient.setex(key, ttl, value);
+    _redisClient.setex(_baseKey + ":" + key, ttl, value);
+    _redisClient.sync_commit();
+}
+
+void RedisHelper::setEx(const vector<tuple<string, int, string>> &params) {
+    for (const auto &[key, ttl, value]: params) {
+        _redisClient.setex(_baseKey + ":" + key, ttl, value);
+    }
     _redisClient.sync_commit();
 }

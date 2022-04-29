@@ -14,10 +14,11 @@ namespace tech::helpers {
 
         void connect(
                 const std::string &host = "127.0.0.1",
-                const size_t &port = 6379,
-                const uint32_t &timeout = 0,
-                const int32_t &retries = 0,
-                const uint32_t &interval = 0
+                size_t port = 6379,
+                int db = 0,
+                uint32_t timeout = 0,
+                int32_t retries = 0,
+                uint32_t interval = 0
         );
 
         void disconnect();
@@ -25,31 +26,27 @@ namespace tech::helpers {
         [[nodiscard]] bool tokenBucket(
                 const std::string &key,
                 const std::chrono::microseconds &restoreInterval,
-                const uint64_t &maxCount
+                uint64_t maxCount
         );
 
         virtual ~RedisHelper() = default;
 
     protected:
-        void compare(
-                const std::string &key,
-                const std::string &value
-        );
-
         void del(const std::string &key);
 
-        void expire(
-                const std::string &key,
-                const std::chrono::seconds &ttl
-        );
+        void expire(const std::string &key, const std::chrono::seconds &ttl);
+
+        void expire(const std::vector<std::tuple<std::string, std::chrono::seconds>> &params);
 
         std::string get(const std::string &key);
 
         void setEx(
                 const std::string &key,
-                const int &ttl,
+                int ttl,
                 const std::string &value
         );
+
+        void setEx(const std::vector<std::tuple<std::string, int, std::string>> &params);
 
     private:
         cpp_redis::client _redisClient;

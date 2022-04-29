@@ -36,26 +36,16 @@ namespace tech::structures {
 
         [[nodiscard]] RedisToken generateTokens(const std::string &userId);
 
-        void checkEmailCode(
-                const std::string &email,
-                const std::string &code
-        );
+        bool checkEmailCode(const std::string &email, const std::string &code);
 
         void deleteEmailCode(const std::string &email);
 
-        void setEmailCode(
-                const std::string &email,
-                const std::string &code
-        );
+        void setEmailCode(const std::string &email, const std::string &code);
 
         [[nodiscard]] int64_t getIdByAccessToken(const std::string &accessToken);
 
     private:
         const Expiration _expiration;
-
-        // TODO: Add more wrappers for basic redis commands
-
-        void _extendRefreshToken(const std::string &refreshToken);
 
         std::string _generateRefreshToken(const std::string &userId);
 
