@@ -37,6 +37,7 @@ add_subdirectory(Gaming)
 add_subdirectory(Message)
 add_subdirectory(Forwarding)
 add_subdirectory(User)
+add_subdirectory(Workshop)
 
 # To disable tests, comment out the following lines
 enable_testing()
