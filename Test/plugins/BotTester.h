@@ -8,10 +8,9 @@
 #include <plugins/BaseTester.h>
 
 namespace tech::plugins {
-    class TransferTester : public BaseTester<TransferTester> {
+    class BotTester : public BaseTester<BotTester> {
     public:
-        TransferTester() = default;
-
+        BotTester() = default;
     };
 }
 

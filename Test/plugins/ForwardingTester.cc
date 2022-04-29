@@ -3,7 +3,7 @@
 //
 
 #include <drogon/drogon.h>
-#include <plugins/TransferTester.h>
+#include <plugins/ForwardingTester.h>
 
 using namespace drogon;
 using namespace std;
