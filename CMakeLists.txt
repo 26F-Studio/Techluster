@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.18)
 
 include(utils.cmake)
 
@@ -16,6 +16,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     message(STATUS "Compiler is GCC")
     add_compile_options(-Wno-volatile -fcoroutines)
+    find_library(GCC_ATOMIC NAMES atomic atomic.so.1 libatomic.so.1)
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     message(STATUS "Compiler is Intel C++")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -28,14 +29,13 @@ endif ()
 find_library(CPPREDIS_LIB cpp_redis)
 find_library(TACOPIE_LIB tacopie)
 find_package(Drogon CONFIG REQUIRED)
-#find_package(mailio CONFIG REQUIRED) # Wait for maintainer fixing this
-find_mailIO(MAILIO_INCLUDE_DIR MAILIO_LIB)
+find_package(mailio CONFIG REQUIRED)
 
 add_subdirectory(Shared)
 add_subdirectory(Connect)
 add_subdirectory(Gaming)
 add_subdirectory(Message)
-add_subdirectory(Transfer)
+add_subdirectory(Forwarding)
 add_subdirectory(User)
 
 # To disable tests, comment out the following lines
