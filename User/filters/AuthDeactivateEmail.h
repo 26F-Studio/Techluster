@@ -16,7 +16,10 @@
 namespace tech::filters {
     class AuthDeactivateEmail :
             public drogon::HttpFilter<AuthDeactivateEmail>,
-            public structures::RequestJsonHandler {
+            public structures::RequestJsonHandler<AuthDeactivateEmail> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         void doFilter(
                 const drogon::HttpRequestPtr &req,

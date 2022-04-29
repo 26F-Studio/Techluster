@@ -21,7 +21,10 @@
 namespace tech::filters {
     class UserUpdateInfo :
             public drogon::HttpFilter<UserUpdateInfo>,
-            public structures::RequestJsonHandler {
+            public structures::RequestJsonHandler<UserUpdateInfo> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         void doFilter(
                 const drogon::HttpRequestPtr &req,

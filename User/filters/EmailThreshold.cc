@@ -16,8 +16,6 @@ using namespace tech::plugins;
 using namespace tech::structures;
 using namespace tech::types;
 
-EmailThreshold::EmailThreshold() : I18nHelper(CMAKE_PROJECT_NAME) {}
-
 void tech::filters::EmailThreshold::doFilter(
         const HttpRequestPtr &req,
         FilterCallback &&failedCb,

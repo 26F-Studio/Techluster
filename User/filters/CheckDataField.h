@@ -17,7 +17,7 @@ namespace tech::filters {
             public drogon::HttpFilter<CheckDataField>,
             public helpers::I18nHelper<CheckDataField> {
     public:
-        CheckDataField();
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
         void doFilter(
                 const drogon::HttpRequestPtr &req,

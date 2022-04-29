@@ -18,7 +18,7 @@ namespace tech::filters {
             public drogon::HttpFilter<CheckRefreshToken>,
             public helpers::I18nHelper<CheckRefreshToken> {
     public:
-        CheckRefreshToken();
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
         void doFilter(
                 const drogon::HttpRequestPtr &req,

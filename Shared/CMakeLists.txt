@@ -4,7 +4,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 project(Shared CXX)
 
-add_compile_definitions(CMAKE_PROJECT_NAME=std::string\("${PROJECT_NAME}"\))
+add_compile_definitions(CMAKE_PROJECT_NAME="${PROJECT_NAME}")
 
 find_package(cryptopp CONFIG REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
@@ -33,10 +33,11 @@ target_link_libraries(
         ${PROJECT_NAME}
         PRIVATE
         cryptopp-static
-        ${MAILIO_LIB}
+        mailio
         PUBLIC
         ${CPPREDIS_LIB}
         Drogon::Drogon
+        ${GCC_ATOMIC}
         magic_enum::magic_enum
         ${TACOPIE_LIB}
 )
@@ -45,6 +46,4 @@ target_include_directories(
         ${PROJECT_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-        PRIVATE
-        ${MAILIO_INCLUDE_DIR}
 )

@@ -17,7 +17,10 @@
 namespace tech::filters {
     class AuthMigrateEmail :
             public drogon::HttpFilter<AuthMigrateEmail>,
-            public structures::RequestJsonHandler {
+            public structures::RequestJsonHandler<AuthMigrateEmail> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         void doFilter(
                 const drogon::HttpRequestPtr &req,

@@ -12,8 +12,6 @@ using namespace tech::filters;
 using namespace tech::helpers;
 using namespace tech::types;
 
-CheckRefreshToken::CheckRefreshToken() : I18nHelper(CMAKE_PROJECT_NAME) {}
-
 void CheckRefreshToken::doFilter(
         const HttpRequestPtr &req,
         FilterCallback &&failedCb,
