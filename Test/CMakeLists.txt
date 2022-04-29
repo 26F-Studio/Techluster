@@ -4,7 +4,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 project(Test CXX)
 
-add_compile_definitions(CMAKE_PROJECT_NAME="${PROJECT_NAME}"s)
+add_compile_definitions(CMAKE_PROJECT_NAME="${PROJECT_NAME}")
 
 add_executable(${PROJECT_NAME} main.cc)
 

@@ -56,8 +56,8 @@ namespace tech::plugins {
 
             _typeName = typeid(T).name();
 #ifdef __GNUC__
-            _typeName.erase(0, typeName.find_last_of("0123456789") + 1);
-            _typeName.erase(typeName.size() - 1);
+            _typeName.erase(0, _typeName.find_last_of("0123456789") + 1);
+            _typeName.erase(_typeName.size() - 1);
 #elif _MSC_VER
             _typeName.erase(0, _typeName.find_last_of(':') + 1);
 #endif
