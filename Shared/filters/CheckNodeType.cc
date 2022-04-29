@@ -14,8 +14,6 @@ using namespace tech::filters;
 using namespace tech::helpers;
 using namespace tech::types;
 
-CheckNodeType::CheckNodeType() : I18nHelper(CMAKE_PROJECT_NAME) {}
-
 void CheckNodeType::doFilter(
         const HttpRequestPtr &req,
         FilterCallback &&failedCb,

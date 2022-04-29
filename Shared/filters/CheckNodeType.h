@@ -15,11 +15,12 @@
 
 namespace tech::filters {
     class CheckNodeType :
-            public drogon::HttpFilter<CheckNodeType>,
+            public drogon::HttpFilter<CheckNodeType, false>,
             public helpers::I18nHelper<CheckNodeType> {
     public:
-        CheckNodeType();
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
+    public:
         void doFilter(
                 const drogon::HttpRequestPtr &req,
                 drogon::FilterCallback &&failedCb,
