@@ -14,19 +14,20 @@ namespace tech::plugins {
             public drogon::Plugin<NodeManager>,
             public helpers::I18nHelper<NodeManager> {
     public:
-        using NetEndian = uint64_t;
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
-        NodeManager();
-
+    public:
         void initAndStart(const Json::Value &config) override;
 
         void shutdown() override;
 
         void updateNode(structures::NodeServer &&nodeServer);
 
-        std::string getBestNode(const types::NodeType &type) const;
+        std::string getBestNode(const types::NodeType &nodeType) const;
 
-        Json::Value getAllNodes(const types::NodeType &type) const;
+        Json::Value getAllNodes(const types::NodeType &nodeType) const;
+
+        void checkNode(types::NodeType nodeType, trantor::InetAddress address) const;
 
         Json::Value parseInfo() const;
 
@@ -38,8 +39,8 @@ namespace tech::plugins {
         std::atomic<uint32_t> _waitTimes;
         std::unordered_map<
                 types::NodeType,
-                std::unordered_map<NetEndian, structures::NodeServer>
-        > _allNodes;
+                std::unordered_map<uint64_t, structures::NodeServer>
+        > _nodeMap;
 
         void _updateTimer(structures::NodeServer &nodeServer);
     };
