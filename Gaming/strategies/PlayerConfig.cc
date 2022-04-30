@@ -2,53 +2,48 @@
 // Created by Particle_G on 2021/3/04.
 //
 
+#include <helpers/MessageJson.h>
+#include <magic_enum.hpp>
 #include <plugins/RoomManager.h>
-#include <strategies/Action.h>
 #include <strategies/PlayerConfig.h>
 #include <structures/Player.h>
+#include <types/Action.h>
+#include <types/JsonValue.h>
 
 using namespace drogon;
+using namespace magic_enum;
 using namespace std;
+using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
+using namespace tech::types;
 
-PlayerConfig::PlayerConfig() : MessageHandlerBase(toUInt(Action::playerConfig)) {}
+PlayerConfig::PlayerConfig() : MessageHandlerBase(enum_integer(Action::playerConfig)) {}
 
-Result PlayerConfig::fromJson(
-        const WebSocketConnectionPtr &wsConnPtr,
-        const Json::Value &request,
-        Json::Value &response,
-        CloseCode &code
-) {
-    if (!(
-            request.isMember("data") && request["data"].isString()
-    )) {
-        response["type"] = static_cast<int>(Type::failed);
-        response["reason"] = "Invalid argument(s)";
-        return Result::failed;
-    }
-
+bool PlayerConfig::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
-    auto config = request["data"].asString();
-    Json::Value data;
-    data["userId"] = player->userId();
-    data["config"] = config;
-
-    player->setConfig(move(config));
-
-    try {
-        app().getPlugin<RoomManager>()->getSharedRoom(
-                player->getJoinedId()
-        ).room.publish(
-                _parseMessage(Type::other, move(data)),
-                player->userId()
-        );
-        response["type"] = static_cast<int>(Type::self);
-        return Result::success;
-    } catch (const exception &error) {
-        response["type"] = static_cast<int>(Type::failed);
-        response["reason"] = error.what();
-        return Result::failed;
+    if (!player || player->getRoomId().empty()) {
+        MessageJson message(_action);
+        message.setMessageType(MessageType::failed);
+        message.setReason(i18n("notAvailable"));
+        message.sendTo(wsConnPtr);
+        return false;
     }
+
+    if (!request.check(JsonValue::String)) {
+        MessageJson message(_action);
+        message.setMessageType(MessageType::failed);
+        message.setReason(i18n("invalidArguments"));
+        message.sendTo(wsConnPtr);
+        return false;
+    }
+    return true;
+}
+
+void PlayerConfig::process(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+    handleExceptions([&]() {
+        wsConnPtr->getContext<Player>()->setConfig(move(request.ref().asString()));
+        app().getPlugin<RoomManager>()->playerConfig(_action, wsConnPtr);
+    }, _action, wsConnPtr);
 }

@@ -2,66 +2,50 @@
 // Created by Particle_G on 2021/3/04.
 //
 
+#include <helpers/MessageJson.h>
+#include <magic_enum.hpp>
 #include <plugins/RoomManager.h>
-#include <strategies/Action.h>
 #include <strategies/PlayerState.h>
 #include <structures/Player.h>
+#include <types/Action.h>
+#include <types/JsonValue.h>
 
 using namespace drogon;
+using namespace magic_enum;
 using namespace std;
+using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
+using namespace tech::types;
 
-PlayerState::PlayerState() : MessageHandlerBase(toUInt(Action::playerState)) {}
+PlayerState::PlayerState() : MessageHandlerBase(enum_integer(Action::playerState)) {}
 
-Result PlayerState::fromJson(
-        const WebSocketConnectionPtr &wsConnPtr,
-        const Json::Value &request,
-        Json::Value &response,
-        CloseCode &code
-) {
-    if (!(
-            request.isMember("data") && request["data"].isInt()
-    )) {
-        response["type"] = static_cast<int>(Type::failed);
-        response["reason"] = "Invalid argument(s)";
-        return Result::failed;
-    }
-
+bool PlayerState::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
-    const auto &stateNumber = request["data"].asInt();
-    Json::Value data;
-    data["userId"] = player->userId();
-    data["state"] = stateNumber;
-
-    try {
-        auto state = Player::toState(stateNumber);
-
-        player->setState(state);
-
-        auto sharedRoom = app().getPlugin<RoomManager>()->getSharedRoom(player->getJoinedId());
-        auto &room = sharedRoom.room;
-
-        room.publish(
-                _parseMessage(Type::other, move(data)),
-                player->userId()
-        );
-
-        if (state == Player::State::ready) {
-            room.checkReady();
-        } else if (state == Player::State::finish ||
-                   state == Player::State::dead) {
-            room.checkFinished();
-        } else if (state == Player::State::standby) {
-            room.cancelStarting();
-        }
-
-        response["type"] = static_cast<int>(Type::self);
-        return Result::success;
-    } catch (const exception &error) {
-        response["type"] = static_cast<int>(Type::failed);
-        response["reason"] = error.what();
-        return Result::failed;
+    if (!player || player->getRoomId().empty() ||
+        player->type == Player::Type::spectator ||
+        player->state != Player::State::playing) {
+        MessageJson message(_action);
+        message.setMessageType(MessageType::failed);
+        message.setReason(i18n("notAvailable"));
+        message.sendTo(wsConnPtr);
+        return false;
     }
+
+    if (!request.check(JsonValue::String)) {
+        MessageJson message(_action);
+        message.setMessageType(MessageType::failed);
+        message.setReason(i18n("invalidArguments"));
+        message.sendTo(wsConnPtr);
+        return false;
+    }
+    return true;
+}
+
+void PlayerState::process(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+    handleExceptions([&]() {
+        wsConnPtr->getContext<Player>()->setCustomState(move(request.ref().asString()));
+        app().getPlugin<RoomManager>()->playerState(_action, wsConnPtr);
+    }, _action, wsConnPtr);
 }

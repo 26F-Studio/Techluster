@@ -2,63 +2,61 @@
 // Created by Particle_G on 2021/3/04.
 //
 
+#include <helpers/MessageJson.h>
+#include <magic_enum.hpp>
 #include <plugins/RoomManager.h>
-#include <strategies/Action.h>
 #include <strategies/RoomCreate.h>
-#include <structures/Player.h>
+#include <types/Action.h>
+#include <types/JsonValue.h>
 
 using namespace drogon;
+using namespace magic_enum;
 using namespace std;
+using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
+using namespace tech::types;
 
-RoomCreate::RoomCreate() : MessageHandlerBase(toUInt(Action::roomCreate)) {}
+RoomCreate::RoomCreate() : MessageHandlerBase(enum_integer(Action::roomCreate)) {}
 
-Result RoomCreate::fromJson(
-        const WebSocketConnectionPtr &wsConnPtr,
-        const Json::Value &request,
-        Json::Value &response,
-        CloseCode &code
-) {
-    if (!(
-            request.isMember("data") && request["data"].isObject() &&
-            request["data"].isMember("capacity") && request["data"]["capacity"].isUInt64() &&
-            request["data"]["capacity"].asUInt64() > 0 &&
-            request["data"].isMember("info") && request["data"]["info"].isObject() &&
-            request["data"].isMember("data") && request["data"]["data"].isObject()
-    )) {
-        response["type"] = static_cast<int>(Type::failed);
-        response["reason"] = "Invalid argument(s)";
-        return Result::failed;
+bool RoomCreate::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+    const auto &player = wsConnPtr->getContext<Player>();
+    if (!player || !player->getRoomId().empty()) {
+        MessageJson message(_action);
+        message.setMessageType(MessageType::failed);
+        message.setReason(i18n("notAvailable"));
+        message.sendTo(wsConnPtr);
+        return false;
     }
 
-    string password;
-    if (request["data"] && request["data"]["password"].isString()) {
-        password = request["data"]["password"].asString();
+    if (!request.check("capacity", JsonValue::Uint64) ||
+        !request.check("info", JsonValue::Object) ||
+        !request.check("data", JsonValue::Object) ||
+        request["capacity"].asUInt64() <= 0) {
+        MessageJson message(_action);
+        message.setMessageType(MessageType::failed);
+        message.setReason(i18n("invalidArguments"));
+        message.sendTo(wsConnPtr);
+        return false;
     }
+    return true;
+}
 
-    try {
-        const auto &roomManager = app().getPlugin<RoomManager>();
+void RoomCreate::process(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+    handleExceptions([&]() {
+        string password;
+        if (request.check("password", JsonValue::String)) {
+            password = move(request["password"].asString());
+        }
 
-        auto roomId = roomManager->createRoom(
-                password,
-                request["data"]["capacity"].asUInt64(),
-                request["data"]["info"],
-                request["data"]["data"]
-        );
-
-        wsConnPtr->getContext<Player>()->setRole(Player::Role::super);
-
-        roomManager->joinRoom(
+        app().getPlugin<RoomManager>()->roomCreate(
+                _action,
                 wsConnPtr,
-                roomId,
-                password
+                request["capacity"].asUInt64(),
+                move(password),
+                request["info"],
+                request["data"]
         );
-        return Result::silent;
-    } catch (const exception &error) {
-        response["type"] = static_cast<int>(Type::failed);
-        response["reason"] = error.what();
-        return Result::failed;
-    }
+    }, _action, wsConnPtr);
 }

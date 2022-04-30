@@ -5,7 +5,7 @@
 #include <helpers/MessageJson.h>
 #include <magic_enum.hpp>
 #include <plugins/RoomManager.h>
-#include <strategies/RoomInfo.h>
+#include <strategies/RoomPassword.h>
 #include <types/Action.h>
 #include <types/JsonValue.h>
 
@@ -18,9 +18,9 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomInfo::RoomInfo() : MessageHandlerBase(enum_integer(Action::roomInfo)) {}
+RoomPassword::RoomPassword() : MessageHandlerBase(enum_integer(Action::roomPassword)) {}
 
-bool RoomInfo::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+bool RoomPassword::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || player->getRoomId().empty() ||
         player->state != Player::State::standby) {
@@ -38,7 +38,7 @@ bool RoomInfo::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &requ
         return false;
     }
 
-    if (!request.check(JsonValue::Array)) {
+    if (!request.check(JsonValue::String)) {
         MessageJson message(_action);
         message.setMessageType(MessageType::failed);
         message.setReason(i18n("invalidArguments"));
@@ -48,12 +48,12 @@ bool RoomInfo::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &requ
     return true;
 }
 
-void RoomInfo::process(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+void RoomPassword::process(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     handleExceptions([&]() {
-        app().getPlugin<RoomManager>()->roomInfo(
+        app().getPlugin<RoomManager>()->roomPassword(
                 _action,
                 wsConnPtr,
-                request
+                move(request.ref().asString())
         );
     }, _action, wsConnPtr);
 }

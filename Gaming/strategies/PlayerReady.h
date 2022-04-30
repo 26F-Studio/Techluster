@@ -8,14 +8,14 @@
 #include <structures/MessageHandlerBase.h>
 
 namespace tech::strategies {
-    class RoomKick :
+    class PlayerReady :
             public structures::MessageHandlerBase,
-            public structures::MessageJsonHandler<RoomKick> {
+            public structures::MessageJsonHandler<PlayerReady> {
     public:
         static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
     public:
-        RoomKick();
+        PlayerReady();
 
         bool filter(const drogon::WebSocketConnectionPtr &wsConnPtr, helpers::RequestJson &request) override;
 

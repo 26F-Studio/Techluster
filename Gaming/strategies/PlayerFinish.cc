@@ -5,7 +5,8 @@
 #include <helpers/MessageJson.h>
 #include <magic_enum.hpp>
 #include <plugins/RoomManager.h>
-#include <strategies/RoomInfo.h>
+#include <strategies/PlayerFinish.h>
+#include <structures/Player.h>
 #include <types/Action.h>
 #include <types/JsonValue.h>
 
@@ -18,27 +19,21 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomInfo::RoomInfo() : MessageHandlerBase(enum_integer(Action::roomInfo)) {}
+PlayerFinish::PlayerFinish() : MessageHandlerBase(enum_integer(Action::playerFinish)) {}
 
-bool RoomInfo::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+bool PlayerFinish::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || player->getRoomId().empty() ||
-        player->state != Player::State::standby) {
+        player->type == Player::Type::spectator ||
+        player->state != Player::State::playing) {
         MessageJson message(_action);
         message.setMessageType(MessageType::failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
     }
-    if (player->role < Player::Role::admin) {
-        MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
-        message.setReason(i18n("noPermission"));
-        message.sendTo(wsConnPtr);
-        return false;
-    }
 
-    if (!request.check(JsonValue::Array)) {
+    if (!request.check(JsonValue::Object)) {
         MessageJson message(_action);
         message.setMessageType(MessageType::failed);
         message.setReason(i18n("invalidArguments"));
@@ -48,12 +43,9 @@ bool RoomInfo::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &requ
     return true;
 }
 
-void RoomInfo::process(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+void PlayerFinish::process(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     handleExceptions([&]() {
-        app().getPlugin<RoomManager>()->roomInfo(
-                _action,
-                wsConnPtr,
-                request
-        );
+        wsConnPtr->getContext<Player>()->state = Player::State::finished;
+        app().getPlugin<RoomManager>()->playerFinish(_action, wsConnPtr, move(request.ref()));
     }, _action, wsConnPtr);
 }
