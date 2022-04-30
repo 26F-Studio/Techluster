@@ -5,58 +5,27 @@
 #pragma once
 
 #include <drogon/WebSocketController.h>
-#include <helpers/BasicJson.h>
+#include <helpers/RequestJson.h>
+#include <types/MessageType.h>
 
 namespace tech::structures {
-    enum class Result {
-        error,
-        failed,
-        silent,
-        success,
-    };
-
-    enum class Type {
-        error,
-        failed,
-        other,
-        self,
-        server,
-    };
-
     class MessageHandlerBase {
     public:
-        explicit MessageHandlerBase(const int &action) : _action(action) {}
+        explicit MessageHandlerBase(int action) : _action(action) {}
 
-        virtual Result fromJson(
+        virtual bool filter(
                 const drogon::WebSocketConnectionPtr &wsConnPtr,
-                const Json::Value &request,
-                Json::Value &response,
-                drogon::CloseCode &code
+                helpers::RequestJson &request
+        ) { return true; }
+
+        virtual void process(
+                const drogon::WebSocketConnectionPtr &wsConnPtr,
+                helpers::RequestJson &request
         ) = 0;
 
         virtual ~MessageHandlerBase() = default;
 
     protected:
         const int _action;
-
-        [[nodiscard]] std::string _parseMessage(
-                const Type &type
-        ) const {
-            Json::Value message;
-            message["type"] = static_cast<int>(type);
-            message["action"] = _action;
-            return helpers::BasicJson(std::move(message)).stringify();
-        }
-
-        [[nodiscard]] std::string _parseMessage(
-                const Type &type,
-                Json::Value &&data
-        ) const {
-            Json::Value message;
-            message["type"] = static_cast<int>(type);
-            message["action"] = _action;
-            message["data"] = std::move(data);
-            return helpers::BasicJson(std::move(message)).stringify();
-        }
     };
 }
