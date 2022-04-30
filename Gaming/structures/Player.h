@@ -5,85 +5,61 @@
 #pragma once
 
 #include <drogon/drogon.h>
-#include <structures/Exceptions.h>
+#include <structures/BasicPlayer.h>
 #include <shared_mutex>
 
 namespace tech::structures {
-    class Player {
+    /**
+     * @brief Connection between client and server
+     *
+     * @param userId: int64_t
+     * @param group: uint64_t (default: 0)
+     * @param role: Role (default: normal)
+     * @param type: Type (default: spectator)
+     * @param state: State (default: standby)
+     * @param _roomId: string
+     * @param _customState: string
+     * @param _config: string
+     * @param _pingList: json
+     */
+    class Player : public BasicPlayer {
     public:
         enum class Role {
-            normal,
+            normal = 1,
+            admin,
             super,
         };
-
+        enum class State {
+            standby,
+            ready,
+            playing,
+            finished,
+        };
         enum class Type {
             gamer,
             spectator,
         };
 
-        enum class State {
-            dead,
-            finish,
-            playing,
-            ready,
-            standby,
-        };
+        explicit Player(
+                int64_t userId,
+                Role role = Role::normal,
+                State state = State::standby,
+                Type type = Type::spectator
+        );
 
-        static constexpr Type toType(const int &type) {
-            switch (type) {
-                case 0:
-                    return Type::gamer;
-                case 1:
-                    return Type::spectator;
-                default:
-                    throw action_exception::InvalidArgument("Invalid type number");
-            }
-        }
+        Player(Player &&player) noexcept;
 
-        static constexpr State toState(const int &state) {
-            switch (state) {
-                case 0:
-                    return State::dead;
-                case 1:
-                    return State::finish;
-                case 2:
-                    return State::playing;
-                case 3:
-                    return State::ready;
-                case 4:
-                    return State::standby;
-                default:
-                    throw action_exception::InvalidArgument("Invalid state number");
-            }
-        }
+        [[nodiscard]] std::string getRoomId() const;
 
-        explicit Player(const int64_t &userId);
+        void setRoomId(const std::string &roomId = {});
 
-        [[nodiscard]] const int64_t &userId() const;
+        [[nodiscard]] std::string getCustomState() const;
 
-        [[nodiscard]] uint32_t getGroup() const;
-
-        void setGroup(const uint32_t &group);
-
-        [[nodiscard]] Role getRole() const;
-
-        void setRole(const Role &role);
-
-        [[nodiscard]] Type getType() const;
-
-        void setType(const Type &type);
-
-        [[nodiscard]] State getState() const;
-
-        void setState(const State &state);
+        void setCustomState(std::string &&customState);
 
         [[nodiscard]] std::string getConfig() const;
 
         void setConfig(std::string &&config);
-
-        [[nodiscard]] std::string getJoinedId() const;
-
-        void setJoinedId(const std::string &joinedId = "");
 
         [[nodiscard]] Json::Value getPingList() const;
 
@@ -93,14 +69,15 @@ namespace tech::structures {
 
         void reset();
 
+    public:
+        std::atomic<uint64_t> group{0};
+        std::atomic<Role> role;
+        std::atomic<State> state;
+        std::atomic<Type> type;
+
     private:
         mutable std::shared_mutex _sharedMutex;
-        const int64_t _userId;
-        std::atomic<uint32_t> _group;
-        std::atomic<Role> _role;
-        std::atomic<Type> _type;
-        std::atomic<State> _state;
-        std::string _config, _joinedId;
+        std::string _roomId, _customState, _config;
         Json::Value _pingList;
     };
 }
