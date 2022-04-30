@@ -16,32 +16,18 @@ NodeServer::NodeServer(
         const double &taskInterval,
         string description,
         Json::Value info
-) : _type(type),
-    _inetAddress(ip, port),
-    _taskInterval(taskInterval),
-    _description(move(description)),
+) : nodeType(type),
+    address(ip, port),
+    taskInterval(taskInterval),
+    description(move(description)),
     _info(move(info)) {}
 
 NodeServer::NodeServer(NodeServer &&nodeServer) noexcept:
-        _inetAddress(nodeServer._inetAddress),
-        _taskInterval(nodeServer._taskInterval),
-        _type(nodeServer._type),
-        _description(nodeServer._description),
+        address(nodeServer.address),
+        taskInterval(nodeServer.taskInterval),
+        nodeType(nodeServer.nodeType),
+        description(nodeServer.description),
         _info(nodeServer._info) {}
-
-std::string NodeServer::getIpPort() const {
-    return _inetAddress.toIpPort();
-}
-
-uint64_t NodeServer::getNetEndian() const {
-    return (static_cast<uint64_t>(_inetAddress.ipNetEndian()) << 32) + _inetAddress.portNetEndian();
-}
-
-NodeType NodeServer::getType() const { return _type; }
-
-double NodeServer::getInterval() const { return _taskInterval; }
-
-std::string NodeServer::getDescription() const { return _description; }
 
 Json::Value NodeServer::getInfo() const {
     shared_lock<shared_mutex> lock(_sharedMutex);
@@ -53,30 +39,22 @@ void NodeServer::setInfo(Json::Value info) {
     _info = move(info);
 }
 
-uint64_t NodeServer::getTimerId() const {
-    return _deactivateTimerId;
-}
-
-void NodeServer::setTimerId(const uint64_t &timerId) {
-    _deactivateTimerId = timerId;
-}
-
 int64_t NodeServer::getLastSeen() const {
     shared_lock<shared_mutex> lock(_sharedMutex);
     return _lastSeen.microSecondsSinceEpoch();
 }
 
-void NodeServer::updateLastSeen() {
+void NodeServer::setLastSeen() {
     unique_lock<shared_mutex> lock(_sharedMutex);
     _lastSeen = Date::now();
 }
 
 Json::Value NodeServer::parseNode() const {
     Json::Value result;
-    result["host"] = getIpPort();
-    result["description"] = getDescription();
+    result["host"] = address.toIpPort();
+    result["description"] = description;
     result["info"] = getInfo();
-    result["timerId"] = getTimerId();
+    result["timerId"] = removalTimerId.load();
     result["lastSeen"] = getLastSeen();
     return result;
 }
