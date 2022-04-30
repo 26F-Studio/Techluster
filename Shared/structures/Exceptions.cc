@@ -55,6 +55,11 @@ Json::Value ResponseException::toJson() const noexcept {
     return result.ref();
 }
 
+MessageException::MessageException(
+        string message,
+        bool error
+) : BaseException(move(message)), error(error) {}
+
 json_exception::InvalidFormat::InvalidFormat(std::string message) :
         BaseException(move(message)) {}
 
@@ -71,9 +76,6 @@ redis_exception::KeyNotFound::KeyNotFound(string message) :
         BaseException(move(message)) {}
 
 redis_exception::FieldNotFound::FieldNotFound(string message) :
-        BaseException(move(message)) {}
-
-redis_exception::NotEqual::NotEqual(string message) :
         BaseException(move(message)) {}
 
 room_exception::PlayerOverFlow::PlayerOverFlow(string message) :

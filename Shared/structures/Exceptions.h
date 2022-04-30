@@ -5,7 +5,9 @@
 #pragma once
 
 #include <drogon/drogon.h>
+#include <helpers/MessageJson.h>
 #include <types/JsonValue.h>
+#include <types/MessageType.h>
 #include <types/ResultCode.h>
 
 namespace tech::internal {
@@ -73,6 +75,13 @@ namespace tech::structures {
         const drogon::HttpStatusCode _statusCode;
     };
 
+    class MessageException : public internal::BaseException {
+    public:
+        explicit MessageException(std::string message, bool error = false);
+
+        std::atomic<bool> error;
+    };
+
     namespace json_exception {
         class InvalidFormat : public internal::BaseException {
         public:
@@ -106,11 +115,6 @@ namespace tech::structures {
         class FieldNotFound : public internal::BaseException {
         public:
             explicit FieldNotFound(std::string message);
-        };
-
-        class NotEqual : public internal::BaseException {
-        public:
-            explicit NotEqual(std::string message);
         };
     }
 
