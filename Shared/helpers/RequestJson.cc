@@ -26,10 +26,15 @@ RequestJson::RequestJson(const drogon::HttpRequestPtr &req) {
     _value = std::move(*object);
 }
 
-bool RequestJson::check(
-        const string &path,
-        const JsonValue &valueType
-) const {
+RequestJson::RequestJson(const HttpResponsePtr &res) {
+    auto object = res->getJsonObject();
+    if (!object) {
+        throw json_exception::InvalidFormat(res->getJsonError());
+    }
+    _value = std::move(*object);
+}
+
+bool RequestJson::check(const string &path, JsonValue valueType) const {
     auto resultPtr = &_value;
     for (const auto &keyString: drogon::utils::splitString(path, ".")) {
         if (resultPtr->isNull()) {
@@ -40,25 +45,25 @@ bool RequestJson::check(
     return _check(*resultPtr, valueType);
 }
 
-void RequestJson::remove(const string &key) {
-    _value.removeMember(key);
-}
+bool RequestJson::check(JsonValue valueType) const { return _check(_value, valueType); }
 
-void RequestJson::trim(
-        const string &key,
-        const JsonValue &valueType
-) {
+void RequestJson::require(const string &key, JsonValue valueType) const {
     if (!check(key, valueType)) {
-        remove(key);
+        throw json_exception::WrongType(valueType);
     }
 }
 
-void RequestJson::require(
-        const string &key,
-        const JsonValue &valueType
-) const {
-    if (!check(key, valueType)) {
+void RequestJson::require(JsonValue valueType) const {
+    if (!check(valueType)) {
         throw json_exception::WrongType(valueType);
+    }
+}
+
+void RequestJson::remove(const string &key) { _value.removeMember(key); }
+
+void RequestJson::trim(const string &key, JsonValue valueType) {
+    if (!check(key, valueType)) {
+        remove(key);
     }
 }
 
