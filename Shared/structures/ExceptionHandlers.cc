@@ -10,38 +10,6 @@ using namespace tech::helpers;
 using namespace tech::structures;
 using namespace tech::types;
 
-RequestJsonHandler::RequestJsonHandler() : I18nHelper(CMAKE_PROJECT_NAME) {}
-
-void RequestJsonHandler::handleExceptions(
-        const function<void()> &mainFunction,
-        drogon::FilterCallback &failedCb
-) {
-    try {
-        mainFunction();
-    } catch (const json_exception::InvalidFormat &e) {
-        ResponseJson response;
-        response.setStatusCode(k400BadRequest);
-        response.setResultCode(ResultCode::invalidFormat);
-        response.setMessage(i18n("invalidFormat"));
-        response.setReason(e);
-        response.httpCallback(failedCb);
-    } catch (const json_exception::WrongType &e) {
-        ResponseJson response;
-        response.setStatusCode(k400BadRequest);
-        response.setResultCode(ResultCode::invalidArguments);
-        response.setMessage(i18n("invalidArguments"));
-        response.httpCallback(failedCb);
-    } catch (const exception &e) {
-        LOG_ERROR << e.what();
-        ResponseJson response;
-        response.setStatusCode(k500InternalServerError);
-        response.setResultCode(ResultCode::internalError);
-        response.setMessage(i18n("internalError"));
-        response.setReason(e);
-        response.httpCallback(failedCb);
-    }
-}
-
 ResponseJsonHandler::ResponseJsonHandler(
         ResponseJsonHandler::ResponseExceptionHandler responseExceptionHandler,
         ResponseJsonHandler::DbExceptionHandler dbExceptionHandler,
