@@ -13,7 +13,7 @@ BasicJson::BasicJson(Json::Value json) : _value(std::move(json)) {}
 
 BasicJson::BasicJson(const string &raw) { stringstream(raw) >> _value; }
 
-string BasicJson::stringify(const string &indentation) {
+string BasicJson::stringify(const string &indentation) const {
     Json::StreamWriterBuilder writerBuilder;
     writerBuilder.settings_["indentation"] = indentation;
     std::unique_ptr<Json::StreamWriter> jsonWriter(writerBuilder.newStreamWriter());
