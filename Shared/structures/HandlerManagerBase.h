@@ -12,16 +12,15 @@ namespace tech::structures {
     template<class handlerManagerImpl>
     class HandlerManagerBase : public drogon::Plugin<handlerManagerImpl> {
     public:
-        Result process(
+        void process(
+                int action,
                 const drogon::WebSocketConnectionPtr &wsConnPtr,
-                const uint32_t &action,
-                const Json::Value &request,
-                Json::Value &response,
-                drogon::CloseCode &code
+                helpers::RequestJson &request
         ) {
-            return _handlerFactory.getHandler(action).fromJson(
-                    wsConnPtr, request, response, code
-            );
+            auto &handler = _handlerFactory.getHandler(action);
+            if (handler.filter(wsConnPtr, request)) {
+                handler.process(wsConnPtr, request);
+            }
         }
 
         virtual ~HandlerManagerBase() = default;

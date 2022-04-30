@@ -14,6 +14,9 @@ namespace tech::api::v2 {
             public structures::ResponseJsonHandler,
             public helpers::I18nHelper<Auth> {
     public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
+    public:
         Auth();
 
         METHOD_LIST_BEGIN

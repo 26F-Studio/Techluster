@@ -12,6 +12,9 @@
 namespace tech::helpers {
     class EmailHelper : public I18nHelper<EmailHelper> {
     public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
+    public:
         EmailHelper(
                 std::string server,
                 std::string account,

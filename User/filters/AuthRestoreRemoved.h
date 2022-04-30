@@ -17,7 +17,10 @@
 namespace tech::filters {
     class AuthRestoreRemoved :
             public drogon::HttpFilter<AuthRestoreRemoved>,
-            public structures::RequestJsonHandler {
+            public structures::RequestJsonHandler<AuthRestoreRemoved> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         void doFilter(
                 const drogon::HttpRequestPtr &req,

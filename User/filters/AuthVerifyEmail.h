@@ -16,7 +16,10 @@
 namespace tech::filters {
     class AuthVerifyEmail :
             public drogon::HttpFilter<AuthVerifyEmail>,
-            public structures::RequestJsonHandler {
+            public structures::RequestJsonHandler<AuthVerifyEmail> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         void doFilter(
                 const drogon::HttpRequestPtr &req,

@@ -23,8 +23,7 @@ EmailHelper::EmailHelper(
         string password,
         const string &senderEmail,
         const string &senderName
-) : I18nHelper(CMAKE_PROJECT_NAME),
-    _server(move(server)),
+) : _server(move(server)),
     _account(move(account)),
     _password(move(password)),
     _sender(senderName, senderEmail) {}

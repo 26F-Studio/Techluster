@@ -18,7 +18,7 @@ namespace tech::filters {
             public drogon::HttpFilter<CheckUserId>,
             public helpers::I18nHelper<CheckUserId> {
     public:
-        CheckUserId();
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
         void doFilter(
                 const drogon::HttpRequestPtr &req,

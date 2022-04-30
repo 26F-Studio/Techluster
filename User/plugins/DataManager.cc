@@ -20,8 +20,6 @@ using namespace tech::structures;
 using namespace tech::types;
 using namespace tech::utils;
 
-DataManager::DataManager() : I18nHelper(CMAKE_PROJECT_NAME) {}
-
 void DataManager::initAndStart(const Json::Value &config) {
     if (!(
             config["tokenBucket"]["ip"]["interval"].isUInt64() &&
@@ -58,6 +56,7 @@ void DataManager::initAndStart(const Json::Value &config) {
     if (!(
             config["redis"]["host"].isString() &&
             config["redis"]["port"].isUInt() &&
+            config["redis"]["db"].isInt() &&
             config["redis"]["timeout"].isUInt() &&
             config["redis"]["expirations"]["refresh"].isInt64() &&
             config["redis"]["expirations"]["access"].isInt64() &&
@@ -79,6 +78,7 @@ void DataManager::initAndStart(const Json::Value &config) {
         _userRedis->connect(
                 config["redis"]["host"].asString(),
                 config["redis"]["port"].asUInt(),
+                config["redis"]["db"].asInt(),
                 config["redis"]["timeout"].asUInt()
         );
     } catch (const cpp_redis::redis_error &e) {
@@ -610,8 +610,8 @@ Json::Value DataManager::getUserData(
         }
         Json::Value output;
         auto source = DataJson(rawString);
-        for (const auto &item: request["paths"]) {
-            output.append(source.retrieveByPath(item.asString()));
+        for (const auto &path: request["paths"]) {
+            output.append(source.retrieveByPath(path.asString()));
         }
         return output;
     } catch (const orm::UnexpectedRows &e) {
@@ -656,7 +656,6 @@ void DataManager::updateUserData(
         }
         for (const auto &item: request["data"]) {
             target.modifyByPath(item["path"].asString(), item["value"]);
-            LOG_DEBUG << target.stringify("  ");
         }
         switch (field) {
             case DataField::Public:
@@ -708,7 +707,13 @@ void DataManager::_checkEmailCode(
         const string &code
 ) {
     try {
-        _userRedis->checkEmailCode(email, code);
+        if (!_userRedis->checkEmailCode(email, code)) {
+            throw ResponseException(
+                    i18n("invalidVerifyCode"),
+                    ResultCode::notAcceptable,
+                    k401Unauthorized
+            );
+        }
         _userRedis->deleteEmailCode(email);
     } catch (const redis_exception::KeyNotFound &e) {
         LOG_DEBUG << "Key not found: " << e.what();
@@ -716,13 +721,6 @@ void DataManager::_checkEmailCode(
                 i18n("invalidVerifyEmail"),
                 ResultCode::notFound,
                 k404NotFound
-        );
-    } catch (const redis_exception::NotEqual &e) {
-        LOG_DEBUG << "Value not equal at: " << e.what();
-        throw ResponseException(
-                i18n("invalidVerifyCode"),
-                ResultCode::notAcceptable,
-                k403Forbidden
         );
     }
 }

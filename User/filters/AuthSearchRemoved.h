@@ -18,7 +18,10 @@
 namespace tech::filters {
     class AuthSearchRemoved :
             public drogon::HttpFilter<AuthSearchRemoved>,
-            public structures::RequestJsonHandler {
+            public structures::RequestJsonHandler<AuthSearchRemoved> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         void doFilter(
                 const drogon::HttpRequestPtr &req,

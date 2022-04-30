@@ -7,10 +7,12 @@
 namespace tech::types {
     enum class NodeType {
         all,
+        bot,
         connect,
+        forwarding,
         gaming,
         message,
-        transfer,
-        user
+        user,
+        workshop
     };
 }

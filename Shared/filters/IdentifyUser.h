@@ -15,8 +15,11 @@
 
 namespace tech::filters {
     class IdentifyUser :
-            public drogon::HttpFilter<IdentifyUser>,
+            public drogon::HttpFilter<IdentifyUser, false>,
             public helpers::I18nHelper<IdentifyUser> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         IdentifyUser();
 

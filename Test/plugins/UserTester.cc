@@ -83,7 +83,8 @@ bool UserTester::verifyCode() {
             _verifyCode = sm[1];
             LOG_INFO << "Verify code: " << _verifyCode;
         } else {
-            throw exception("Can not find verify code in email");
+            LOG_ERROR << "Can not find verify code in email";
+            return false;
         }
         return true;
     }

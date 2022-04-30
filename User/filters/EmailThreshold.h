@@ -16,7 +16,7 @@ namespace tech::filters {
             public drogon::HttpFilter<EmailThreshold>,
             public helpers::I18nHelper<EmailThreshold> {
     public:
-        EmailThreshold();
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
         void doFilter(
                 const drogon::HttpRequestPtr &req,

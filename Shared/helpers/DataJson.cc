@@ -4,24 +4,49 @@
 
 #include <helpers/DataJson.h>
 #include <utils/data.h>
+#include <memory>
 
 using namespace std;
 using namespace tech::helpers;
 using namespace tech::utils::data;
+
+namespace {
+    void stoul(variant<string, uint32_t> &key) {
+        if (holds_alternative<string>(key)) {
+            const auto &keyString = get<string>(key);
+            if (all_of(keyString.begin(), keyString.end(), ::isdigit)) {
+                key = static_cast<uint32_t>(stoul(keyString));
+            }
+        }
+    }
+
+    void keyHandler(
+            const variant<string, uint32_t> &key,
+            const function<void(const std::string &)> &objectHandler,
+            const function<void(const uint32_t &)> &arrayHandler
+    ) {
+        if (holds_alternative<string>(key)) {
+            objectHandler(get<string>(key));
+        } else {
+            arrayHandler(get<uint32_t>(key));
+        }
+    }
+}
 
 void DataJson::canOverwrite(const bool &overwrite) { _overwrite = overwrite; }
 
 void DataJson::canSkip(const bool &skip) { _skip = skip; }
 
 Json::Value DataJson::retrieveByPath(const string &path) {
+    shared_lock<shared_mutex> lock(_sharedMutex);
     auto resultPtr = &_value;
     for (const auto &keyString: drogon::utils::splitString(path, ".")) {
         if (resultPtr->isNull()) {
             return {Json::nullValue};
         }
         variant<string, uint32_t> key = keyString;
-        _stoul(key);
-        _keyHandler(key, [&resultPtr](const std::string &name) {
+        stoul(key);
+        keyHandler(key, [&resultPtr](const std::string &name) {
             resultPtr = &(*resultPtr)[name];
         }, [&resultPtr](const uint32_t &index) {
             resultPtr = &(*resultPtr)[index];
@@ -34,6 +59,7 @@ void DataJson::modifyByPath(
         const string &path,
         const Json::Value &value
 ) {
+    unique_lock<shared_mutex> lock(_sharedMutex);
     if (path.empty()) {
         _value = value;
         return;
@@ -42,33 +68,12 @@ void DataJson::modifyByPath(
     auto keys = drogon::utils::splitString(path, ".");
     for (uint32_t keyIndex = 0; keyIndex < keys.size(); keyIndex++) {
         variant<string, uint32_t> key = keys[keyIndex];
-        _stoul(key);
+        stoul(key);
         if (keyIndex == keys.size() - 1) {
             _modifyElement(tempInput, key, value);
         } else {
             _followElement(tempInput, key);
         }
-    }
-}
-
-void DataJson::_stoul(variant<string, uint32_t> &key) {
-    if (holds_alternative<string>(key)) {
-        const auto &keyString = get<string>(key);
-        if (all_of(keyString.begin(), keyString.end(), ::isdigit)) {
-            key = stoul(keyString);
-        }
-    }
-}
-
-void DataJson::_keyHandler(
-        const variant<string, uint32_t> &key,
-        const function<void(const std::string &)> &objectHandler,
-        const function<void(const uint32_t &)> &arrayHandler
-) {
-    if (holds_alternative<string>(key)) {
-        objectHandler(get<string>(key));
-    } else {
-        arrayHandler(get<uint32_t>(key));
     }
 }
 
@@ -102,13 +107,13 @@ void DataJson::_modifyElement(
         const Json::Value &value
 ) {
     if (value.isNull()) {
-        _keyHandler(key, [&target](const std::string &name) {
+        keyHandler(key, [&target](const std::string &name) {
             target->removeMember(name, nullptr);
         }, [&target](const uint32_t &index) {
             target->removeIndex(index, nullptr);
         });
     } else {
-        _keyHandler(key, [this, &target, &value](const std::string &name) {
+        keyHandler(key, [this, &target, &value](const std::string &name) {
             _try_overwrite(target, Json::objectValue);
             (*target)[name] = value;
         }, [this, &target, &value](const uint32_t &index) {
@@ -127,7 +132,7 @@ void DataJson::_followElement(
         Json::Value *&target,
         const variant<std::string, uint32_t> &key
 ) {
-    _keyHandler(key, [this, &target](const std::string &name) {
+    keyHandler(key, [this, &target](const std::string &name) {
         _try_overwrite(target, Json::objectValue);
         target = &(*target)[name];
     }, [this, &target](const uint32_t &index) {

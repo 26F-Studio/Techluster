@@ -2,50 +2,58 @@
 // Created by Particle_G on 2021/3/04.
 //
 
+#include <helpers/MessageJson.h>
+#include <magic_enum.hpp>
 #include <plugins/RoomManager.h>
-#include <strategies/Action.h>
 #include <strategies/RoomInfo.h>
-#include <structures/Player.h>
+#include <types/Action.h>
+#include <types/JsonValue.h>
 
 using namespace drogon;
+using namespace magic_enum;
 using namespace std;
+using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
+using namespace tech::types;
 
-RoomInfo::RoomInfo() : MessageHandlerBase(toUInt(Action::roomInfo)) {}
+RoomInfo::RoomInfo() : MessageHandlerBase(enum_integer(Action::roomInfo)) {}
 
-Result RoomInfo::fromJson(
-        const WebSocketConnectionPtr &wsConnPtr,
-        const Json::Value &request,
-        Json::Value &response,
-        CloseCode &code
-) {
-    if (!(
-            request.isMember("data") && request["data"].isObject()
-    )) {
-        response["type"] = static_cast<int>(Type::failed);
-        response["reason"] = "Invalid argument(s)";
-        return Result::failed;
-    }
-
+bool RoomInfo::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
-    if (player->getRole() != Player::Role::super) {
-        response["type"] = static_cast<int>(Type::failed);
-        response["reason"] = "You are not the superuser";
-        return Result::failed;
+    if (!player || player->getRoomId().empty() ||
+        player->state != Player::State::standby) {
+        MessageJson message(_action);
+        message.setMessageType(MessageType::failed);
+        message.setReason(i18n("notAvailable"));
+        message.sendTo(wsConnPtr);
+        return false;
+    }
+    if (player->role < Player::Role::admin) {
+        MessageJson message(_action);
+        message.setMessageType(MessageType::failed);
+        message.setReason(i18n("noPermission"));
+        message.sendTo(wsConnPtr);
+        return false;
     }
 
-    try {
-        auto info = request["data"];
-        auto sharedRoom = app().getPlugin<RoomManager>()->getSharedRoom(player->getJoinedId());
-        auto &room = sharedRoom.room;
-        room.setInfo(info);
-        room.publish(_parseMessage(Type::server, move(info)));
-        return Result::silent;
-    } catch (const exception &error) {
-        response["type"] = static_cast<int>(Type::failed);
-        response["reason"] = error.what();
-        return Result::failed;
+    if (!request.check(JsonValue::Array)) {
+        MessageJson message(_action);
+        message.setMessageType(MessageType::failed);
+        message.setReason(i18n("invalidArguments"));
+        message.sendTo(wsConnPtr);
+        return false;
     }
+    return true;
+}
+
+void RoomInfo::process(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+    handleExceptions([&]() {
+        app().getPlugin<RoomManager>()->roomInfo(
+                _action,
+                wsConnPtr,
+                request
+        );
+    }, _action, wsConnPtr);
 }

@@ -7,18 +7,12 @@
 #include <drogon/drogon.h>
 
 namespace tech::helpers {
-    template<typename T>
-    class I18nHelper {
+    template<class T>
+    class I18nHelper : trantor::NonCopyable {
     public:
-        I18nHelper() = delete;
-
-        I18nHelper(const I18nHelper &) = delete;
-
-        I18nHelper(I18nHelper &&) = delete;
-
-        explicit I18nHelper(std::string projectName) {
+        I18nHelper() {
             using namespace std;
-            _basename = move(projectName.append("."));
+            _basename = move(T::projectName + "."s);
             string typeName(typeid(T).name());
 #ifdef __GNUC__
             typeName.erase(0, typeName.find_last_of("0123456789") + 1);

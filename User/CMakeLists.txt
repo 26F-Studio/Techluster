@@ -4,7 +4,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 project(User CXX)
 
-add_compile_definitions(CMAKE_PROJECT_NAME=std::string\("${PROJECT_NAME}"\))
+add_compile_definitions(CMAKE_PROJECT_NAME="${PROJECT_NAME}")
 
 add_executable(${PROJECT_NAME} main.cc)
 

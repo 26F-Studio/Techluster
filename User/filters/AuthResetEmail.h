@@ -18,7 +18,10 @@
 namespace tech::filters {
     class AuthResetEmail :
             public drogon::HttpFilter<AuthResetEmail>,
-            public structures::RequestJsonHandler {
+            public structures::RequestJsonHandler<AuthResetEmail> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         void doFilter(
                 const drogon::HttpRequestPtr &req,

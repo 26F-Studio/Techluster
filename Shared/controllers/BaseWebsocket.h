@@ -4,8 +4,10 @@
 
 #pragma once
 
-#include <helpers/BasicJson.h>
+#include <helpers/MessageJson.h>
+#include <helpers/RequestJson.h>
 #include <magic_enum.hpp>
+#include <structures/ExceptionHandlers.h>
 #include <structures/HandlerManagerBase.h>
 #include <structures/MessageHandlerBase.h>
 #include <utils/websocket.h>
@@ -14,9 +16,7 @@ namespace tech::ws::v2 {
     template<class controllerImpl, class handlerManagerImpl>
     class BaseWebsocket : public drogon::WebSocketController<controllerImpl> {
     public:
-        BaseWebsocket() : _handlerManager(
-                drogon::app().getPlugin<handlerManagerImpl>()
-        ) {};
+        BaseWebsocket() : _handlerManager(drogon::app().getPlugin<handlerManagerImpl>()) {};
 
         void handleNewMessage(
                 const drogon::WebSocketConnectionPtr &wsConnPtr,
@@ -28,19 +28,15 @@ namespace tech::ws::v2 {
             using namespace tech::structures;
             using namespace tech::utils;
 
+            if (!wsConnPtr->connected()) {
+                return;
+            }
+
             switch (type) {
                 case WebSocketMessageType::Text:
-                case WebSocketMessageType::Binary: {
-                    Json::Value request = BasicJson(message).stringify(), response;
-                    CloseCode code;
-                    auto result = requestHandler(wsConnPtr, request, response, code);
-                    if (result == Result::success || result == Result::failed) {
-                        wsConnPtr->send(BasicJson(response).stringify());
-                    } else if (result == Result::error) {
-                        wsConnPtr->shutdown(code, BasicJson(response).stringify());
-                    }
+                case WebSocketMessageType::Binary:
+                    requestHandler(wsConnPtr, BasicJson(message).ref());
                     break;
-                }
                 case WebSocketMessageType::Ping:
                     wsConnPtr->send(message, WebSocketMessageType::Pong);
                     break;
@@ -58,30 +54,31 @@ namespace tech::ws::v2 {
             }
         }
 
-        virtual ~BaseWebsocket() = default;
+        ~BaseWebsocket() override = default;
 
     protected:
-        virtual structures::Result requestHandler(
+        virtual void requestHandler(
                 const drogon::WebSocketConnectionPtr &wsConnPtr,
-                const Json::Value &request,
-                Json::Value &response,
-                drogon::CloseCode &code
+                const Json::Value &request
         ) {
-            if (!(
-                    request.isMember("action") && request["action"].isUInt()
-            )) {
-                response["type"] = "Failed";
-                response["reason"] = "Missing param 'action'";
-                return structures::Result::failed;
+            using namespace tech::helpers;
+            using namespace tech::types;
+
+            if (!request["action"].isInt()) {
+                MessageJson message;
+                message.setMessageType(MessageType::failed);
+                message.setReason(reason("invalidAction"));
+                message.sendTo(wsConnPtr);
             }
+            RequestJson requestJson(request["data"]);
             return _handlerManager->process(
+                    request["action"].asInt(),
                     wsConnPtr,
-                    request["action"].asUInt(),
-                    request,
-                    response,
-                    code
+                    requestJson
             );
         }
+
+        [[nodiscard]] virtual std::string reason(const std::string &param) const = 0;
 
     private:
         structures::HandlerManagerBase<handlerManagerImpl> *_handlerManager;

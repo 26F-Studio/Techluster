@@ -18,8 +18,9 @@ namespace tech::filters {
             public drogon::HttpFilter<CheckAccessToken>,
             public helpers::I18nHelper<CheckAccessToken> {
     public:
-        CheckAccessToken();
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
+    public:
         void doFilter(
                 const drogon::HttpRequestPtr &req,
                 drogon::FilterCallback &&failedCb,

@@ -15,7 +15,10 @@
 namespace tech::filters {
     class UserGetData :
             public drogon::HttpFilter<UserGetData>,
-            public structures::RequestJsonHandler {
+            public structures::RequestJsonHandler<UserGetData> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         void doFilter(
                 const drogon::HttpRequestPtr &req,

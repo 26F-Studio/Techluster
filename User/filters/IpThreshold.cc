@@ -14,8 +14,6 @@ using namespace tech::plugins;
 using namespace tech::structures;
 using namespace tech::types;
 
-IpThreshold::IpThreshold() : I18nHelper(CMAKE_PROJECT_NAME) {}
-
 void IpThreshold::doFilter(
         const HttpRequestPtr &req,
         FilterCallback &&failedCb,

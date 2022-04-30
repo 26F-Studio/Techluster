@@ -10,6 +10,7 @@
 using namespace drogon;
 using namespace magic_enum;
 using namespace std;
+using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::types;
 
@@ -22,7 +23,7 @@ Json::Value ConnectTester::allocator(const string &type) {
     WebHelper::colorOut("Retrieve node type: " + type, WebHelper::Color::cyan);
     return _httpRequest(
             Get,
-            "/allocator",
+            "/node/allocate",
             {make_pair("nodeType", type)}
     );
 }
@@ -45,11 +46,11 @@ std::string ConnectTester::toHost(const uint32_t &port) {
     return _heartbeatBody["ip"].asString().append(":").append(to_string(port));
 }
 
-Json::Value ConnectTester::monitor(const string &type) {
+DataJson ConnectTester::monitor(const string &type) {
     WebHelper::colorOut("Monitor node type: " + type, WebHelper::Color::cyan);
-    return _httpRequest(
+    return DataJson(_httpRequest(
             Get,
             "/monitor",
             {make_pair("nodeType", type)}
-    );
+    ));
 }

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <helpers/BasicJson.h>
+#include <shared_mutex>
 #include <variant>
 
 namespace tech::helpers {
@@ -30,15 +31,8 @@ namespace tech::helpers {
         );
 
     private:
+        mutable std::shared_mutex _sharedMutex;
         bool _overwrite{}, _skip{};
-
-        static void _stoul(std::variant<std::string, uint32_t> &key);
-
-        static void _keyHandler(
-                const std::variant<std::string, uint32_t> &key,
-                const std::function<void(const std::string &)> &objectHandler,
-                const std::function<void(const uint32_t &)> &arrayHandler
-        );
 
         void _try_overwrite(
                 Json::Value *&target,

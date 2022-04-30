@@ -14,8 +14,6 @@ using namespace tech::filters;
 using namespace tech::helpers;
 using namespace tech::types;
 
-CheckDataField::CheckDataField() : I18nHelper(CMAKE_PROJECT_NAME) {}
-
 void CheckDataField::doFilter(
         const HttpRequestPtr &req,
         FilterCallback &&failedCb,

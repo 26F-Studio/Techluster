@@ -13,8 +13,11 @@
  */
 namespace tech::filters {
     class CheckCredential :
-            public drogon::HttpFilter<CheckCredential>,
+            public drogon::HttpFilter<CheckCredential, false>,
             public helpers::I18nHelper<CheckCredential> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         CheckCredential();
 

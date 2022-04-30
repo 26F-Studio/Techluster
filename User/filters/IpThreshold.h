@@ -15,7 +15,7 @@ namespace tech::filters {
             public drogon::HttpFilter<IpThreshold>,
             public helpers::I18nHelper<IpThreshold> {
     public:
-        IpThreshold();
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
         void doFilter(
                 const drogon::HttpRequestPtr &req,

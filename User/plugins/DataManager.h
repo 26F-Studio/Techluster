@@ -19,8 +19,9 @@ namespace tech::plugins {
             public drogon::Plugin<DataManager>,
             public helpers::I18nHelper<DataManager> {
     public:
-        DataManager();
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
+    public:
         void initAndStart(const Json::Value &config) override;
 
         void shutdown() override;

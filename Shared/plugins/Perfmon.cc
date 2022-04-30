@@ -4,7 +4,7 @@
 
 #include <algorithm>
 #include <drogon/drogon.h>
-#include <helpers/ResponseJson.h>
+#include <magic_enum.hpp>
 #include <plugins/Authorizer.h>
 #include <plugins/Perfmon.h>
 #include <structures/Exceptions.h>
@@ -27,10 +27,65 @@
 #endif
 
 using namespace drogon;
+using namespace magic_enum;
 using namespace std;
 using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::structures;
+using namespace tech::types;
+using namespace trantor;
+
+namespace {
+#if _WIN32
+
+    constexpr uint64_t fileTimeToInt64(const FILETIME &ft) {
+        return (static_cast<uint64_t>(ft.dwHighDateTime) << 32) | static_cast<uint64_t>(ft.dwLowDateTime);
+    }
+
+    double getCpuLoad(uint64_t &previousTotalTicks, uint64_t &previousIdleTicks) {
+        FILETIME idleTime, kernelTime, userTime;
+        if (GetSystemTimes(&idleTime, &kernelTime, &userTime)) {
+            auto idleTicks = fileTimeToInt64(idleTime), totalTicks = fileTimeToInt64(kernelTime) + fileTimeToInt64(userTime);
+
+            uint64_t totalTicksSinceLastTime = totalTicks - previousTotalTicks,
+                    idleTicksSinceLastTime = idleTicks - previousIdleTicks;
+
+            previousTotalTicks = totalTicks;
+            previousIdleTicks = idleTicks;
+
+            double result = 1;
+            if (totalTicksSinceLastTime > 0) {
+                result -= static_cast<double>(idleTicksSinceLastTime) / static_cast<double>(totalTicksSinceLastTime);
+            }
+            return result;
+        } else {
+            return -1.0;
+        }
+    }
+
+    bool getSysNetworkFlow(unsigned long &bitTotalReceive, unsigned long &bitTotalSend) {
+        unsigned long dwBufferLen = 0;
+        GetIfTable(nullptr, &dwBufferLen, 0);
+        unique_ptr<MIB_IFTABLE> pMibIfTable((MIB_IFTABLE *) malloc(dwBufferLen));
+        unsigned long dwRet = GetIfTable(pMibIfTable.get(), &dwBufferLen, 0);
+        if (dwRet) {
+            LOG_ERROR << "Get ifTable failed, code: " << dwRet;
+            return false;
+        }
+        for (int i = 0; i != pMibIfTable->dwNumEntries; ++i) {
+            if (pMibIfTable->table[i].dwType == 6 ||
+                pMibIfTable->table[i].dwType == 71) {
+                bitTotalReceive += pMibIfTable->table[i].dwInOctets;
+                bitTotalSend += pMibIfTable->table[i].dwOutOctets;
+            }
+        }
+        bitTotalReceive *= 8;
+        bitTotalSend *= 8;
+        return true;
+    }
+
+#endif
+}
 
 void Perfmon::initAndStart(const Json::Value &config) {
     if (!(
@@ -57,7 +112,7 @@ void Perfmon::initAndStart(const Json::Value &config) {
         config["report"]["type"].isString() &&
         config["report"]["description"].isString()) {
 
-        _reportAddress = config["report"]["address"].asString();
+        _connectAddress = config["report"]["address"].asString();
         _nodeType = config["report"]["type"].asString();
 
         _heartbeatBody["ip"] = config["report"]["localhost"].asBool() ? "127.0.0.1" :
@@ -98,7 +153,7 @@ Json::Value Perfmon::parseInfo() const {
 
 void Perfmon::_report() {
     _heartbeatBody["info"] = parseInfo();
-    auto client = HttpClient::newHttpClient("http://" + _reportAddress);
+    auto client = HttpClient::newHttpClient("http://" + _connectAddress);
     auto req = HttpRequest::newHttpJsonRequest(_heartbeatBody);
     req->setMethod(Post);
     req->setPath("/tech/api/v2/heartbeat/report");
@@ -110,13 +165,11 @@ void Perfmon::_report() {
             return;
         }
         try {
-            ResponseJson response(responsePtr);
-            if (responsePtr->getStatusCode() != k200OK) {
-                LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
-                         << response.stringify();
+            if (responsePtr->statusCode() != k200OK) {
+                LOG_WARN << "Request failed (" << responsePtr->statusCode() << "): \n";
             }
         } catch (const json_exception::InvalidFormat &e) {
-            LOG_WARN << "Invalid response body (" << responsePtr->getStatusCode() << "): \n"
+            LOG_WARN << "Invalid response body (" << responsePtr->statusCode() << "): \n"
                      << e.what();
         }
     }, 3);
@@ -136,38 +189,15 @@ void Perfmon::_updateInfo() {
         _rMemAvail = memInfo.ullAvailPhys;
     });
     threads.emplace_back([this]() {
-        auto getLoad = [](
-                uint64_t &previousTotalTicks,
-                uint64_t &previousIdleTicks
-        ) -> double {
-            FILETIME idleTime, kernelTime, userTime;
-            if (GetSystemTimes(&idleTime, &kernelTime, &userTime)) {
-                auto fileTimeToInt64 = [](const FILETIME &ft) -> uint64_t {
-                    return (static_cast<uint64_t>(ft.dwHighDateTime) << 32) | static_cast<uint64_t>(ft.dwLowDateTime);
-                };
-                auto idleTicks = fileTimeToInt64(idleTime), totalTicks = fileTimeToInt64(kernelTime) + fileTimeToInt64(userTime);
-
-                uint64_t totalTicksSinceLastTime = totalTicks - previousTotalTicks,
-                        idleTicksSinceLastTime = idleTicks - previousIdleTicks;
-
-                previousTotalTicks = totalTicks;
-                previousIdleTicks = idleTicks;
-
-                double result = 1;
-                if (totalTicksSinceLastTime > 0) {
-                    result -= static_cast<double>(idleTicksSinceLastTime) / static_cast<double>(totalTicksSinceLastTime);
-                }
-                return result;
-            } else {
-                return -1.0;
-            }
-        };
-
         uint64_t previousTotalTicks{}, previousIdleTicks{};
         uint32_t count{};
         double cumulateLoad{};
         for (uint32_t timer = 0; timer < 1000; timer += _cpuInterval) {
-            cumulateLoad += getLoad(previousTotalTicks, previousIdleTicks);
+            auto load = getCpuLoad(previousTotalTicks, previousIdleTicks);
+            if (load < 0) {
+                continue;
+            }
+            cumulateLoad += load;
             this_thread::sleep_for(chrono::milliseconds(_cpuInterval));
             count++;
         }
@@ -207,120 +237,49 @@ void Perfmon::_updateInfo() {
         }
     });
     threads.emplace_back([this]() {
-        auto getNetworkTraffic = [](atomic<int64_t> &netDown, atomic<int64_t> &netUp) -> void {
-            auto getSysNetworkFlow = [](
-                    unsigned long &bitTotalReceive,
-                    unsigned long &bitTotalSend
-            ) -> bool {
-                unsigned long dwBufferLen = 0;
-                GetIfTable(nullptr, &dwBufferLen, 0);
-                unique_ptr<MIB_IFTABLE> pMibIfTable((MIB_IFTABLE *) malloc(dwBufferLen));
-                unsigned long dwRet = GetIfTable(pMibIfTable.get(), &dwBufferLen, 0);
-                if (dwRet) {
-                    LOG_ERROR << "Get ifTable failed, code: " << dwRet;
-                    return false;
-                }
-                for (int i = 0; i != pMibIfTable->dwNumEntries; ++i) {
-                    if (pMibIfTable->table[i].dwType == 6 ||
-                        pMibIfTable->table[i].dwType == 71) {
-                        bitTotalReceive += pMibIfTable->table[i].dwInOctets;
-                        bitTotalSend += pMibIfTable->table[i].dwOutOctets;
-                    }
-                }
-                bitTotalReceive *= 8;
-                bitTotalSend *= 8;
-                return true;
-            };
-
-            unsigned long previousReceive{},
-                    previousSend{},
-                    nowReceive{},
-                    nowSend{};
-            if (!getSysNetworkFlow(previousReceive, previousSend)) {
-                netDown = netUp = -1;
-            }
-            this_thread::sleep_for(chrono::seconds(1));
-            if (!getSysNetworkFlow(nowReceive, nowSend)) {
-                netDown = netUp = -1;
-            }
-
-            netDown = nowReceive - previousReceive;
-            netUp = nowSend - previousSend;
-        };
-        getNetworkTraffic(_netDown, _netUp);
+        unsigned long previousReceive{}, previousSend{}, nowReceive{}, nowSend{};
+        if (!getSysNetworkFlow(previousReceive, previousSend)) {
+            _netDown = _netUp = -1;
+        }
+        this_thread::sleep_for(chrono::seconds(1));
+        if (!getSysNetworkFlow(nowReceive, nowSend)) {
+            _netDown = _netUp = -1;
+        }
+        _netDown = nowReceive - previousReceive;
+        _netUp = nowSend - previousSend;
     });
     threads.emplace_back([this]() {
-        char cmd[] = R"(cmd /c netstat -ano | find /i "127.0.0.1" /v | find /i "ESTABLISHED" /c)";
-        string strResult;
-        HANDLE hPipeRead, hPipeWrite;
+        DWORD dwSize{};
+        GetTcpTable(nullptr, &dwSize, {});
+        unique_ptr<MIB_TCPTABLE> tcpTablePtr{reinterpret_cast<MIB_TCPTABLE *>(malloc(dwSize))};
 
-        SECURITY_ATTRIBUTES saAttr = {sizeof(SECURITY_ATTRIBUTES)};
-        saAttr.bInheritHandle = TRUE; // Pipe handles are inherited by child process.
-        saAttr.lpSecurityDescriptor = nullptr;
-
-        // Create a pipe to get results from child's stdout.
-        if (!CreatePipe(&hPipeRead, &hPipeWrite, &saAttr, 0)) {
-            LOG_ERROR << "Create pipe failed";
-            return;
-        }
-
-        STARTUPINFO si;
-        PROCESS_INFORMATION pi;
-        ZeroMemory(&si, sizeof(si));
-        ZeroMemory(&pi, sizeof(pi));
-        si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-        si.hStdOutput = hPipeWrite;
-        si.hStdError = hPipeWrite;
-        si.wShowWindow = SW_HIDE;
-
-        BOOL fSuccess = CreateProcess(
-                nullptr,
-                cmd,
-                nullptr,
-                nullptr,
-                TRUE,
-                CREATE_NEW_CONSOLE,
-                nullptr,
-                nullptr,
-                &si,
-                &pi
-        );
-        if (!fSuccess) {
-            LOG_ERROR << "Create process failed";
-            CloseHandle(hPipeWrite);
-            CloseHandle(hPipeRead);
-            return;
-        }
-
-        bool bProcessEnded = false;
-        for (; !bProcessEnded;) {
-            // Give some timeSlice (50 ms), so we won't waste 100% CPU.
-            bProcessEnded = WaitForSingleObject(pi.hProcess, 50) == WAIT_OBJECT_0;
-
-            for (;;) {
-                char buf[1024];
-                DWORD dwRead = 0;
-                DWORD dwAvail = 0;
-
-                if (!::PeekNamedPipe(hPipeRead, nullptr, 0, nullptr, &dwAvail, nullptr))
-                    break;
-
-                if (!dwAvail)
-                    break;
-
-                if (!::ReadFile(hPipeRead, buf, min<unsigned long>(sizeof(buf) - 1, dwAvail), &dwRead, nullptr) || !dwRead)
-                    break;
-
-                buf[dwRead] = 0;
-                strResult += buf;
+        auto result = GetTcpTable(tcpTablePtr.get(), &dwSize, true);
+        if (result == NO_ERROR) {
+            uint64_t counter{};
+            _connections.resize(tcpTablePtr->dwNumEntries);
+            for (unsigned long i = 0; i < tcpTablePtr->dwNumEntries; i++) {
+                auto tcpStateOpt = enum_cast<TcpState>(static_cast<int>(tcpTablePtr->table[i].dwState));
+                if (tcpStateOpt && tcpStateOpt.value() == TcpState::established) {
+                    counter++;
+                }
+                _connections[i] = {
+                        InetAddress{{
+                                            AF_INET,
+                                            static_cast<USHORT>(tcpTablePtr->table[i].dwLocalPort),
+                                            {.S_un={.S_addr=static_cast<ULONG>(tcpTablePtr->table[i].dwLocalAddr)}}
+                                    }},
+                        InetAddress{{
+                                            AF_INET,
+                                            static_cast<USHORT>(tcpTablePtr->table[i].dwRemotePort),
+                                            {.S_un={.S_addr=static_cast<ULONG>(tcpTablePtr->table[i].dwRemoteAddr)}}
+                                    }},
+                        tcpStateOpt ? tcpStateOpt.value() : TcpState::reserved
+                };
             }
-        } //for
-
-        CloseHandle(hPipeWrite);
-        CloseHandle(hPipeRead);
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
-        _netConn = strtoull(strResult.c_str(), nullptr, 10);
+            _netConn = counter;
+        } else {
+            LOG_WARN << "GetTcpTable failed with " << result;
+        }
     });
 
     for (auto &tempThread: threads) {

@@ -8,7 +8,7 @@
 #include <structures/ExceptionHandlers.h>
 
 /**
- * @brief This filter checks "Heartbeat::report" request body.
+ * @brief This filter checks "Heartbeat::report" request body
  * @param ip: String
  * @param port: UInt
  * @param taskInterval: Double
@@ -21,7 +21,10 @@
 namespace tech::filters {
     class HeartBeatReport :
             public drogon::HttpFilter<HeartBeatReport>,
-            public structures::RequestJsonHandler {
+            public structures::RequestJsonHandler<HeartBeatReport> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         void doFilter(
                 const drogon::HttpRequestPtr &req,

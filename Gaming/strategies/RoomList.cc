@@ -2,52 +2,61 @@
 // Created by Particle_G on 2021/3/04.
 //
 
+#include <helpers/MessageJson.h>
+#include <magic_enum.hpp>
 #include <plugins/RoomManager.h>
-#include <strategies/Action.h>
 #include <strategies/RoomList.h>
-#include <structures/Player.h>
+#include <types/Action.h>
+#include <types/JsonValue.h>
 
 using namespace drogon;
+using namespace magic_enum;
 using namespace std;
+using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::strategies;
 using namespace tech::structures;
+using namespace tech::types;
 
-RoomList::RoomList() : MessageHandlerBase(toUInt(Action::roomList)) {}
+RoomList::RoomList() : MessageHandlerBase(enum_integer(Action::roomList)) {}
 
-Result RoomList::fromJson(
+bool RoomList::filter(
         const WebSocketConnectionPtr &wsConnPtr,
-        const Json::Value &request,
-        Json::Value &response,
-        CloseCode &code
+        RequestJson &request
 ) {
-    string search;
-    uint64_t begin = 0, count = 10;
-    if (request.isMember("data") && request["data"].isObject()) {
-        if (request["data"].isMember("search") && request["data"]["search"].isString()) {
-            search = request["data"]["search"].asString();
-        }
-
-        if (request["data"].isMember("begin") && request["data"]["begin"].isUInt64()) {
-            begin = request["data"]["begin"].asUInt64();
-        }
-
-        if (request["data"].isMember("count") && request["data"]["count"].isUInt64()) {
-            count = request["data"]["count"].asUInt64();
-        }
+    const auto &player = wsConnPtr->getContext<Player>();
+    if (!player) {
+        MessageJson message(_action);
+        message.setMessageType(MessageType::failed);
+        message.setReason(i18n("notAvailable"));
+        message.sendTo(wsConnPtr);
+        return false;
     }
+    return true;
+}
 
-    try {
-        response["type"] = static_cast<int>(Type::self);
-        response["data"] = app().getPlugin<RoomManager>()->roomList(
-                search,
+void RoomList::process(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+    handleExceptions([&]() {
+        string search;
+        uint64_t begin = 0, count = 10;
+        if (request.check("search", JsonValue::String)) {
+            search = move(request["search"].asString());
+        }
+
+        if (request.check("begin", JsonValue::Uint64)) {
+            begin = request["begin"].asUInt64();
+        }
+
+        if (request.check("count", JsonValue::Uint64)) {
+            count = request["count"].asUInt64();
+        }
+
+        app().getPlugin<RoomManager>()->roomList(
+                _action,
+                wsConnPtr,
+                move(search),
                 begin,
                 count
         );
-        return Result::success;
-    } catch (const exception &error) {
-        response["type"] = static_cast<int>(Type::failed);
-        response["reason"] = error.what();
-        return Result::failed;
-    }
+    }, _action, wsConnPtr);
 }

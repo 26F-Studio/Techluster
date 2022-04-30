@@ -5,105 +5,116 @@
 #pragma once
 
 #include <drogon/drogon.h>
-#include <drogon/WebSocketConnection.h>
-#include <shared_mutex>
+#include <helpers/DataJson.h>
+#include <helpers/I18nHelper.h>
+#include <helpers/MessageJson.h>
+#include <helpers/RequestJson.h>
+#include <plugins/ConnectionManager.h>
 
 namespace tech::structures {
-    class Room {
+    /**
+     * @brief Gaming room to store players and game data
+     *
+     * @param roomId: string
+     * @param state: State
+     * @param endCondition: EndCondition
+     * @param leftLimit: uint64_t
+     * @param capacity: uint64_t
+     * @param startTimerId: uint64_t
+     * @param endTimerId: uint64_t
+     * @param transferNode: InetAddress
+     * @param _passwordHash: string
+     * @param _info: json
+     * @param _data: json
+     * @param _playerSet: unordered_set(id)
+     */
+    class Room : helpers::I18nHelper<Room> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         enum class State {
-            pending,
-            starting,
-            started,
+            playing,
+            ready,
+            standby,
         };
 
+        // TODO: Support custom end conditions
         enum class EndCondition {
-            playingLeft = 0,
-            finishReach,
+            custom,
+            groupLeft,
+            playerLeft,
+            timesUp,
         };
 
         explicit Room(
-                const std::string &password,
                 const uint64_t &capacity,
+                const std::string &password,
                 Json::Value info,
                 Json::Value data
         );
 
         Room(Room &&room) noexcept;
 
-        [[nodiscard]] const std::string &roomId() const;
-
         [[nodiscard]] bool checkPassword(const std::string &password) const;
 
-        [[nodiscard]] Json::Value getInfo(const Json::Value &list = _defaultList());
+        void updatePassword(const std::string &password);
 
-        void setInfo(const Json::Value &list);
+        void subscribe(int64_t userId);
 
-        [[nodiscard]] Json::Value getData(const Json::Value &list = _defaultList());
+        void unsubscribe(int64_t userId);
 
-        void setData(const Json::Value &list);
+        [[nodiscard]] uint64_t countGamer() const;
 
-        void subscribe(const drogon::WebSocketConnectionPtr &connection);
+        [[nodiscard]] uint64_t countGroup() const;
 
-        void unsubscribe(const drogon::WebSocketConnectionPtr &connection);
+        [[nodiscard]] uint64_t countPlaying() const;
 
-        void unsubscribe(const int64_t &userId);
+        [[nodiscard]] uint64_t countSpectator() const;
 
-        [[nodiscard]] bool empty() const;
+        [[nodiscard]] uint64_t countStandby() const;
 
-        [[nodiscard]] Json::Value parse(const bool &inner = false) const;
+        bool empty() const;
 
-        void publish(
-                std::string &&message,
-                const int64_t &excludedId = -1
-        );
+        bool full() const;
 
-        void tell(
-                std::string &&message,
-                const int64_t &target
-        );
+        [[nodiscard]] Json::Value parse(bool details = false) const;
 
-        void changeAdmin(
-                const drogon::WebSocketConnectionPtr &connection,
-                const int64_t &userId
-        );
+        void publish(const helpers::MessageJson &message, int64_t excludedId = -1);
 
-        void checkReady();
+        Json::Value roomData(const helpers::RequestJson &request);
 
-        void cancelStarting();
+        Json::Value roomInfo(const helpers::RequestJson &request);
 
-        void checkFinished();
+        void tryStart();
 
-        ~Room();
+        bool tryCancelStart();
+
+        void tryEnd(bool force = false);
+
+        ~Room() override;
+
+    public:
+        const std::string roomId{drogon::utils::getUuid()};
+        std::atomic<State> state{State::standby};
+        std::atomic<EndCondition> endCondition{EndCondition::playerLeft};
+        std::atomic<uint64_t> leftLimit{1};
+        std::atomic<uint64_t> capacity;
+        std::atomic<uint64_t> startTimerId, endTimerId;
+        std::atomic<trantor::InetAddress> forwardingNode;
 
     private:
+        plugins::ConnectionManager *_connectionManager;
+        // TODO: Use finer-grained mutexes
         mutable std::shared_mutex _sharedMutex;
-        const std::string _roomId, _passwordHash;
-        std::atomic<uint64_t> _capacity, _endCount, _timerId;
-        Json::Value _info, _data;
-        std::atomic<State> _state;
-        std::atomic<EndCondition> _endCondition;
-        std::unordered_map<int64_t, drogon::WebSocketConnectionPtr> _connectionsMap;
-        std::atomic<trantor::InetAddress> _transferNode;
+        std::string _passwordHash;
+        helpers::DataJson _info, _data;
+        std::unordered_set<int64_t> _playerSet;
 
-        static Json::Value _defaultList() {
-            Json::Value result(Json::arrayValue);
-            result.append(Json::arrayValue);
-            return result;
-        }
+        void _estimateForwardingNode();
 
-        [[nodiscard]] bool _full() const;
+        void _createTransmission();
 
-        [[nodiscard]] uint64_t _size() const;
-
-        [[nodiscard]] uint64_t _count() const;
-
-        void _insert(const drogon::WebSocketConnectionPtr &connection);
-
-        void _remove(const drogon::WebSocketConnectionPtr &connection);
-
-        void _startingGame();
-
-        std::string _getTransferNode();
+        void _removeTransmission();
     };
 }

@@ -13,7 +13,7 @@ using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::types;
 
-CheckCredential::CheckCredential() : I18nHelper(CMAKE_PROJECT_NAME) {}
+CheckCredential::CheckCredential() {}
 
 void CheckCredential::doFilter(
         const HttpRequestPtr &req,

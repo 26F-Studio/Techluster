@@ -15,7 +15,7 @@ namespace tech::helpers {
 
         explicit BasicJson(const std::string &raw);
 
-        std::string stringify(const std::string &indentation = "");
+        [[nodiscard]] std::string stringify(const std::string &indentation = "") const;
 
         Json::Value &ref();
 

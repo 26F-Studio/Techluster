@@ -5,6 +5,7 @@
 #pragma once
 
 #include <drogon/plugins/Plugin.h>
+#include <helpers/DataJson.h>
 #include <plugins/BaseTester.h>
 
 namespace tech::plugins {
@@ -20,7 +21,7 @@ namespace tech::plugins {
 
         std::string toHost(const uint32_t &port);
 
-        Json::Value monitor(const std::string &type);
+        helpers::DataJson monitor(const std::string &type);
 
     private:
         Json::Value _heartbeatBody;

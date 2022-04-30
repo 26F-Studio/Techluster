@@ -2,7 +2,7 @@
 // Created by Particle_G on 2021/8/19.
 //
 
-#include <controllers/Allocator.h>
+#include <controllers/Manage.h>
 #include <helpers/ResponseJson.h>
 #include <magic_enum.hpp>
 
@@ -15,7 +15,7 @@ using namespace tech::plugins;
 using namespace tech::structures;
 using namespace tech::types;
 
-Allocator::Allocator() :
+Manage::Manage() :
         ResponseJsonHandler(
                 [](const ResponseException &e, ResponseJson &response) {
                     response.setStatusCode(e.statusCode());
@@ -36,26 +36,31 @@ Allocator::Allocator() :
                     response.setReason(e);
                 }
         ),
-        I18nHelper(CMAKE_PROJECT_NAME),
-        _nodeManager(app().getPlugin<NodeManager>()) {}
+        _transferManager(app().getPlugin<TransmissionManager>()) {}
 
-void Allocator::allocate(
-        const HttpRequestPtr &req,
-        function<void(const HttpResponsePtr &)> &&callback
-) {
+void Manage::create(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     ResponseJson response;
     handleExceptions([&]() {
-        auto nodeType = req->attributes()->get<NodeType>("nodeType");
-        if (nodeType == NodeType::transfer) {
-            response.setData(_nodeManager->getAllNodes(nodeType));
-        } else {
-            response.setData(_nodeManager->getBestNode(nodeType));
+        auto request = req->attributes()->get<RequestJson>("requestJson");
+        set<int64_t> playerSet;
+        for (const auto &player: request["players"]) {
+            if (player.isInt64()) {
+                playerSet.insert(player.asInt64());
+            }
         }
+        _transferManager->create(
+                move(request["roomId"].asString()),
+                move(playerSet)
+        );
     }, response);
     response.httpCallback(callback);
+}
 
-    // TODO: Move this into NodeManager
-    // response.setResultCode(ResultCode::notAvailable);
-    // response.setStatusCode(k503ServiceUnavailable);
-    // response.setMessage(i18n("notAvailable."s.append(enum_name(nodeType))));
+void Manage::remove(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
+    ResponseJson response;
+    handleExceptions([&]() {
+        auto request = req->attributes()->get<RequestJson>("requestJson");
+        _transferManager->remove(request["roomId"].asString());
+    }, response);
+    response.httpCallback(callback);
 }

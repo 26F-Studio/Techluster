@@ -4,7 +4,7 @@
 
 #include <filters/IdentifyUser.h>
 #include <helpers/ResponseJson.h>
-#include <plugins/AuthMaintainer.h>
+#include <plugins/NodeMaintainer.h>
 #include <structures/Exceptions.h>
 #include <types/ResultCode.h>
 
@@ -16,7 +16,7 @@ using namespace tech::plugins;
 using namespace tech::structures;
 using namespace tech::types;
 
-IdentifyUser::IdentifyUser() : I18nHelper(CMAKE_PROJECT_NAME) {}
+IdentifyUser::IdentifyUser() {}
 
 void IdentifyUser::doFilter(
         const HttpRequestPtr &req,
@@ -34,7 +34,7 @@ void IdentifyUser::doFilter(
     }
     try {
         int64_t id{};
-        if (app().getPlugin<AuthMaintainer>()->checkAccessToken(accessToken, id) != k200OK) {
+        if (app().getPlugin<NodeMaintainer>()->checkAccessToken(accessToken, id) != k200OK) {
             ResponseJson response;
             response.setStatusCode(k401Unauthorized);
             response.setResultCode(ResultCode::notAcceptable);

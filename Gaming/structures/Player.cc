@@ -2,38 +2,55 @@
 // Created by particleg on 2021/10/8.
 //
 
+#include <magic_enum.hpp>
 #include <structures/Player.h>
 #include <utils/crypto.h>
 
 using namespace drogon;
+using namespace magic_enum;
 using namespace tech::structures;
 using namespace tech::utils;
 using namespace std;
 
-Player::Player(const int64_t &userId) : _userId(userId) {
-    _group = 0;
-    _role = Role::normal;
-    _type = Type::gamer;
-    _state = State::standby;
+Player::Player(
+        int64_t userId,
+        Role role,
+        State state,
+        Type type
+) : BasicPlayer(userId),
+    role(role),
+    state(state),
+    type(type) {}
+
+Player::Player(Player &&player) noexcept:
+        BasicPlayer(player.userId),
+        _customState(move(player._customState)),
+        _config(move(player._config)) {
+    group = player.group.load();
+    role = player.role.load();
+    type = player.type.load();
+    state = player.state.load();
 }
 
-const int64_t &Player::userId() const { return _userId; }
+string Player::getRoomId() const {
+    shared_lock<shared_mutex> lock(_sharedMutex);
+    return _roomId;
+}
 
-uint32_t Player::getGroup() const { return _group; }
+void Player::setRoomId(const string &roomId) {
+    unique_lock<shared_mutex> lock(_sharedMutex);
+    _roomId = roomId;
+}
 
-void Player::setGroup(const uint32_t &group) { _group = group; }
+string Player::getCustomState() const {
+    shared_lock<shared_mutex> lock(_sharedMutex);
+    return _customState;
+}
 
-Player::Role Player::getRole() const { return _role; }
-
-void Player::setRole(const Player::Role &role) { _role = role; }
-
-Player::Type Player::getType() const { return _type; }
-
-void Player::setType(const Player::Type &type) { _type = type; }
-
-Player::State Player::getState() const { return _state; }
-
-void Player::setState(const Player::State &state) { _state = state; }
+void Player::setCustomState(string &&customState) {
+    unique_lock<shared_mutex> lock(_sharedMutex);
+    _customState = move(customState);
+}
 
 string Player::getConfig() const {
     shared_lock<shared_mutex> lock(_sharedMutex);
@@ -43,16 +60,6 @@ string Player::getConfig() const {
 void Player::setConfig(string &&config) {
     unique_lock<shared_mutex> lock(_sharedMutex);
     _config = move(config);
-}
-
-string Player::getJoinedId() const {
-    shared_lock<shared_mutex> lock(_sharedMutex);
-    return _joinedId;
-}
-
-void Player::setJoinedId(const string &joinedId) {
-    unique_lock<shared_mutex> lock(_sharedMutex);
-    _joinedId = joinedId;
 }
 
 Json::Value Player::getPingList() const {
@@ -67,21 +74,27 @@ void Player::setPingList(Json::Value &&pingList) {
 
 Json::Value Player::info() const {
     Json::Value result;
-    result["userId"] = userId();
-    result["group"] = getGroup();
-    result["role"] = static_cast<int>(getRole());
-    result["type"] = static_cast<int>(getType());
-    result["state"] = static_cast<int>(getState());
+    result["userId"] = userId;
+    result["group"] = group.load();
+    result["role"] = string(enum_name(role.load()));
+    result["type"] = string(enum_name(type.load()));
     result["config"] = getConfig();
 
+    shared_lock<shared_mutex> lock(_sharedMutex);
+    if (state == State::playing) {
+        result["state"] = _customState;
+    } else {
+        result["state"] = string(enum_name(state.load()));
+    }
     return result;
 }
 
 void Player::reset() {
-    _group = 0;
-    _role = Role::normal;
-    _type = Type::gamer;
-    _state = State::standby;
-
-    setJoinedId();
+    group = 0;
+    role = Role::normal;
+    state = State::standby;
+    type = Type::spectator;
+    unique_lock<shared_mutex> lock(_sharedMutex);
+    _roomId.clear();
+    _customState.clear();
 }

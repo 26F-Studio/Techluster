@@ -12,19 +12,19 @@ using namespace cpp_redis;
 using namespace tech::structures;
 using namespace tech::utils;
 
-// TODO: Make some Redis actions run in pipeline
+UserRedis::UserRedis(Expiration expiration) :
+        RedisHelper("user"),
+        _expiration(expiration) {}
 
-UserRedis::UserRedis(Expiration expiration) : RedisHelper("user"), _expiration(expiration) {}
-
-UserRedis::UserRedis(UserRedis &&redis) noexcept: RedisHelper("user"), _expiration(redis._expiration) {}
+UserRedis::UserRedis(UserRedis &&redis) noexcept:
+        RedisHelper("user"),
+        _expiration(redis._expiration) {}
 
 RedisToken UserRedis::refresh(const string &refreshToken) {
-    _extendRefreshToken(refreshToken);
+    expire("auth:refresh:" + refreshToken, _expiration.refresh);
     return {
             refreshToken,
-            _generateAccessToken(
-                    get("user:auth:refresh:" + refreshToken)
-            )
+            _generateAccessToken(get("auth:refresh:" + refreshToken))
     };
 }
 
@@ -35,15 +35,12 @@ RedisToken UserRedis::generateTokens(const string &userId) {
     };
 }
 
-void UserRedis::checkEmailCode(
-        const string &email,
-        const string &code
-) {
-    compare("user:auth:code:email:" + email, code);
+bool UserRedis::checkEmailCode(const string &email, const string &code) {
+    return get("auth:code:email:" + email) == code;
 }
 
 void UserRedis::deleteEmailCode(const string &email) {
-    del("user:auth:code:email:" + email);
+    del("auth:code:email:" + email);
 }
 
 void UserRedis::setEmailCode(
@@ -51,27 +48,20 @@ void UserRedis::setEmailCode(
         const string &code
 ) {
     setEx(
-            "user:auth:code:email:" + email,
+            "auth:code:email:" + email,
             _expiration.getEmailSeconds(),
             code
     );
 }
 
 int64_t UserRedis::getIdByAccessToken(const string &accessToken) {
-    return stoll(get("user:auth:access:" + accessToken));
-}
-
-void UserRedis::_extendRefreshToken(const string &refreshToken) {
-    expire(
-            "user:auth:refresh:" + refreshToken,
-            _expiration.refresh
-    );
+    return stoll(get("auth:access:" + accessToken));
 }
 
 string UserRedis::_generateRefreshToken(const string &userId) {
     auto refreshToken = crypto::keccak(drogon::utils::getUuid());
     setEx(
-            "user:auth:refresh:" + refreshToken,
+            "auth:refresh:" + refreshToken,
             _expiration.getRefreshSeconds(),
             userId
     );
@@ -80,15 +70,15 @@ string UserRedis::_generateRefreshToken(const string &userId) {
 
 string UserRedis::_generateAccessToken(const string &userId) {
     auto accessToken = crypto::blake2B(drogon::utils::getUuid());
-    setEx(
-            "user:auth:id:" + userId,
-            _expiration.getAccessSeconds(),
-            accessToken
-    );
-    setEx(
-            "user:auth:access:" + accessToken,
-            _expiration.getAccessSeconds(),
-            userId
-    );
+    setEx({{
+                   "auth:id:" + userId,
+                   _expiration.getAccessSeconds(),
+                   accessToken
+           },
+           {
+                   "auth:access:" + accessToken,
+                   _expiration.getAccessSeconds(),
+                   userId
+           }});
     return accessToken;
 }

@@ -12,8 +12,6 @@ using namespace tech::filters;
 using namespace tech::helpers;
 using namespace tech::types;
 
-CheckAccessToken::CheckAccessToken() : I18nHelper(CMAKE_PROJECT_NAME) {}
-
 void CheckAccessToken::doFilter(
         const HttpRequestPtr &req,
         FilterCallback &&failedCb,

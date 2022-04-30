@@ -24,22 +24,19 @@ namespace tech::helpers {
 
         explicit RequestJson(const drogon::HttpRequestPtr &req);
 
-        [[nodiscard]] bool check(
-                const std::string &path,
-                const types::JsonValue &valueType
-        ) const;
+        explicit RequestJson(const drogon::HttpResponsePtr &res);
+
+        [[nodiscard]] bool check(const std::string &path, types::JsonValue valueType) const;
+
+        [[nodiscard]] bool check(types::JsonValue valueType) const;
+
+        void require(const std::string &key, types::JsonValue valueType) const;
+
+        void require(types::JsonValue valueType) const;
 
         void remove(const std::string &key);
 
-        void trim(
-                const std::string &key,
-                const types::JsonValue &valueType
-        );
-
-        void require(
-                const std::string &key,
-                const types::JsonValue &valueType
-        ) const;
+        void trim(const std::string &key, types::JsonValue valueType);
 
         template<internal::JsonTypes T>
         [[nodiscard]] bool check(

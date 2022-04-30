@@ -3,7 +3,6 @@
 //
 
 #include <drogon/drogon.h>
-#include <helpers/BasicJson.h>
 #include <helpers/ResponseJson.h>
 #include <magic_enum.hpp>
 #include <plugins/BaseTester.h>
@@ -52,12 +51,6 @@ Json::Value WebHelper::_httpRequest(
     auto[result, responsePtr] = client->sendRequest(req, 180);
     if (result != ReqResult::Ok) {
         throw NetworkException("Node is down", result);
-    }
-    try {
-        ResponseJson response(responsePtr);
-    } catch (const json_exception::InvalidFormat &e) {
-        LOG_WARN << "Invalid response body (" << responsePtr->getStatusCode() << "): \n"
-                 << e.what();
     }
     try {
         ResponseJson response(responsePtr);

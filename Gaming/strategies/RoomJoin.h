@@ -4,18 +4,21 @@
 
 #pragma once
 
+#include <structures/ExceptionHandlers.h>
 #include <structures/MessageHandlerBase.h>
 
 namespace tech::strategies {
-    class RoomJoin : public structures::MessageHandlerBase {
+    class RoomJoin :
+            public structures::MessageHandlerBase,
+            public structures::MessageJsonHandler<RoomJoin> {
+    public:
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
+
     public:
         RoomJoin();
 
-        structures::Result fromJson(
-                const drogon::WebSocketConnectionPtr &wsConnPtr,
-                const Json::Value &request,
-                Json::Value &response,
-                drogon::CloseCode &code
-        ) override;
+        bool filter(const drogon::WebSocketConnectionPtr &wsConnPtr, helpers::RequestJson &request) override;
+
+        void process(const drogon::WebSocketConnectionPtr &wsConnPtr, helpers::RequestJson &request) override;
     };
 }

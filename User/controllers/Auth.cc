@@ -36,7 +36,6 @@ Auth::Auth() :
                     response.setReason(e);
                 }
         ),
-        I18nHelper(CMAKE_PROJECT_NAME),
         _dataManager(app().getPlugin<DataManager>()) {}
 
 void Auth::check(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {

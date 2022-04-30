@@ -17,7 +17,7 @@ The new distributed backends for [Techmino](https://github.com/26F-Studio/Techmi
 
 #### Todo
 
-- Manage requests from gaming nodes and allocate bot node to transfer Nodes
+- Manage requests from gaming nodes and allocate bot node to forwarding Nodes
 - Implement multi-thread bot service
 
 #### In progress
@@ -30,7 +30,7 @@ The new distributed backends for [Techmino](https://github.com/26F-Studio/Techmi
 
 #### Todo
 
-- Receive user location info and allocate proper transfer node.
+- Receive user location info and allocate proper forwarding node.
 
 #### In progress
 

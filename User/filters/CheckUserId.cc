@@ -9,8 +9,6 @@ using namespace std;
 using namespace tech::filters;
 using namespace tech::helpers;
 
-CheckUserId::CheckUserId() : I18nHelper(CMAKE_PROJECT_NAME) {}
-
 void CheckUserId::doFilter(
         const HttpRequestPtr &req,
         FilterCallback &&failedCb,
