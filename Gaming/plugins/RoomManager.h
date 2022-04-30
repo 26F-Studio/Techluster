@@ -5,82 +5,98 @@
 #pragma once
 
 #include <drogon/plugins/Plugin.h>
+#include <helpers/I18nHelper.h>
 #include <structures/Room.h>
+#include <structures/Player.h>
+#include <types/Action.h>
 
 namespace tech::plugins {
-    class RoomManager : public drogon::Plugin<RoomManager> {
+    class RoomManager :
+            public drogon::Plugin<RoomManager>,
+            public helpers::I18nHelper<RoomManager> {
     public:
-        class SharedRoom {
-        public:
-            explicit SharedRoom(
-                    structures::Room &room,
-                    std::shared_lock<std::shared_mutex> &&lock
-            );
+        static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
-            structures::Room &room;
-        private:
-            std::shared_lock<std::shared_mutex> _lock;
-        };
-
-        class UniqueRoom {
-        public:
-            explicit UniqueRoom(
-                    structures::Room &room,
-                    std::unique_lock<std::shared_mutex> &&lock
-            );
-
-            structures::Room &room;
-        private:
-            std::unique_lock<std::shared_mutex> _lock;
-        };
-
-        RoomManager() = default;
+    public:
+        RoomManager();
 
         void initAndStart(const Json::Value &config) override;
 
         void shutdown() override;
 
-        [[nodiscard]] std::string createRoom(
-                const std::string &password,
-                const uint32_t &capacity,
-                const Json::Value &info,
-                const Json::Value &data
+        void playerConfig(int action, const drogon::WebSocketConnectionPtr &wsConnPtr);
+
+        void playerFinish(
+                int action,
+                const drogon::WebSocketConnectionPtr &wsConnPtr,
+                Json::Value &&finishData
         );
 
-        void removeRoom(const std::string &roomId);
+        void playerGroup(int action, const drogon::WebSocketConnectionPtr &wsConnPtr);
 
-        SharedRoom getSharedRoom(const std::string &roomId);
+        void playerReady(int action, const drogon::WebSocketConnectionPtr &wsConnPtr);
 
-        UniqueRoom getUniqueRoom(const std::string &roomId);
+        void playerRole(int action, const drogon::WebSocketConnectionPtr &wsConnPtr);
 
-        Json::Value roomList(
-                const std::string &search,
-                const uint64_t &begin,
-                const uint64_t &count
+        void playerState(int action, const drogon::WebSocketConnectionPtr &wsConnPtr);
+
+        void playerType(
+                int action,
+                const drogon::WebSocketConnectionPtr &wsConnPtr,
+                structures::Player::Type type
+        );
+
+        void roomCreate(
+                int action,
+                const drogon::WebSocketConnectionPtr &wsConnPtr,
+                uint32_t capacity,
+                std::string &&password,
+                Json::Value roomInfo,
+                Json::Value roomData
+        );
+
+        void roomData(
+                int action,
+                const drogon::WebSocketConnectionPtr &wsConnPtr,
+                const helpers::RequestJson &updateData
+        );
+
+        void roomInfo(
+                int action,
+                const drogon::WebSocketConnectionPtr &wsConnPtr,
+                const helpers::RequestJson &updateData
+        );
+
+        void roomJoin(
+                int action,
+                const drogon::WebSocketConnectionPtr &wsConnPtr,
+                std::string &&roomId,
+                std::string &&password
+        );
+
+        void roomKick(int action, const drogon::WebSocketConnectionPtr &wsConnPtr);
+
+        void roomLeave(int action, const drogon::WebSocketConnectionPtr &wsConnPtr);
+
+        void roomList(
+                int action,
+                const drogon::WebSocketConnectionPtr &wsConnPtr,
+                std::string &&search,
+                uint64_t begin,
+                uint64_t count
         ) const;
 
-        void joinRoom(
-                const drogon::WebSocketConnectionPtr &connection,
-                const std::string &roomId,
-                const std::string &password
+        void roomPassword(
+                int action,
+                const drogon::WebSocketConnectionPtr &wsConnPtr,
+                std::string &&password
         );
 
-        void leaveRoom(
-                const drogon::WebSocketConnectionPtr &connection
-        );
+        void roomRemove(const drogon::WebSocketConnectionPtr &wsConnPtr);
 
     private:
-        struct RoomWithMutex {
-            explicit RoomWithMutex(structures::Room &&room);
-
-            RoomWithMutex(RoomWithMutex &&moved) noexcept;
-
-            structures::Room room;
-            mutable std::unique_ptr<std::shared_mutex> sharedMutex; // TODO: Try not using unique_ptr
-        };
-
         mutable std::shared_mutex _sharedMutex;
-        std::unordered_map<std::string, RoomWithMutex> _roomMap;
+        std::unordered_map<std::string, structures::Room> _roomMap;
     };
 }
 

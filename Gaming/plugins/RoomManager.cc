@@ -3,27 +3,24 @@
 //
 
 #include <drogon/drogon.h>
+#include <magic_enum.hpp>
+#include <helpers/MessageJson.h>
 #include <plugins/RoomManager.h>
-#include <strategies/Action.h>
+#include <structures/Exceptions.h>
 #include <structures/Player.h>
+#include <types/Action.h>
 #include <utils/crypto.h>
 
 using namespace drogon;
+using namespace magic_enum;
 using namespace std;
+using namespace tech::helpers;
 using namespace tech::plugins;
-using namespace tech::strategies;
 using namespace tech::structures;
+using namespace tech::types;
 using namespace tech::utils;
 
-RoomManager::SharedRoom::SharedRoom(
-        Room &room,
-        shared_lock<shared_mutex> &&lock
-) : room(room), _lock(move(lock)) {}
-
-RoomManager::UniqueRoom::UniqueRoom(
-        Room &room,
-        unique_lock<shared_mutex> &&lock
-) : room(room), _lock(move(lock)) {}
+RoomManager::RoomManager() = default;
 
 void RoomManager::initAndStart(const Json::Value &config) {
     LOG_INFO << "RoomManager loaded.";
@@ -31,140 +28,347 @@ void RoomManager::initAndStart(const Json::Value &config) {
 
 void RoomManager::shutdown() { LOG_INFO << "RoomManager shutdown."; }
 
-string RoomManager::createRoom(
-        const string &password,
-        const uint32_t &capacity,
-        const Json::Value &info,
-        const Json::Value &data
+void RoomManager::playerConfig(int action, const WebSocketConnectionPtr &wsConnPtr) {
+    const auto &player = wsConnPtr->getContext<Player>();
+
+    Json::Value data;
+    data["userId"] = player->userId;
+    data["config"] = player->getConfig();
+    MessageJson publishMessage(action);
+    publishMessage.setData(move(data));
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        _roomMap.at(player->getRoomId()).publish(publishMessage);
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
+}
+
+void RoomManager::playerFinish(
+        int action,
+        const WebSocketConnectionPtr &wsConnPtr,
+        Json::Value &&finishData
 ) {
-    auto room = Room(
-            password,
+    const auto &player = wsConnPtr->getContext<Player>();
+
+    Json::Value data;
+    data["userId"] = player->userId;
+    data["finishData"] = move(finishData);
+    MessageJson publishMessage(action);
+    publishMessage.setData(move(data));
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        auto &room = _roomMap.at(player->getRoomId());
+        room.publish(publishMessage);
+        room.tryEnd();
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
+}
+
+void RoomManager::playerGroup(int action, const WebSocketConnectionPtr &wsConnPtr) {
+    const auto &player = wsConnPtr->getContext<Player>();
+
+    Json::Value data;
+    data["userId"] = player->userId;
+    data["group"] = player->group.load();
+    MessageJson publishMessage(action);
+    publishMessage.setData(move(data));
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        _roomMap.at(player->getRoomId()).publish(publishMessage);
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
+}
+
+void RoomManager::playerReady(int action, const WebSocketConnectionPtr &wsConnPtr) {
+    const auto &player = wsConnPtr->getContext<Player>();
+    auto ready = player->state == Player::State::ready;
+
+    Json::Value data;
+    data["userId"] = player->userId;
+    data["ready"] = ready;
+    MessageJson publishMessage(action);
+    publishMessage.setData(move(data));
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        auto &room = _roomMap.at(player->getRoomId());
+        room.publish(publishMessage);
+        if (ready) {
+            room.tryStart();
+        } else {
+            room.tryCancelStart();
+        }
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
+}
+
+void RoomManager::playerRole(int action, const WebSocketConnectionPtr &wsConnPtr) {
+    const auto &player = wsConnPtr->getContext<Player>();
+
+    Json::Value data;
+    data["userId"] = player->userId;
+    data["role"] = string(enum_name(player->role.load()));
+    MessageJson publishMessage(action);
+    publishMessage.setData(move(data));
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        _roomMap.at(player->getRoomId()).publish(publishMessage);
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
+}
+
+void RoomManager::playerState(int action, const WebSocketConnectionPtr &wsConnPtr) {
+    const auto &player = wsConnPtr->getContext<Player>();
+
+    Json::Value data;
+    data["userId"] = player->userId;
+    data["customState"] = player->getCustomState();
+    MessageJson publishMessage(action);
+    publishMessage.setData(move(data));
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        _roomMap.at(player->getRoomId()).publish(publishMessage);
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
+}
+
+void RoomManager::playerType(
+        int action,
+        const WebSocketConnectionPtr &wsConnPtr,
+        Player::Type type
+) {
+    const auto &player = wsConnPtr->getContext<Player>();
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        auto &room = _roomMap.at(player->getRoomId());
+        if (type == Player::Type::gamer && room.full()) {
+            MessageJson failedMessage(action);
+            failedMessage.setMessageType(MessageType::failed);
+            failedMessage.setReason(i18n("roomFull"));
+            failedMessage.sendTo(wsConnPtr);
+        } else {
+            player->type = type;
+
+            Json::Value data;
+            data["userId"] = player->userId;
+            data["type"] = string(enum_name(player->type.load()));
+            MessageJson publishMessage(action);
+            publishMessage.setData(move(data));
+            room.publish(publishMessage);
+        }
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
+}
+
+void RoomManager::roomCreate(
+        int action,
+        const WebSocketConnectionPtr &wsConnPtr,
+        uint32_t capacity,
+        string &&password,
+        Json::Value roomInfo,
+        Json::Value roomData
+) {
+    const auto &player = wsConnPtr->getContext<Player>();
+
+    Room room(
             capacity,
-            info,
-            data
+            password,
+            move(roomInfo),
+            move(roomData)
     );
-    auto roomId = room.roomId();
+    const auto &roomId = room.roomId;
+    room.subscribe(player->userId);
+    player->setRoomId(roomId);
     {
         unique_lock<shared_mutex> lock(_sharedMutex);
-        auto[_, result]=_roomMap.try_emplace(
-                roomId,
-                RoomWithMutex(move(room))
-        );
-        if (!result) {
-            LOG_FATAL << "UUID collided!";
-            return {};
-        }
+        _roomMap.emplace(roomId, move(room));
     }
-    return roomId;
+
+    MessageJson publishMessage(action);
+    publishMessage.setData(roomId);
+    publishMessage.sendTo(wsConnPtr);
 }
 
-void RoomManager::removeRoom(const string &roomId) {
-    unique_lock<std::shared_mutex> lock(_sharedMutex);
-    auto iter = _roomMap.find(roomId);
-    if (iter != _roomMap.end()) {
-        typename decltype(_roomMap)::node_type node; // Declare node first to avoid memory leak
-        unique_lock<shared_mutex> innerLock(*iter->second.sharedMutex);
-        node = _roomMap.extract(roomId);
-        if (node.empty()) {
-            LOG_INFO << "Room " << roomId << " already removed";
-        }
-    } else {
-        LOG_INFO << "Room " << roomId << " does not exist";
-    }
-}
-
-RoomManager::SharedRoom RoomManager::getSharedRoom(const string &roomId) {
-    shared_lock<shared_mutex> lock(_sharedMutex);
-    auto iter = _roomMap.find(roomId);
-    if (iter != _roomMap.end()) {
-        return SharedRoom(
-                iter->second.room,
-                move(shared_lock<shared_mutex>(
-                        *iter->second.sharedMutex
-                ))
-        );
-    }
-    throw room_exception::RoomNotFound("Invalid room id");
-}
-
-RoomManager::UniqueRoom RoomManager::getUniqueRoom(const string &roomId) {
-    shared_lock<shared_mutex> lock(_sharedMutex);
-    auto iter = _roomMap.find(roomId);
-    if (iter != _roomMap.end()) {
-        return UniqueRoom(
-                iter->second.room,
-                move(unique_lock<shared_mutex>(
-                        *iter->second.sharedMutex
-                ))
-        );
-    }
-    throw room_exception::RoomNotFound("Invalid room id");
-}
-
-void RoomManager::joinRoom(
-        const WebSocketConnectionPtr &connection,
-        const string &roomId,
-        const string &password
+void RoomManager::roomData(
+        int action,
+        const WebSocketConnectionPtr &wsConnPtr,
+        const RequestJson &updateData
 ) {
-    auto sharedRoom = getSharedRoom(roomId);
-    auto &room = sharedRoom.room;
-    if (!room.checkPassword(password)) {
-        throw room_exception::InvalidPassword("Password is incorrect");
-    }
+    const auto &player = wsConnPtr->getContext<Player>();
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        auto &room = _roomMap.at(player->getRoomId());
 
-    room.subscribe(connection);
+        MessageJson publishMessage(action);
+        publishMessage.setData(room.roomData(updateData));
+        room.publish(publishMessage);
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
 }
 
-void RoomManager::leaveRoom(
-        const WebSocketConnectionPtr &connection
+void RoomManager::roomInfo(
+        int action,
+        const WebSocketConnectionPtr &wsConnPtr,
+        const RequestJson &updateData
 ) {
-    const auto &player = connection->getContext<Player>();
-    auto roomId = player->getJoinedId();
-    bool isEmpty;
-    {
-        auto sharedRoom = getSharedRoom(roomId);
-        auto &room = sharedRoom.room;
-        room.unsubscribe(connection);
-        isEmpty = room.empty();
-    }
-    if (isEmpty) { // TODO: Check if thread safe
-        removeRoom(roomId);
+    const auto &player = wsConnPtr->getContext<Player>();
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        auto &room = _roomMap.at(player->getRoomId());
+
+        MessageJson publishMessage(action);
+        publishMessage.setData(room.roomInfo(updateData));
+        room.publish(publishMessage);
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
     }
 }
 
-Json::Value RoomManager::roomList(
-        const string &search,
-        const uint64_t &begin,
-        const uint64_t &count
+void RoomManager::roomJoin(
+        int action,
+        const WebSocketConnectionPtr &wsConnPtr,
+        std::string &&roomId,
+        std::string &&password
+) {
+    const auto &player = wsConnPtr->getContext<Player>();
+    const auto &userId = player->userId;
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        auto &room = _roomMap.at(player->getRoomId());
+        if (room.checkPassword(password)) {
+            room.subscribe(userId);
+            player->setRoomId(roomId);
+
+            bool spectate = false;
+            if (room.state == Room::State::playing) {
+                spectate = true;
+            } else if (!room.full() && room.tryCancelStart()) {
+                player->type = Player::Type::gamer;
+            }
+
+            MessageJson successMessage(action);
+            successMessage.setMessageType(MessageType::server);
+            successMessage.setData(room.parse(true));
+            successMessage.sendTo(wsConnPtr);
+
+            MessageJson publishMessage(action);
+            publishMessage.setData(player->info());
+            room.publish(publishMessage, userId);
+
+            if (spectate) {
+                MessageJson spectateMessage(enum_integer(Action::gameSpectate));
+                spectateMessage.setData(room.forwardingNode.load().toIpPort());
+                spectateMessage.sendTo(wsConnPtr);
+            }
+        } else {
+            throw MessageException("wrongPassword");
+        }
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
+}
+
+void RoomManager::roomKick(int action, const WebSocketConnectionPtr &wsConnPtr) {
+    roomLeave(action, wsConnPtr);
+}
+
+void RoomManager::roomLeave(int action, const WebSocketConnectionPtr &wsConnPtr) {
+    const auto &player = wsConnPtr->getContext<Player>();
+    const auto &roomId = player->getRoomId();
+    const auto &userId = player->userId;
+
+    Json::Value data;
+    data["userId"] = userId;
+    MessageJson publishMessage(action);
+    publishMessage.setData(move(data));
+    bool empty;
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        auto &room = _roomMap.at(roomId);
+        room.unsubscribe(userId);
+        room.publish(publishMessage, userId);
+        player->reset();
+
+        empty = room.empty();
+        if (!empty) {
+            room.tryEnd();
+        }
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
+
+    MessageJson successMessage(action);
+    successMessage.setMessageType(MessageType::server);
+    successMessage.sendTo(wsConnPtr);
+
+    if (empty) {
+        unique_lock<std::shared_mutex> lock(_sharedMutex);
+        _roomMap.erase(roomId);
+    }
+}
+
+void RoomManager::roomList(
+        int action,
+        const WebSocketConnectionPtr &wsConnPtr,
+        string &&search,
+        uint64_t begin,
+        uint64_t count
 ) const {
-    Json::Value result(Json::arrayValue);
-    shared_lock<shared_mutex> lock(_sharedMutex);
-    if (begin < _roomMap.size()) {
-        uint64_t counter{};
-        for (const auto&[roomId, roomWithMutex]: _roomMap) {
-            if (counter < begin) {
+    Json::Value data(Json::arrayValue);
+    {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        if (begin < _roomMap.size()) {
+            uint64_t counter{};
+            for (const auto &[roomId, room]: _roomMap) {
+                if (counter < begin) {
+                    ++counter;
+                    continue;
+                }
+                if (counter >= begin + count) {
+                    break;
+                }
+                if (search.empty() || roomId.find(search) != string::npos) {
+                    data.append(room.parse());
+                }
                 ++counter;
-                continue;
             }
-            if (counter >= begin + count) {
-                break;
-            }
-            if (search.empty() || roomId.find(search) != string::npos) {
-                shared_lock<shared_mutex> innerLock(*roomWithMutex.sharedMutex);
-                result.append(roomWithMutex.room.parse());
-            }
-            ++counter;
         }
     }
-    return result;
+    MessageJson successMessage(action);
+    successMessage.setData(move(data));
+    successMessage.sendTo(wsConnPtr);
 }
 
-RoomManager::RoomWithMutex::RoomWithMutex(
-        Room &&room
-) : room(move(room)),
-    sharedMutex(new shared_mutex()) {}
+void RoomManager::roomPassword(
+        int action,
+        const WebSocketConnectionPtr &wsConnPtr,
+        string &&password
+) {
+    const auto &player = wsConnPtr->getContext<Player>();
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        auto &room = _roomMap.at(player->getRoomId());
 
-RoomManager::RoomWithMutex::RoomWithMutex(
-        RoomManager::RoomWithMutex &&moved
-) noexcept: room(move(moved.room)),
-            sharedMutex(move(moved.sharedMutex)) {}
+        room.updatePassword(password);
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
+    MessageJson successMessage(action);
+    successMessage.setMessageType(MessageType::server);
+    successMessage.sendTo(wsConnPtr);
+}
+
+void RoomManager::roomRemove(const WebSocketConnectionPtr &wsConnPtr) {
+    const auto &player = wsConnPtr->getContext<Player>();
+    {
+        unique_lock<std::shared_mutex> lock(_sharedMutex);
+        _roomMap.erase(player->getRoomId());
+    }
+}
