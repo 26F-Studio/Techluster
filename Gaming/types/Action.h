@@ -4,35 +4,33 @@
 
 #pragma once
 
-#include <structures/Exceptions.h>
-
-namespace tech::strategies {
+namespace tech::types {
     enum class Action {
         /// Room actions
-        roomCreate = 0,
+        roomCreate = 1000,
         roomData,
         roomInfo,
         roomJoin,
         roomKick,
         roomLeave,
         roomList,
+        roomPassword,
         roomRemove,
 
         /// Player actions
-        playerConfig = 10,
+        playerConfig = 1100,
+        playerFinish,
         playerGroup,
         playerPing,
+        playerReady,
         playerRole,
         playerState,
         playerType,
 
         /// Game actions
-        gameEnd = 20,
+        gameEnd = 1200,
         gameReady,
+        gameSpectate,
         gameStart,
     };
-
-    static constexpr uint32_t toUInt(const Action &action) {
-        return static_cast<uint32_t>(action);
-    }
 }
