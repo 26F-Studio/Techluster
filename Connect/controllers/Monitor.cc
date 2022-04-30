@@ -36,7 +36,6 @@ Monitor::Monitor() :
                     response.setReason(e);
                 }
         ),
-        I18nHelper(CMAKE_PROJECT_NAME),
         _nodeManager(app().getPlugin<NodeManager>()),
         _perfmon(app().getPlugin<Perfmon>()) {}
 
@@ -53,10 +52,4 @@ void Monitor::getInfo(const HttpRequestPtr &req, function<void(const HttpRespons
         }
     }, response);
     response.httpCallback(callback, "*");
-
-    // TODO: Move this into NodeManager
-    // response.setStatusCode(k406NotAcceptable);
-    // response.setResultCode(ResultCode::invalidArguments);
-    // response.setMessage(i18n("notAvailable."s.append(enum_name(nodeType))));
-    // response.setReason(e);
 }

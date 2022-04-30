@@ -36,7 +36,6 @@ Heartbeat::Heartbeat() :
                     response.setReason(e);
                 }
         ),
-        I18nHelper(CMAKE_PROJECT_NAME),
         _nodeManager(app().getPlugin<NodeManager>()) {}
 
 void Heartbeat::report(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
@@ -53,13 +52,6 @@ void Heartbeat::report(const HttpRequestPtr &req, function<void(const HttpRespon
                 request["info"]
         );
         _nodeManager->updateNode(move(nodeServer));
-        ResponseJson().httpCallback(callback);
     }, response);
     response.httpCallback(callback);
-
-    // TODO: Move this into NodeManager
-    // response.setStatusCode(k406NotAcceptable);
-    // response.setResultCode(ResultCode::invalidArguments);
-    // response.setMessage(e.what());
-    // response.httpCallback(callback);
 }
