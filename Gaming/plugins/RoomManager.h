@@ -55,16 +55,30 @@ namespace tech::plugins {
                 Json::Value roomData
         );
 
-        void roomData(
+        void roomDataGet(
                 int action,
                 const drogon::WebSocketConnectionPtr &wsConnPtr,
-                const helpers::RequestJson &updateData
+                const std::string &roomId
         );
 
-        void roomInfo(
+        void roomDataUpdate(
                 int action,
                 const drogon::WebSocketConnectionPtr &wsConnPtr,
-                const helpers::RequestJson &updateData
+                const std::string &roomId,
+                const Json::Value &data
+        );
+
+        void roomInfoGet(
+                int action,
+                const drogon::WebSocketConnectionPtr &wsConnPtr,
+                const std::string &roomId
+        );
+
+        void roomInfoUpdate(
+                int action,
+                const drogon::WebSocketConnectionPtr &wsConnPtr,
+                const std::string &roomId,
+                const Json::Value &data
         );
 
         void roomJoin(

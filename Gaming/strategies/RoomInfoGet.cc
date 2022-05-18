@@ -5,7 +5,7 @@
 #include <helpers/MessageJson.h>
 #include <magic_enum.hpp>
 #include <plugins/RoomManager.h>
-#include <strategies/RoomInfo.h>
+#include <strategies/RoomInfoGet.h>
 #include <types/Action.h>
 #include <types/JsonValue.h>
 
@@ -18,42 +18,40 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomInfo::RoomInfo() : MessageHandlerBase(enum_integer(Action::roomInfo)) {}
+RoomInfoGet::RoomInfoGet() : MessageHandlerBase(enum_integer(Action::RoomInfoGet)) {}
 
-bool RoomInfo::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+bool RoomInfoGet::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
-    if (!player || player->getRoomId().empty() ||
-        player->state != Player::State::standby) {
+    /// @note Return false if the player does not exist.
+    if (!player) {
         MessageJson message(_action);
         message.setMessageType(MessageType::failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
     }
-    if (player->role < Player::Role::admin) {
+    if (request.check("roomId", JsonValue::String) && player->getRoomId().empty()) {
+        /// @note Return false if no room is specified.
         MessageJson message(_action);
         message.setMessageType(MessageType::failed);
-        message.setReason(i18n("noPermission"));
-        message.sendTo(wsConnPtr);
-        return false;
-    }
-
-    if (!request.check(JsonValue::Array)) {
-        MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
-        message.setReason(i18n("invalidArguments"));
+        message.setReason(i18n("roomNotFound"));
         message.sendTo(wsConnPtr);
         return false;
     }
     return true;
 }
 
-void RoomInfo::process(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+void RoomInfoGet::process(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
+    const auto &player = wsConnPtr->getContext<Player>();
+    string roomId = player->getRoomId();
+    if (request.check("roomId", JsonValue::String)) {
+        roomId = request["roomId"].asString();
+    }
     handleExceptions([&]() {
-        app().getPlugin<RoomManager>()->roomInfo(
+        app().getPlugin<RoomManager>()->roomInfoGet(
                 _action,
                 wsConnPtr,
-                request
+                roomId
         );
     }, _action, wsConnPtr);
 }

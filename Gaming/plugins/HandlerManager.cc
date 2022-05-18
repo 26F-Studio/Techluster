@@ -11,8 +11,10 @@
 #include <strategies/PlayerState.h>
 #include <strategies/PlayerType.h>
 #include <strategies/RoomCreate.h>
-#include <strategies/RoomData.h>
-#include <strategies/RoomInfo.h>
+#include <strategies/RoomDataGet.h>
+#include <strategies/RoomDataUpdate.h>
+#include <strategies/RoomInfoGet.h>
+#include <strategies/RoomInfoUpdate.h>
 #include <strategies/RoomJoin.h>
 #include <strategies/RoomKick.h>
 #include <strategies/RoomLeave.h>
@@ -31,22 +33,24 @@ using namespace tech::types;
 using namespace tech::utils;
 
 void HandlerManager::initAndStart(const Json::Value &config) {
-    _handlerFactory.registerHandler<PlayerConfig>(enum_integer(Action::playerConfig));
-    _handlerFactory.registerHandler<PlayerGroup>(enum_integer(Action::playerGroup));
-    _handlerFactory.registerHandler<PlayerPing>(enum_integer(Action::playerPing));
-    _handlerFactory.registerHandler<PlayerRole>(enum_integer(Action::playerRole));
-    _handlerFactory.registerHandler<PlayerState>(enum_integer(Action::playerState));
-    _handlerFactory.registerHandler<PlayerType>(enum_integer(Action::playerType));
+    _handlerFactory.registerHandler<PlayerConfig>(enum_integer(Action::PlayerConfig));
+    _handlerFactory.registerHandler<PlayerGroup>(enum_integer(Action::PlayerGroup));
+    _handlerFactory.registerHandler<PlayerPing>(enum_integer(Action::PlayerPing));
+    _handlerFactory.registerHandler<PlayerRole>(enum_integer(Action::PlayerRole));
+    _handlerFactory.registerHandler<PlayerState>(enum_integer(Action::PlayerState));
+    _handlerFactory.registerHandler<PlayerType>(enum_integer(Action::PlayerType));
 
-    _handlerFactory.registerHandler<RoomCreate>(enum_integer(Action::roomCreate));
-    _handlerFactory.registerHandler<RoomData>(enum_integer(Action::roomData));
-    _handlerFactory.registerHandler<RoomInfo>(enum_integer(Action::roomInfo));
-    _handlerFactory.registerHandler<RoomJoin>(enum_integer(Action::roomJoin));
-    _handlerFactory.registerHandler<RoomKick>(enum_integer(Action::roomKick));
-    _handlerFactory.registerHandler<RoomLeave>(enum_integer(Action::roomLeave));
-    _handlerFactory.registerHandler<RoomList>(enum_integer(Action::roomList));
-    _handlerFactory.registerHandler<RoomPassword>(enum_integer(Action::roomPassword));
-    _handlerFactory.registerHandler<RoomRemove>(enum_integer(Action::roomRemove));
+    _handlerFactory.registerHandler<RoomCreate>(enum_integer(Action::RoomCreate));
+    _handlerFactory.registerHandler<RoomDataGet>(enum_integer(Action::RoomDataGet));
+    _handlerFactory.registerHandler<RoomDataUpdate>(enum_integer(Action::RoomDataUpdate));
+    _handlerFactory.registerHandler<RoomInfoGet>(enum_integer(Action::RoomInfoGet));
+    _handlerFactory.registerHandler<RoomInfoUpdate>(enum_integer(Action::RoomInfoUpdate));
+    _handlerFactory.registerHandler<RoomJoin>(enum_integer(Action::RoomJoin));
+    _handlerFactory.registerHandler<RoomKick>(enum_integer(Action::RoomKick));
+    _handlerFactory.registerHandler<RoomLeave>(enum_integer(Action::RoomLeave));
+    _handlerFactory.registerHandler<RoomList>(enum_integer(Action::RoomList));
+    _handlerFactory.registerHandler<RoomPassword>(enum_integer(Action::RoomPassword));
+    _handlerFactory.registerHandler<RoomRemove>(enum_integer(Action::RoomRemove));
 
     LOG_INFO << "HandlerManager loaded.";
 }

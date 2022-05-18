@@ -208,20 +208,30 @@ void Room::publish(const MessageJson &message, int64_t excludedId) {
     }
 }
 
-Json::Value Room::roomData(const RequestJson &request) {
+Json::Value Room::getData() const {
     shared_lock<shared_mutex> lock(_sharedMutex);
-    for (const auto &item: request["data"]) {
-        _data.modifyByPath(item["path"].asString(), item["value"]);
-    }
-    return _data.ref();
+    return _data.copy();
 }
 
-Json::Value Room::roomInfo(const RequestJson &request) {
+Json::Value Room::updateData(const Json::Value &data) {
     shared_lock<shared_mutex> lock(_sharedMutex);
-    for (const auto &item: request["data"]) {
+    for (const auto &item: data) {
+        _data.modifyByPath(item["path"].asString(), item["value"]);
+    }
+    return _data.copy();
+}
+
+Json::Value Room::getInfo() const {
+    shared_lock<shared_mutex> lock(_sharedMutex);
+    return _info.copy();
+}
+
+Json::Value Room::updateInfo(const Json::Value &data) {
+    shared_lock<shared_mutex> lock(_sharedMutex);
+    for (const auto &item: data) {
         _info.modifyByPath(item["path"].asString(), item["value"]);
     }
-    return _info.ref();
+    return _info.copy();
 }
 
 bool Room::tryCancelStart() {
@@ -269,7 +279,7 @@ void Room::tryEnd(bool force) {
 
     MessageJson message;
     message.setMessageType(MessageType::server);
-    message.setAction(enum_integer(Action::gameEnd));
+    message.setAction(enum_integer(Action::GameEnd));
     publish(message);
 
     _removeTransmission();
@@ -284,7 +294,7 @@ void Room::tryStart() {
 
     MessageJson message;
     message.setMessageType(MessageType::server);
-    message.setAction(enum_integer(Action::gameReady));
+    message.setAction(enum_integer(Action::GameReady));
     publish(message);
 
     startTimerId = app().getLoop()->runAfter(3, [this]() {
@@ -297,7 +307,7 @@ void Room::tryStart() {
 
         MessageJson message;
         message.setMessageType(MessageType::server);
-        message.setAction(enum_integer(Action::gameStart));
+        message.setAction(enum_integer(Action::GameStart));
         message.setData(data);
         publish(message);
     });
@@ -310,7 +320,7 @@ Room::~Room() {
         wsConnPtr->getContext<Player>()->reset();
         unsubscribe(userId);
 
-        MessageJson successMessage(enum_integer(Action::roomRemove));
+        MessageJson successMessage(enum_integer(Action::RoomRemove));
         successMessage.setMessageType(MessageType::server);
         successMessage.sendTo(wsConnPtr);
     }
