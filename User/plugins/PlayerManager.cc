@@ -684,7 +684,7 @@ void PlayerManager::_checkEmailCode(
     try {
         if (!_userRedis->checkEmailCode(email, code)) {
             throw ResponseException(
-                    i18n("invalidVerifyCode"),
+                    i18n("invalidCode"),
                     ResultCode::NotAcceptable,
                     k401Unauthorized
             );
@@ -693,7 +693,7 @@ void PlayerManager::_checkEmailCode(
     } catch (const redis_exception::KeyNotFound &e) {
         LOG_DEBUG << "Key not found: " << e.what();
         throw ResponseException(
-                i18n("invalidVerifyEmail"),
+                i18n("invalidEmail"),
                 ResultCode::NotFound,
                 k404NotFound
         );
