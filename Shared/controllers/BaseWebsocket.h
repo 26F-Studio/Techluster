@@ -41,8 +41,6 @@ namespace tech::ws::v2 {
                     wsConnPtr->send(message, WebSocketMessageType::Pong);
                     break;
                 case WebSocketMessageType::Pong:
-                    LOG_WARN << "Message from " << wsConnPtr->peerAddr().toIpPort()
-                             << " is (" << magic_enum::enum_name(type) << "):" << message;
                     break;
                 case WebSocketMessageType::Close:
                     wsConnPtr->forceClose();
