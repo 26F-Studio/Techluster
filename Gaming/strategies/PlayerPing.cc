@@ -17,7 +17,7 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-PlayerPing::PlayerPing() : MessageHandlerBase(enum_integer(Action::playerPing)) {}
+PlayerPing::PlayerPing() : MessageHandlerBase(enum_integer(Action::PlayerPing)) {}
 
 bool PlayerPing::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();

@@ -35,7 +35,7 @@ void Gaming::handleConnectionClosed(const WebSocketConnectionPtr &wsConnPtr) {
     if (player) {
         if (!player->getRoomId().empty()) {
             try {
-                _roomManager->roomLeave(enum_integer(Action::roomLeave), wsConnPtr);
+                _roomManager->roomLeave(enum_integer(Action::RoomLeave), wsConnPtr);
             } catch (const internal::BaseException &e) {
                 LOG_DEBUG << "Closed without leaving room: " << e.what();
             }

@@ -18,7 +18,7 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomJoin::RoomJoin() : MessageHandlerBase(enum_integer(Action::roomJoin)) {}
+RoomJoin::RoomJoin() : MessageHandlerBase(enum_integer(Action::RoomJoin)) {}
 
 bool RoomJoin::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();

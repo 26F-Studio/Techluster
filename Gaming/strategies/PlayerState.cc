@@ -19,7 +19,7 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-PlayerState::PlayerState() : MessageHandlerBase(enum_integer(Action::playerState)) {}
+PlayerState::PlayerState() : MessageHandlerBase(enum_integer(Action::PlayerState)) {}
 
 bool PlayerState::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();

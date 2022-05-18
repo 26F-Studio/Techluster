@@ -18,7 +18,7 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomList::RoomList() : MessageHandlerBase(enum_integer(Action::roomList)) {}
+RoomList::RoomList() : MessageHandlerBase(enum_integer(Action::RoomList)) {}
 
 bool RoomList::filter(
         const WebSocketConnectionPtr &wsConnPtr,

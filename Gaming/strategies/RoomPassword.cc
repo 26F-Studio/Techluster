@@ -18,7 +18,7 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomPassword::RoomPassword() : MessageHandlerBase(enum_integer(Action::roomPassword)) {}
+RoomPassword::RoomPassword() : MessageHandlerBase(enum_integer(Action::RoomPassword)) {}
 
 bool RoomPassword::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();

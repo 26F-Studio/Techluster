@@ -17,7 +17,7 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomRemove::RoomRemove() : MessageHandlerBase(enum_integer(Action::roomRemove)) {}
+RoomRemove::RoomRemove() : MessageHandlerBase(enum_integer(Action::RoomRemove)) {}
 
 bool RoomRemove::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();

@@ -18,7 +18,7 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomKick::RoomKick() : MessageHandlerBase(enum_integer(Action::roomKick)) {}
+RoomKick::RoomKick() : MessageHandlerBase(enum_integer(Action::RoomKick)) {}
 
 bool RoomKick::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();

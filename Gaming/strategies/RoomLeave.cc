@@ -18,7 +18,7 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomLeave::RoomLeave() : MessageHandlerBase(enum_integer(Action::roomLeave)) {}
+RoomLeave::RoomLeave() : MessageHandlerBase(enum_integer(Action::RoomLeave)) {}
 
 bool RoomLeave::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
