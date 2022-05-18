@@ -1,7 +1,3 @@
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 project(Shared CXX)
 
 add_compile_definitions(CMAKE_PROJECT_NAME="${PROJECT_NAME}")

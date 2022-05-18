@@ -1,7 +1,3 @@
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 project(Gaming CXX)
 
 add_compile_definitions(CMAKE_PROJECT_NAME="${PROJECT_NAME}")
@@ -18,9 +14,6 @@ aux_source_directory(types TYPE_SRC)
 aux_source_directory(utils UTIL_SRC)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Shared::Shared)
-
-drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
-        ${CMAKE_CURRENT_BINARY_DIR})
 
 target_include_directories(${PROJECT_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 target_sources(${PROJECT_NAME} PRIVATE
