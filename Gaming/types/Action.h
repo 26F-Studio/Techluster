@@ -7,30 +7,32 @@
 namespace tech::types {
     enum class Action {
         /// Room actions
-        roomCreate = 1000,
-        roomData,
-        roomInfo,
-        roomJoin,
-        roomKick,
-        roomLeave,
-        roomList,
-        roomPassword,
-        roomRemove,
+        RoomCreate = 1000,
+        RoomDataGet,
+        RoomDataUpdate,
+        RoomInfoGet,
+        RoomInfoUpdate,
+        RoomJoin,
+        RoomKick,
+        RoomLeave,
+        RoomList,
+        RoomPassword,
+        RoomRemove,
 
         /// Player actions
-        playerConfig = 1100,
-        playerFinish,
-        playerGroup,
-        playerPing,
-        playerReady,
-        playerRole,
-        playerState,
-        playerType,
+        PlayerConfig = 1100,
+        PlayerFinish,
+        PlayerGroup,
+        PlayerPing,
+        PlayerReady,
+        PlayerRole,
+        PlayerState,
+        PlayerType,
 
         /// Game actions
-        gameEnd = 1200,
-        gameReady,
-        gameSpectate,
-        gameStart,
+        GameEnd = 1200,
+        GameReady,
+        GameSpectate,
+        GameStart,
     };
 }
