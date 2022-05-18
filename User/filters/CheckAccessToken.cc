@@ -17,16 +17,7 @@ void CheckAccessToken::doFilter(
         FilterCallback &&failedCb,
         FilterChainCallback &&nextCb
 ) {
-    auto accessToken = req->getHeader("x-access-token");
-    if (accessToken.empty()) {
-        ResponseJson response;
-        response.setStatusCode(k400BadRequest);
-        response.setResultCode(ResultCode::invalidArguments);
-        response.setMessage(i18n("invalidArguments"));
-        response.httpCallback(failedCb);
-        return;
-    }
-    req->attributes()->insert("accessToken", accessToken);
+    req->attributes()->insert("accessToken", req->getHeader("x-access-token"));
     nextCb();
 }
 
