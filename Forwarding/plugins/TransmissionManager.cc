@@ -31,8 +31,8 @@ void TransmissionManager::create(string &&roomId, set<int64_t> &&playerSet) {
 }
 
 void TransmissionManager::remove(const string &roomId) {
-    MessageJson publishMessage(enum_integer(Action::transmissionRemove));
-    publishMessage.setMessageType(MessageType::server);
+    MessageJson publishMessage(enum_integer(Action::TransmissionRemove));
+    publishMessage.setMessageType(MessageType::Server);
     {
         shared_lock<shared_mutex> lock(_sharedMutex);
         _transmissionMap.at(roomId).publish(publishMessage);
@@ -71,7 +71,7 @@ void TransmissionManager::transmissionJoin(int action, const WebSocketConnection
         room.publish(publishMessage, transmitter->userId);
 
         MessageJson selfMessage(action);
-        selfMessage.setMessageType(MessageType::server);
+        selfMessage.setMessageType(MessageType::Server);
         selfMessage.setData(room.parse());
         selfMessage.sendTo(wsConnPtr);
     } catch (const out_of_range &e) {
@@ -94,6 +94,6 @@ void TransmissionManager::transmissionLeave(int action, const WebSocketConnectio
     }
 
     MessageJson selfMessage(action);
-    selfMessage.setMessageType(MessageType::server);
+    selfMessage.setMessageType(MessageType::Server);
     selfMessage.sendTo(wsConnPtr);
 }

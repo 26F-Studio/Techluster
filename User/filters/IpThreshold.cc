@@ -4,7 +4,7 @@
 
 #include <filters/IpThreshold.h>
 #include <helpers/ResponseJson.h>
-#include <plugins/DataManager.h>
+#include <plugins/PlayerManager.h>
 
 using namespace drogon;
 using namespace std;
@@ -20,10 +20,10 @@ void IpThreshold::doFilter(
         FilterChainCallback &&nextCb
 ) {
     try {
-        if (!app().getPlugin<DataManager>()->ipLimit(req->getPeerAddr().toIp())) {
+        if (!app().getPlugin<PlayerManager>()->ipLimit(req->getPeerAddr().toIp())) {
             ResponseJson response;
             response.setStatusCode(k429TooManyRequests);
-            response.setResultCode(ResultCode::tooFrequent);
+            response.setResultCode(ResultCode::TooFrequent);
             response.setMessage(i18n("tooFrequent"));
             response.httpCallback(failedCb);
             return;
@@ -32,7 +32,7 @@ void IpThreshold::doFilter(
         LOG_ERROR << e.what();
         ResponseJson response;
         response.setStatusCode(k500InternalServerError);
-        response.setResultCode(ResultCode::internalError);
+        response.setResultCode(ResultCode::InternalError);
         response.setMessage(i18n("internalError"));
         response.httpCallback(failedCb);
         return;

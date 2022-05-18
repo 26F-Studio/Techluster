@@ -25,13 +25,13 @@ Manage::Manage() :
                 [this](const orm::DrogonDbException &e, ResponseJson &response) {
                     LOG_ERROR << e.base().what();
                     response.setStatusCode(k500InternalServerError);
-                    response.setResultCode(ResultCode::databaseError);
+                    response.setResultCode(ResultCode::DatabaseError);
                     response.setMessage(i18n("databaseError"));
                 },
                 [this](const exception &e, ResponseJson &response) {
                     LOG_ERROR << e.what();
                     response.setStatusCode(k500InternalServerError);
-                    response.setResultCode(ResultCode::internalError);
+                    response.setResultCode(ResultCode::InternalError);
                     response.setMessage(i18n("internalError"));
                     response.setReason(e);
                 }

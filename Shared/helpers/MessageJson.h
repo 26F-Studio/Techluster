@@ -19,7 +19,7 @@ namespace tech::helpers {
 
         explicit MessageJson(int action);
 
-        void setMessageType(const types::MessageType &type = types::MessageType::client);
+        void setMessageType(const types::MessageType &type = types::MessageType::Client);
 
         void setAction(int action);
 

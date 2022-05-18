@@ -19,7 +19,7 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-PlayerGroup::PlayerGroup() : MessageHandlerBase(enum_integer(Action::playerGroup)) {}
+PlayerGroup::PlayerGroup() : MessageHandlerBase(enum_integer(Action::PlayerGroup)) {}
 
 bool PlayerGroup::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
@@ -27,7 +27,7 @@ bool PlayerGroup::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &r
         player->type == Player::Type::spectator ||
         player->state != Player::State::standby) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -35,7 +35,7 @@ bool PlayerGroup::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &r
 
     if (!request.check(JsonValue::Uint64)) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidArguments"));
         message.sendTo(wsConnPtr);
         return false;

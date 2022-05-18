@@ -79,6 +79,25 @@ HttpStatusCode NodeMaintainer::checkAccessToken(const string &accessToken, int64
     }
 }
 
+Json::Value NodeMaintainer::getUserInfo(int64_t userId) {
+    auto client = HttpClient::newHttpClient("http://" + userAddress.load().toIpPort());
+    auto req = HttpRequest::newHttpRequest();
+    req->setPath("/tech/api/v2/user/info");
+    req->setParameter("userId", to_string(userId));
+    auto [result, responsePtr] = client->sendRequest(req, 3);
+    if (result != ReqResult::Ok) {
+        _updateUserAddress();
+        throw NetworkException("User node is down", result);
+    }
+    try {
+        RequestJson response(responsePtr);
+        response.require("data", JsonValue::Object);
+        return response["data"];
+    } catch (const json_exception::InvalidFormat &e) {
+        throw NetworkException("Invalid Json: "s + e.what(), ReqResult::BadResponse);
+    }
+}
+
 tuple<string, string> NodeMaintainer::getWorkshopItem(const std::string &itemId) {
     auto client = HttpClient::newHttpClient("http://" + workshopAddress.load().toIpPort());
     auto req = HttpRequest::newHttpRequest();
@@ -110,7 +129,7 @@ void NodeMaintainer::_updateUserAddress() {
     auto client = HttpClient::newHttpClient("http://" + connectAddress.load().toIpPort());
     auto req = HttpRequest::newHttpRequest();
     req->setPath("/tech/api/v2/node/allocate");
-    req->setParameter("nodeType", "user");
+    req->setParameter("nodeType", "User");
     client->sendRequest(req, [this](ReqResult result, const HttpResponsePtr &responsePtr) {
         if (result != ReqResult::Ok) {
             LOG_ERROR << "Request failed (" << static_cast<int>(result) << ")";
@@ -142,7 +161,7 @@ void NodeMaintainer::_updateWorkshopAddress() {
     auto client = HttpClient::newHttpClient("http://" + connectAddress.load().toIpPort());
     auto req = HttpRequest::newHttpRequest();
     req->setPath("/tech/api/v2/node/allocate");
-    req->setParameter("nodeType", "workshop");
+    req->setParameter("nodeType", "Workshop");
     client->sendRequest(req, [this](ReqResult result, const HttpResponsePtr &responsePtr) {
         if (result != ReqResult::Ok) {
             LOG_ERROR << "Request failed (" << static_cast<int>(result) << ")";

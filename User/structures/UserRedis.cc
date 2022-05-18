@@ -43,10 +43,7 @@ void UserRedis::deleteEmailCode(const string &email) {
     del("auth:code:email:" + email);
 }
 
-void UserRedis::setEmailCode(
-        const string &email,
-        const string &code
-) {
+void UserRedis::setEmailCode(const string &email, const string &code) {
     setEx(
             "auth:code:email:" + email,
             _expiration.getEmailSeconds(),

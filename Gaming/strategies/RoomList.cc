@@ -18,7 +18,7 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomList::RoomList() : MessageHandlerBase(enum_integer(Action::roomList)) {}
+RoomList::RoomList() : MessageHandlerBase(enum_integer(Action::RoomList)) {}
 
 bool RoomList::filter(
         const WebSocketConnectionPtr &wsConnPtr,
@@ -27,7 +27,7 @@ bool RoomList::filter(
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;

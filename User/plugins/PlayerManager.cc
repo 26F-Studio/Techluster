@@ -4,7 +4,8 @@
 
 #include <drogon/drogon.h>
 #include <helpers/DataJson.h>
-#include <plugins/DataManager.h>
+#include <plugins/PlayerManager.h>
+#include <structures/ExceptionHandlers.h>
 #include <structures/Exceptions.h>
 #include <utils/crypto.h>
 #include <utils/data.h>
@@ -20,7 +21,7 @@ using namespace tech::structures;
 using namespace tech::types;
 using namespace tech::utils;
 
-void DataManager::initAndStart(const Json::Value &config) {
+void PlayerManager::initAndStart(const Json::Value &config) {
     if (!(
             config["tokenBucket"]["ip"]["interval"].isUInt64() &&
             config["tokenBucket"]["ip"]["maxCount"].isUInt64() &&
@@ -101,38 +102,38 @@ void DataManager::initAndStart(const Json::Value &config) {
     LOG_INFO << "DataManager loaded.";
 }
 
-void DataManager::shutdown() {
+void PlayerManager::shutdown() {
     _userRedis->disconnect();
     LOG_INFO << "DataManager shutdown.";
 }
 
-int64_t DataManager::getUserId(const string &accessToken) {
+int64_t PlayerManager::getUserId(const string &accessToken) {
     try {
         return _userRedis->getIdByAccessToken(accessToken);
     } catch (const redis_exception::KeyNotFound &e) {
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(
                 i18n("invalidAccessToken"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k401Unauthorized
         );
     }
 }
 
-RedisToken DataManager::refresh(const string &refreshToken) {
+RedisToken PlayerManager::refresh(const string &refreshToken) {
     try {
         return move(_userRedis->refresh(refreshToken));
     } catch (const redis_exception::KeyNotFound &e) {
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(
                 i18n("invalidRefreshToken"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k401Unauthorized
         );
     }
 }
 
-void DataManager::verifyEmail(const string &email) {
+void PlayerManager::verifyEmail(const string &email) {
     auto code = data::randomString(8);
     _userRedis->setEmailCode(email, code);
     auto mailContent = io::getFileContent("./verifyEmail.html");
@@ -149,20 +150,18 @@ void DataManager::verifyEmail(const string &email) {
     );
 }
 
-tuple<RedisToken, bool> DataManager::loginEmailCode(
+tuple<RedisToken, bool> PlayerManager::loginEmailCode(
         const string &email,
         const string &code
 ) {
     _checkEmailCode(email, code);
 
     techluster::Player player;
-    bool isNew = false;
     if (_playerMapper->count(orm::Criteria(
             techluster::Player::Cols::_email,
             orm::CompareOperator::EQ,
             email
     )) == 0) {
-        isNew = true;
         player.setEmail(email);
         _playerMapper->insert(player);
         techluster::Data data;
@@ -177,11 +176,11 @@ tuple<RedisToken, bool> DataManager::loginEmailCode(
 
     return {
             _userRedis->generateTokens(to_string(player.getValueOfId())),
-            isNew
+            player.getValueOfPassword().empty()
     };
 }
 
-RedisToken DataManager::loginEmailPassword(
+RedisToken PlayerManager::loginEmailPassword(
         const string &email,
         const string &password
 ) {
@@ -199,7 +198,7 @@ RedisToken DataManager::loginEmailPassword(
         if (player.getValueOfPassword().empty()) {
             throw ResponseException(
                     i18n("noPassword"),
-                    ResultCode::nullValue,
+                    ResultCode::NullValue,
                     k403Forbidden
             );
         }
@@ -209,13 +208,13 @@ RedisToken DataManager::loginEmailPassword(
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("invalidEmailPass"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k403Forbidden
         );
     }
 }
 
-void DataManager::resetEmail(
+void PlayerManager::resetEmail(
         const string &email,
         const string &code,
         const string &newPassword
@@ -229,21 +228,18 @@ void DataManager::resetEmail(
                 email
         ));
         player.setPassword(newPassword);
-        if (player.getValueOfIsNew()) {
-            player.setIsNew(false);
-        }
         _playerMapper->update(player);
     } catch (const orm::UnexpectedRows &e) {
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
 }
 
-void DataManager::migrateEmail(
+void PlayerManager::migrateEmail(
         const string &accessToken,
         const string &newEmail,
         const string &code
@@ -266,7 +262,7 @@ void DataManager::migrateEmail(
         ))) {
             throw ResponseException(
                     i18n("emailExists"),
-                    ResultCode::conflict,
+                    ResultCode::Conflict,
                     k409Conflict
             );
         }
@@ -276,20 +272,20 @@ void DataManager::migrateEmail(
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(
                 i18n("invalidAccessToken"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k401Unauthorized
         );
     } catch (const orm::UnexpectedRows &e) {
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
 }
 
-void DataManager::deactivateEmail(
+void PlayerManager::deactivateEmail(
         const string &accessToken,
         const string &code
 ) {
@@ -331,20 +327,20 @@ void DataManager::deactivateEmail(
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(
                 i18n("invalidAccessToken"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k401Unauthorized
         );
     } catch (const orm::UnexpectedRows &e) {
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
 }
 
-Json::Value DataManager::searchRemoved(const RequestJson &request) {
+Json::Value PlayerManager::searchRemoved(const RequestJson &request) {
     using namespace chrono;
     orm::Criteria criteria;
     if (request.check("id", JsonValue::Int64)) {
@@ -422,13 +418,13 @@ Json::Value DataManager::searchRemoved(const RequestJson &request) {
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
 }
 
-void DataManager::restoreRemoved(
+void PlayerManager::restoreRemoved(
         const string &email,
         const string &code
 ) {
@@ -452,28 +448,17 @@ void DataManager::restoreRemoved(
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
 }
 
-Json::Value DataManager::getUserInfo(
-        const string &accessToken,
-        const int64_t &userId
-) {
-    int64_t targetId;
-    try {
-        auto tempUserId = _userRedis->getIdByAccessToken(accessToken);
-        targetId = userId < 0 ? tempUserId : userId;
-    } catch (const redis_exception::KeyNotFound &e) {
-        LOG_DEBUG << "Key not found:" << e.what();
-        throw ResponseException(
-                i18n("invalidAccessToken"),
-                ResultCode::notAcceptable,
-                k401Unauthorized
-        );
-    }
+Json::Value PlayerManager::getUserInfo(const string &accessToken, int64_t userId) {
+    int64_t targetId = userId;
+    NO_EXCEPTION(
+            targetId = _userRedis->getIdByAccessToken(accessToken);
+    )
     try {
         auto result = _playerMapper->findOne(orm::Criteria(
                 techluster::Player::Cols::_id,
@@ -482,19 +467,21 @@ Json::Value DataManager::getUserInfo(
         )).toJson();
         result.removeMember("password");
         result.removeMember("avatar");
-        result.removeMember("is_new");
+        if (userId > 0) {
+            result.removeMember("email");
+        }
         return result;
     } catch (const orm::UnexpectedRows &e) {
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
 }
 
-void DataManager::updateUserInfo(
+void PlayerManager::updateUserInfo(
         const string &accessToken,
         RequestJson request
 ) {
@@ -504,15 +491,14 @@ void DataManager::updateUserInfo(
                 orm::CompareOperator::EQ,
                 _userRedis->getIdByAccessToken(accessToken)
         ));
-        if (player.getValueOfIsNew()) {
+        if (player.getValueOfPassword().empty()) {
             if (!request.check("password", JsonValue::String)) {
                 throw ResponseException(
                         i18n("noPassword"),
-                        ResultCode::nullValue,
+                        ResultCode::NullValue,
                         k403Forbidden
                 );
             }
-            player.setIsNew(false);
         } else {
             request.remove("password");
         }
@@ -525,28 +511,17 @@ void DataManager::updateUserInfo(
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
 }
 
-string DataManager::getAvatar(
-        const string &accessToken,
-        const int64_t &userId
-) {
-    int64_t targetId;
-    try {
-        auto tempUserId = _userRedis->getIdByAccessToken(accessToken);
-        targetId = userId < 0 ? tempUserId : userId;
-    } catch (const redis_exception::KeyNotFound &e) {
-        LOG_DEBUG << "Key not found:" << e.what();
-        throw ResponseException(
-                i18n("invalidAccessToken"),
-                ResultCode::notAcceptable,
-                k401Unauthorized
-        );
-    }
+string PlayerManager::getAvatar(const string &accessToken, int64_t userId) {
+    int64_t targetId = userId;
+    NO_EXCEPTION(
+            targetId = _userRedis->getIdByAccessToken(accessToken);
+    )
     try {
         auto player = _playerMapper->findOne(orm::Criteria(
                 techluster::Player::Cols::_id,
@@ -558,13 +533,13 @@ string DataManager::getAvatar(
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
 }
 
-Json::Value DataManager::getUserData(
+Json::Value PlayerManager::getUserData(
         const string &accessToken,
         const int64_t &userId,
         const DataField &field,
@@ -577,7 +552,7 @@ Json::Value DataManager::getUserData(
         if (userId != tempUserId && field != DataField::Public) {
             throw ResponseException(
                     i18n("noPermission"),
-                    ResultCode::noPermission,
+                    ResultCode::NoPermission,
                     k403Forbidden
             );
         }
@@ -586,7 +561,7 @@ Json::Value DataManager::getUserData(
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(
                 i18n("invalidAccessToken"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k401Unauthorized
         );
     }
@@ -618,13 +593,13 @@ Json::Value DataManager::getUserData(
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
 }
 
-void DataManager::updateUserData(
+void PlayerManager::updateUserData(
         const string &accessToken,
         const DataField &field,
         const RequestJson &request
@@ -673,20 +648,20 @@ void DataManager::updateUserData(
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(
                 i18n("invalidAccessToken"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k401Unauthorized
         );
     } catch (const orm::UnexpectedRows &e) {
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
 }
 
-bool DataManager::ipLimit(const string &ip) const {
+bool PlayerManager::ipLimit(const string &ip) const {
     return _userRedis->tokenBucket(
             "ip:" + ip,
             _ipInterval,
@@ -694,7 +669,7 @@ bool DataManager::ipLimit(const string &ip) const {
     );
 }
 
-bool DataManager::emailLimit(const string &email) const {
+bool PlayerManager::emailLimit(const string &email) const {
     return _userRedis->tokenBucket(
             "email:" + email,
             _emailInterval,
@@ -702,7 +677,7 @@ bool DataManager::emailLimit(const string &email) const {
     );
 }
 
-void DataManager::_checkEmailCode(
+void PlayerManager::_checkEmailCode(
         const string &email,
         const string &code
 ) {
@@ -710,7 +685,7 @@ void DataManager::_checkEmailCode(
         if (!_userRedis->checkEmailCode(email, code)) {
             throw ResponseException(
                     i18n("invalidVerifyCode"),
-                    ResultCode::notAcceptable,
+                    ResultCode::NotAcceptable,
                     k401Unauthorized
             );
         }
@@ -719,7 +694,7 @@ void DataManager::_checkEmailCode(
         LOG_DEBUG << "Key not found: " << e.what();
         throw ResponseException(
                 i18n("invalidVerifyEmail"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }

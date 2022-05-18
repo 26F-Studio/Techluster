@@ -41,8 +41,8 @@ void Transmission::join(int64_t userId) {
     {
         shared_lock<shared_mutex> lock(_transmitterMutex);
         if (includes(_transmitterSet.begin(), _transmitterSet.end(), playerSet.begin(), playerSet.end())) {
-            MessageJson publishMessage(enum_integer(Action::transmissionStart));
-            publishMessage.setMessageType(MessageType::server);
+            MessageJson publishMessage(enum_integer(Action::TransmissionStart));
+            publishMessage.setMessageType(MessageType::Server);
             publish(publishMessage);
         }
     }

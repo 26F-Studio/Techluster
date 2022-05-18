@@ -19,14 +19,14 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-PlayerRole::PlayerRole() : MessageHandlerBase(enum_integer(Action::playerRole)) {}
+PlayerRole::PlayerRole() : MessageHandlerBase(enum_integer(Action::PlayerRole)) {}
 
 bool PlayerRole::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || player->getRoomId().empty() ||
         player->state != Player::State::standby) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -35,7 +35,7 @@ bool PlayerRole::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &re
     if (!request.check("targetUserId", JsonValue::Int64) ||
         !request.check("role", JsonValue::String)) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidArguments"));
         message.sendTo(wsConnPtr);
         return false;
@@ -43,14 +43,14 @@ bool PlayerRole::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &re
     auto castedRole = enum_cast<Player::Role>(request["role"].asString());
     if (!castedRole.has_value()) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidRole"));
         message.sendTo(wsConnPtr);
         return false;
     }
     if (player->role < castedRole.value()) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("noPermission"));
         message.sendTo(wsConnPtr);
         return false;
@@ -63,7 +63,7 @@ bool PlayerRole::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &re
         player->userId == targetPlayer->userId ||
         player->getRoomId() != targetPlayer->getRoomId()) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidTarget"));
         message.sendTo(wsConnPtr);
         return false;

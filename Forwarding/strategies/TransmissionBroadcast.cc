@@ -19,14 +19,14 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-TransmissionBroadcast::TransmissionBroadcast() : MessageHandlerBase(enum_integer(Action::transmissionBroadcast)) {}
+TransmissionBroadcast::TransmissionBroadcast() : MessageHandlerBase(enum_integer(Action::TransmissionBroadcast)) {}
 
 bool TransmissionBroadcast::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &transmitter = wsConnPtr->getContext<Transmitter>();
     if (!transmitter || transmitter->getRoomId().empty() ||
         transmitter->type != Transmitter::Type::gamer) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -34,7 +34,7 @@ bool TransmissionBroadcast::filter(const WebSocketConnectionPtr &wsConnPtr, Requ
 
     if (!request.check(JsonValue::String)) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidArguments"));
         message.sendTo(wsConnPtr);
         return false;

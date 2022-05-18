@@ -26,7 +26,7 @@ void CheckNodeType::doFilter(
     } else {
         ResponseJson response;
         response.setStatusCode(k406NotAcceptable);
-        response.setResultCode(ResultCode::notAcceptable);
+        response.setResultCode(ResultCode::NotAcceptable);
         response.setMessage(i18n("invalidNodeType"));
         response.httpCallback(failedCb);
     }

@@ -7,10 +7,10 @@
 #include <drogon/drogon.h>
 
 namespace tech::types {
-    enum class MessageType {
-        Error,
-        Failed,
-        Client,
-        Server,
+    enum class Permission {
+        Banned,
+        Restricted,
+        Normal,
+        Admin
     };
 }

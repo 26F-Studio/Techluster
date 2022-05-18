@@ -19,9 +19,9 @@ using namespace tech::types;
 using namespace tech::utils;
 
 void HandlerManager::initAndStart(const Json::Value &config) {
-    _handlerFactory.registerHandler<TransmissionBroadcast>(enum_integer(Action::transmissionBroadcast));
-    _handlerFactory.registerHandler<TransmissionJoin>(enum_integer(Action::transmissionJoin));
-    _handlerFactory.registerHandler<TransmissionLeave>(enum_integer(Action::transmissionLeave));
+    _handlerFactory.registerHandler<TransmissionBroadcast>(enum_integer(Action::TransmissionBroadcast));
+    _handlerFactory.registerHandler<TransmissionJoin>(enum_integer(Action::TransmissionJoin));
+    _handlerFactory.registerHandler<TransmissionLeave>(enum_integer(Action::TransmissionLeave));
 
     LOG_INFO << "HandlerManager loaded.";
 }

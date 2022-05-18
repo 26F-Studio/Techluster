@@ -18,13 +18,13 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomCreate::RoomCreate() : MessageHandlerBase(enum_integer(Action::roomCreate)) {}
+RoomCreate::RoomCreate() : MessageHandlerBase(enum_integer(Action::RoomCreate)) {}
 
 bool RoomCreate::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || !player->getRoomId().empty()) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -35,7 +35,7 @@ bool RoomCreate::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &re
         !request.check("data", JsonValue::Object) ||
         request["capacity"].asUInt64() <= 0) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidArguments"));
         message.sendTo(wsConnPtr);
         return false;

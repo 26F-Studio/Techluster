@@ -148,7 +148,7 @@ void RoomManager::playerType(
         auto &room = _roomMap.at(player->getRoomId());
         if (type == Player::Type::gamer && room.full()) {
             MessageJson failedMessage(action);
-            failedMessage.setMessageType(MessageType::failed);
+            failedMessage.setMessageType(MessageType::Failed);
             failedMessage.setReason(i18n("roomFull"));
             failedMessage.sendTo(wsConnPtr);
         } else {
@@ -185,6 +185,7 @@ void RoomManager::roomCreate(
     const auto &roomId = room.roomId;
     room.subscribe(player->userId);
     player->setRoomId(roomId);
+    player->role = Player::Role::admin;
     {
         unique_lock<shared_mutex> lock(_sharedMutex);
         _roomMap.emplace(roomId, move(room));
@@ -195,36 +196,68 @@ void RoomManager::roomCreate(
     publishMessage.sendTo(wsConnPtr);
 }
 
-void RoomManager::roomData(
+void RoomManager::roomDataGet(
         int action,
         const WebSocketConnectionPtr &wsConnPtr,
-        const RequestJson &updateData
+        const string &roomId
 ) {
     const auto &player = wsConnPtr->getContext<Player>();
     try {
         shared_lock<shared_mutex> lock(_sharedMutex);
-        auto &room = _roomMap.at(player->getRoomId());
+        MessageJson successMessage(action);
+        successMessage.setData(_roomMap.at(roomId).getData());
+        successMessage.sendTo(wsConnPtr);
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
+}
 
+void RoomManager::roomDataUpdate(
+        int action,
+        const WebSocketConnectionPtr &wsConnPtr,
+        const string &roomId,
+        const Json::Value &data
+) {
+    const auto &player = wsConnPtr->getContext<Player>();
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        auto &room = _roomMap.at(roomId);
         MessageJson publishMessage(action);
-        publishMessage.setData(room.roomData(updateData));
+        publishMessage.setData(room.updateData(data));
         room.publish(publishMessage);
     } catch (const out_of_range &) {
         throw MessageException("roomNotFound");
     }
 }
 
-void RoomManager::roomInfo(
+void RoomManager::roomInfoGet(
         int action,
         const WebSocketConnectionPtr &wsConnPtr,
-        const RequestJson &updateData
+        const string &roomId
+) {
+    const auto &player = wsConnPtr->getContext<Player>();
+    try {
+        shared_lock<shared_mutex> lock(_sharedMutex);
+        MessageJson successMessage(action);
+        successMessage.setData(_roomMap.at(roomId).getInfo());
+        successMessage.sendTo(wsConnPtr);
+    } catch (const out_of_range &) {
+        throw MessageException("roomNotFound");
+    }
+}
+
+void RoomManager::roomInfoUpdate(
+        int action,
+        const WebSocketConnectionPtr &wsConnPtr,
+        const string &roomId,
+        const Json::Value &data
 ) {
     const auto &player = wsConnPtr->getContext<Player>();
     try {
         shared_lock<shared_mutex> lock(_sharedMutex);
         auto &room = _roomMap.at(player->getRoomId());
-
         MessageJson publishMessage(action);
-        publishMessage.setData(room.roomInfo(updateData));
+        publishMessage.setData(room.updateInfo(data));
         room.publish(publishMessage);
     } catch (const out_of_range &) {
         throw MessageException("roomNotFound");
@@ -254,7 +287,7 @@ void RoomManager::roomJoin(
             }
 
             MessageJson successMessage(action);
-            successMessage.setMessageType(MessageType::server);
+            successMessage.setMessageType(MessageType::Server);
             successMessage.setData(room.parse(true));
             successMessage.sendTo(wsConnPtr);
 
@@ -263,7 +296,7 @@ void RoomManager::roomJoin(
             room.publish(publishMessage, userId);
 
             if (spectate) {
-                MessageJson spectateMessage(enum_integer(Action::gameSpectate));
+                MessageJson spectateMessage(enum_integer(Action::GameSpectate));
                 spectateMessage.setData(room.forwardingNode.load().toIpPort());
                 spectateMessage.sendTo(wsConnPtr);
             }
@@ -305,7 +338,7 @@ void RoomManager::roomLeave(int action, const WebSocketConnectionPtr &wsConnPtr)
     }
 
     MessageJson successMessage(action);
-    successMessage.setMessageType(MessageType::server);
+    successMessage.setMessageType(MessageType::Server);
     successMessage.sendTo(wsConnPtr);
 
     if (empty) {
@@ -361,7 +394,7 @@ void RoomManager::roomPassword(
         throw MessageException("roomNotFound");
     }
     MessageJson successMessage(action);
-    successMessage.setMessageType(MessageType::server);
+    successMessage.setMessageType(MessageType::Server);
     successMessage.sendTo(wsConnPtr);
 }
 

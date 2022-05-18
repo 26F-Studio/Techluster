@@ -1,6 +1,6 @@
 #include <drogon/drogon.h>
 #include <plugins/Authorizer.h>
-#include <plugins/DataManager.h>
+#include <plugins/PlayerManager.h>
 #include <plugins/Perfmon.h>
 
 using namespace drogon;
@@ -10,7 +10,7 @@ int main() {
     app().loadConfigFile("config.json");
     app().run();
     app().getPlugin<Authorizer>();
-    app().getPlugin<DataManager>();
+    app().getPlugin<PlayerManager>();
     app().getPlugin<Perfmon>();
     return 0;
 }

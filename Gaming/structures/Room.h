@@ -82,9 +82,13 @@ namespace tech::structures {
 
         void publish(const helpers::MessageJson &message, int64_t excludedId = -1);
 
-        Json::Value roomData(const helpers::RequestJson &request);
+        Json::Value getData() const;
 
-        Json::Value roomInfo(const helpers::RequestJson &request);
+        Json::Value updateData(const Json::Value &data);
+
+        Json::Value getInfo() const;
+
+        Json::Value updateInfo(const Json::Value &data);
 
         void tryStart();
 

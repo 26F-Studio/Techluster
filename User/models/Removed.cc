@@ -14,7 +14,6 @@ using namespace drogon::orm;
 using namespace drogon_model::techluster;
 
 const std::string Removed::Cols::_id = "id";
-const std::string Removed::Cols::_email = "email";
 const std::string Removed::Cols::_username = "username";
 const std::string Removed::Cols::_motto = "motto";
 const std::string Removed::Cols::_region = "region";
@@ -22,6 +21,9 @@ const std::string Removed::Cols::_avatar = "avatar";
 const std::string Removed::Cols::_avatar_hash = "avatar_hash";
 const std::string Removed::Cols::_avatar_frame = "avatar_frame";
 const std::string Removed::Cols::_clan = "clan";
+const std::string Removed::Cols::_permission = "permission";
+const std::string Removed::Cols::_password = "password";
+const std::string Removed::Cols::_email = "email";
 const std::string Removed::Cols::_data = "data";
 const std::string Removed::Cols::_timestamp = "timestamp";
 const std::string Removed::Cols::_recoverable = "recoverable";
@@ -30,18 +32,20 @@ const bool Removed::hasPrimaryKey = true;
 const std::string Removed::tableName = "removed";
 
 const std::vector<typename Removed::MetaData> Removed::metaData_ = {
-        {"id",           "int64_t",         "bigint",  8, 0, 1, 1},
-        {"email",        "std::string",     "text",    0, 0, 0, 0},
-        {"username",     "std::string",     "text",    0, 0, 0, 0},
-        {"motto",        "std::string",     "text",    0, 0, 0, 0},
-        {"region",       "int32_t",         "integer", 4, 0, 0, 0},
-        {"avatar",       "std::string",     "text",    0, 0, 0, 0},
-        {"avatar_hash",  "std::string",     "text",    0, 0, 0, 0},
-        {"avatar_frame", "int32_t",         "integer", 4, 0, 0, 0},
-        {"clan",         "std::string",     "text",    0, 0, 0, 0},
-        {"data",         "std::string",     "text",    0, 0, 0, 1},
-        {"timestamp",    "::trantor::Date", "date",    0, 0, 0, 1},
-        {"recoverable",  "bool",            "boolean", 1, 0, 0, 1}
+        {"id",           "int64_t",         "bigint",                      8, 0, 1, 1},
+        {"username",     "std::string",     "text",                        0, 0, 0, 0},
+        {"motto",        "std::string",     "text",                        0, 0, 0, 0},
+        {"region",       "int32_t",         "integer",                     4, 0, 0, 0},
+        {"avatar",       "std::string",     "text",                        0, 0, 0, 0},
+        {"avatar_hash",  "std::string",     "text",                        0, 0, 0, 0},
+        {"avatar_frame", "int32_t",         "integer",                     4, 0, 0, 0},
+        {"clan",         "std::string",     "text",                        0, 0, 0, 0},
+        {"permission",   "std::string",     "USER-DEFINED",                0, 0, 0, 0},
+        {"password",     "std::string",     "text",                        0, 0, 0, 0},
+        {"email",        "std::string",     "text",                        0, 0, 0, 0},
+        {"data",         "std::string",     "text",                        0, 0, 0, 1},
+        {"timestamp",    "::trantor::Date", "timestamp without time zone", 0, 0, 0, 1},
+        {"recoverable",  "bool",            "boolean",                     1, 0, 0, 1}
 };
 
 const std::string &Removed::getColumnName(size_t index) noexcept(false) {
@@ -53,9 +57,6 @@ Removed::Removed(const Row &r, const ssize_t indexOffset) noexcept {
     if (indexOffset < 0) {
         if (!r["id"].isNull()) {
             id_ = std::make_shared<int64_t>(r["id"].as<int64_t>());
-        }
-        if (!r["email"].isNull()) {
-            email_ = std::make_shared<std::string>(r["email"].as<std::string>());
         }
         if (!r["username"].isNull()) {
             username_ = std::make_shared<std::string>(r["username"].as<std::string>());
@@ -78,23 +79,42 @@ Removed::Removed(const Row &r, const ssize_t indexOffset) noexcept {
         if (!r["clan"].isNull()) {
             clan_ = std::make_shared<std::string>(r["clan"].as<std::string>());
         }
+        if (!r["permission"].isNull()) {
+            permission_ = std::make_shared<std::string>(r["permission"].as<std::string>());
+        }
+        if (!r["password"].isNull()) {
+            password_ = std::make_shared<std::string>(r["password"].as<std::string>());
+        }
+        if (!r["email"].isNull()) {
+            email_ = std::make_shared<std::string>(r["email"].as<std::string>());
+        }
         if (!r["data"].isNull()) {
             data_ = std::make_shared<std::string>(r["data"].as<std::string>());
         }
         if (!r["timestamp"].isNull()) {
-            auto daysStr = r["timestamp"].as<std::string>();
+            auto timeStr = r["timestamp"].as<std::string>();
             struct tm stm;
             memset(&stm, 0, sizeof(stm));
-            strptime(daysStr.c_str(), "%Y-%m-%d", &stm);
+            auto p = strptime(timeStr.c_str(), "%Y-%m-%d %H:%M:%S", &stm);
             time_t t = mktime(&stm);
-            timestamp_ = std::make_shared<::trantor::Date>(t * 1000000);
+            size_t decimalNum = 0;
+            if (p) {
+                if (*p == '.') {
+                    std::string decimals(p + 1, &timeStr[timeStr.length()]);
+                    while (decimals.length() < 6) {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t) atol(decimals.c_str());
+                }
+                timestamp_ = std::make_shared<::trantor::Date>(t * 1000000 + decimalNum);
+            }
         }
         if (!r["recoverable"].isNull()) {
             recoverable_ = std::make_shared<bool>(r["recoverable"].as<bool>());
         }
     } else {
         size_t offset = (size_t) indexOffset;
-        if (offset + 12 > r.size()) {
+        if (offset + 14 > r.size()) {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
         }
@@ -105,50 +125,68 @@ Removed::Removed(const Row &r, const ssize_t indexOffset) noexcept {
         }
         index = offset + 1;
         if (!r[index].isNull()) {
-            email_ = std::make_shared<std::string>(r[index].as<std::string>());
+            username_ = std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 2;
         if (!r[index].isNull()) {
-            username_ = std::make_shared<std::string>(r[index].as<std::string>());
+            motto_ = std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 3;
         if (!r[index].isNull()) {
-            motto_ = std::make_shared<std::string>(r[index].as<std::string>());
+            region_ = std::make_shared<int32_t>(r[index].as<int32_t>());
         }
         index = offset + 4;
         if (!r[index].isNull()) {
-            region_ = std::make_shared<int32_t>(r[index].as<int32_t>());
+            avatar_ = std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 5;
         if (!r[index].isNull()) {
-            avatar_ = std::make_shared<std::string>(r[index].as<std::string>());
+            avatarHash_ = std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 6;
         if (!r[index].isNull()) {
-            avatarHash_ = std::make_shared<std::string>(r[index].as<std::string>());
+            avatarFrame_ = std::make_shared<int32_t>(r[index].as<int32_t>());
         }
         index = offset + 7;
         if (!r[index].isNull()) {
-            avatarFrame_ = std::make_shared<int32_t>(r[index].as<int32_t>());
+            clan_ = std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 8;
         if (!r[index].isNull()) {
-            clan_ = std::make_shared<std::string>(r[index].as<std::string>());
+            permission_ = std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 9;
         if (!r[index].isNull()) {
-            data_ = std::make_shared<std::string>(r[index].as<std::string>());
+            password_ = std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 10;
         if (!r[index].isNull()) {
-            auto daysStr = r[index].as<std::string>();
-            struct tm stm;
-            memset(&stm, 0, sizeof(stm));
-            strptime(daysStr.c_str(), "%Y-%m-%d", &stm);
-            time_t t = mktime(&stm);
-            timestamp_ = std::make_shared<::trantor::Date>(t * 1000000);
+            email_ = std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 11;
+        if (!r[index].isNull()) {
+            data_ = std::make_shared<std::string>(r[index].as<std::string>());
+        }
+        index = offset + 12;
+        if (!r[index].isNull()) {
+            auto timeStr = r[index].as<std::string>();
+            struct tm stm;
+            memset(&stm, 0, sizeof(stm));
+            auto p = strptime(timeStr.c_str(), "%Y-%m-%d %H:%M:%S", &stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if (p) {
+                if (*p == '.') {
+                    std::string decimals(p + 1, &timeStr[timeStr.length()]);
+                    while (decimals.length() < 6) {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t) atol(decimals.c_str());
+                }
+                timestamp_ = std::make_shared<::trantor::Date>(t * 1000000 + decimalNum);
+            }
+        }
+        index = offset + 13;
         if (!r[index].isNull()) {
             recoverable_ = std::make_shared<bool>(r[index].as<bool>());
         }
@@ -157,7 +195,7 @@ Removed::Removed(const Row &r, const ssize_t indexOffset) noexcept {
 }
 
 Removed::Removed(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false) {
-    if (pMasqueradingVector.size() != 12) {
+    if (pMasqueradingVector.size() != 14) {
         LOG_ERROR << "Bad masquerading vector";
         return;
     }
@@ -170,72 +208,94 @@ Removed::Removed(const Json::Value &pJson, const std::vector<std::string> &pMasq
     if (!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1])) {
         dirtyFlag_[1] = true;
         if (!pJson[pMasqueradingVector[1]].isNull()) {
-            email_ = std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
+            username_ = std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
         }
     }
     if (!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2])) {
         dirtyFlag_[2] = true;
         if (!pJson[pMasqueradingVector[2]].isNull()) {
-            username_ = std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
+            motto_ = std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
         }
     }
     if (!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3])) {
         dirtyFlag_[3] = true;
         if (!pJson[pMasqueradingVector[3]].isNull()) {
-            motto_ = std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
+            region_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[3]].asInt64());
         }
     }
     if (!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4])) {
         dirtyFlag_[4] = true;
         if (!pJson[pMasqueradingVector[4]].isNull()) {
-            region_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[4]].asInt64());
+            avatar_ = std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
         }
     }
     if (!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5])) {
         dirtyFlag_[5] = true;
         if (!pJson[pMasqueradingVector[5]].isNull()) {
-            avatar_ = std::make_shared<std::string>(pJson[pMasqueradingVector[5]].asString());
+            avatarHash_ = std::make_shared<std::string>(pJson[pMasqueradingVector[5]].asString());
         }
     }
     if (!pMasqueradingVector[6].empty() && pJson.isMember(pMasqueradingVector[6])) {
         dirtyFlag_[6] = true;
         if (!pJson[pMasqueradingVector[6]].isNull()) {
-            avatarHash_ = std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
+            avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[6]].asInt64());
         }
     }
     if (!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7])) {
         dirtyFlag_[7] = true;
         if (!pJson[pMasqueradingVector[7]].isNull()) {
-            avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[7]].asInt64());
+            clan_ = std::make_shared<std::string>(pJson[pMasqueradingVector[7]].asString());
         }
     }
     if (!pMasqueradingVector[8].empty() && pJson.isMember(pMasqueradingVector[8])) {
         dirtyFlag_[8] = true;
         if (!pJson[pMasqueradingVector[8]].isNull()) {
-            clan_ = std::make_shared<std::string>(pJson[pMasqueradingVector[8]].asString());
+            permission_ = std::make_shared<std::string>(pJson[pMasqueradingVector[8]].asString());
         }
     }
     if (!pMasqueradingVector[9].empty() && pJson.isMember(pMasqueradingVector[9])) {
         dirtyFlag_[9] = true;
         if (!pJson[pMasqueradingVector[9]].isNull()) {
-            data_ = std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
+            password_ = std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
         }
     }
     if (!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10])) {
         dirtyFlag_[10] = true;
         if (!pJson[pMasqueradingVector[10]].isNull()) {
-            auto daysStr = pJson[pMasqueradingVector[10]].asString();
-            struct tm stm;
-            memset(&stm, 0, sizeof(stm));
-            strptime(daysStr.c_str(), "%Y-%m-%d", &stm);
-            time_t t = mktime(&stm);
-            timestamp_ = std::make_shared<::trantor::Date>(t * 1000000);
+            email_ = std::make_shared<std::string>(pJson[pMasqueradingVector[10]].asString());
         }
     }
     if (!pMasqueradingVector[11].empty() && pJson.isMember(pMasqueradingVector[11])) {
         dirtyFlag_[11] = true;
         if (!pJson[pMasqueradingVector[11]].isNull()) {
-            recoverable_ = std::make_shared<bool>(pJson[pMasqueradingVector[11]].asBool());
+            data_ = std::make_shared<std::string>(pJson[pMasqueradingVector[11]].asString());
+        }
+    }
+    if (!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12])) {
+        dirtyFlag_[12] = true;
+        if (!pJson[pMasqueradingVector[12]].isNull()) {
+            auto timeStr = pJson[pMasqueradingVector[12]].asString();
+            struct tm stm;
+            memset(&stm, 0, sizeof(stm));
+            auto p = strptime(timeStr.c_str(), "%Y-%m-%d %H:%M:%S", &stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if (p) {
+                if (*p == '.') {
+                    std::string decimals(p + 1, &timeStr[timeStr.length()]);
+                    while (decimals.length() < 6) {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t) atol(decimals.c_str());
+                }
+                timestamp_ = std::make_shared<::trantor::Date>(t * 1000000 + decimalNum);
+            }
+        }
+    }
+    if (!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13])) {
+        dirtyFlag_[13] = true;
+        if (!pJson[pMasqueradingVector[13]].isNull()) {
+            recoverable_ = std::make_shared<bool>(pJson[pMasqueradingVector[13]].asBool());
         }
     }
 }
@@ -247,73 +307,95 @@ Removed::Removed(const Json::Value &pJson) noexcept(false) {
             id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
         }
     }
-    if (pJson.isMember("email")) {
-        dirtyFlag_[1] = true;
-        if (!pJson["email"].isNull()) {
-            email_ = std::make_shared<std::string>(pJson["email"].asString());
-        }
-    }
     if (pJson.isMember("username")) {
-        dirtyFlag_[2] = true;
+        dirtyFlag_[1] = true;
         if (!pJson["username"].isNull()) {
             username_ = std::make_shared<std::string>(pJson["username"].asString());
         }
     }
     if (pJson.isMember("motto")) {
-        dirtyFlag_[3] = true;
+        dirtyFlag_[2] = true;
         if (!pJson["motto"].isNull()) {
             motto_ = std::make_shared<std::string>(pJson["motto"].asString());
         }
     }
     if (pJson.isMember("region")) {
-        dirtyFlag_[4] = true;
+        dirtyFlag_[3] = true;
         if (!pJson["region"].isNull()) {
             region_ = std::make_shared<int32_t>((int32_t) pJson["region"].asInt64());
         }
     }
     if (pJson.isMember("avatar")) {
-        dirtyFlag_[5] = true;
+        dirtyFlag_[4] = true;
         if (!pJson["avatar"].isNull()) {
             avatar_ = std::make_shared<std::string>(pJson["avatar"].asString());
         }
     }
     if (pJson.isMember("avatar_hash")) {
-        dirtyFlag_[6] = true;
+        dirtyFlag_[5] = true;
         if (!pJson["avatar_hash"].isNull()) {
             avatarHash_ = std::make_shared<std::string>(pJson["avatar_hash"].asString());
         }
     }
     if (pJson.isMember("avatar_frame")) {
-        dirtyFlag_[7] = true;
+        dirtyFlag_[6] = true;
         if (!pJson["avatar_frame"].isNull()) {
             avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson["avatar_frame"].asInt64());
         }
     }
     if (pJson.isMember("clan")) {
-        dirtyFlag_[8] = true;
+        dirtyFlag_[7] = true;
         if (!pJson["clan"].isNull()) {
             clan_ = std::make_shared<std::string>(pJson["clan"].asString());
         }
     }
-    if (pJson.isMember("data")) {
+    if (pJson.isMember("permission")) {
+        dirtyFlag_[8] = true;
+        if (!pJson["permission"].isNull()) {
+            permission_ = std::make_shared<std::string>(pJson["permission"].asString());
+        }
+    }
+    if (pJson.isMember("password")) {
         dirtyFlag_[9] = true;
+        if (!pJson["password"].isNull()) {
+            password_ = std::make_shared<std::string>(pJson["password"].asString());
+        }
+    }
+    if (pJson.isMember("email")) {
+        dirtyFlag_[10] = true;
+        if (!pJson["email"].isNull()) {
+            email_ = std::make_shared<std::string>(pJson["email"].asString());
+        }
+    }
+    if (pJson.isMember("data")) {
+        dirtyFlag_[11] = true;
         if (!pJson["data"].isNull()) {
             data_ = std::make_shared<std::string>(pJson["data"].asString());
         }
     }
     if (pJson.isMember("timestamp")) {
-        dirtyFlag_[10] = true;
+        dirtyFlag_[12] = true;
         if (!pJson["timestamp"].isNull()) {
-            auto daysStr = pJson["timestamp"].asString();
+            auto timeStr = pJson["timestamp"].asString();
             struct tm stm;
             memset(&stm, 0, sizeof(stm));
-            strptime(daysStr.c_str(), "%Y-%m-%d", &stm);
+            auto p = strptime(timeStr.c_str(), "%Y-%m-%d %H:%M:%S", &stm);
             time_t t = mktime(&stm);
-            timestamp_ = std::make_shared<::trantor::Date>(t * 1000000);
+            size_t decimalNum = 0;
+            if (p) {
+                if (*p == '.') {
+                    std::string decimals(p + 1, &timeStr[timeStr.length()]);
+                    while (decimals.length() < 6) {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t) atol(decimals.c_str());
+                }
+                timestamp_ = std::make_shared<::trantor::Date>(t * 1000000 + decimalNum);
+            }
         }
     }
     if (pJson.isMember("recoverable")) {
-        dirtyFlag_[11] = true;
+        dirtyFlag_[13] = true;
         if (!pJson["recoverable"].isNull()) {
             recoverable_ = std::make_shared<bool>(pJson["recoverable"].asBool());
         }
@@ -322,7 +404,7 @@ Removed::Removed(const Json::Value &pJson) noexcept(false) {
 
 void Removed::updateByMasqueradedJson(const Json::Value &pJson,
                                       const std::vector<std::string> &pMasqueradingVector) noexcept(false) {
-    if (pMasqueradingVector.size() != 12) {
+    if (pMasqueradingVector.size() != 14) {
         LOG_ERROR << "Bad masquerading vector";
         return;
     }
@@ -334,72 +416,94 @@ void Removed::updateByMasqueradedJson(const Json::Value &pJson,
     if (!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1])) {
         dirtyFlag_[1] = true;
         if (!pJson[pMasqueradingVector[1]].isNull()) {
-            email_ = std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
+            username_ = std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
         }
     }
     if (!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2])) {
         dirtyFlag_[2] = true;
         if (!pJson[pMasqueradingVector[2]].isNull()) {
-            username_ = std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
+            motto_ = std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
         }
     }
     if (!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3])) {
         dirtyFlag_[3] = true;
         if (!pJson[pMasqueradingVector[3]].isNull()) {
-            motto_ = std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
+            region_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[3]].asInt64());
         }
     }
     if (!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4])) {
         dirtyFlag_[4] = true;
         if (!pJson[pMasqueradingVector[4]].isNull()) {
-            region_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[4]].asInt64());
+            avatar_ = std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
         }
     }
     if (!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5])) {
         dirtyFlag_[5] = true;
         if (!pJson[pMasqueradingVector[5]].isNull()) {
-            avatar_ = std::make_shared<std::string>(pJson[pMasqueradingVector[5]].asString());
+            avatarHash_ = std::make_shared<std::string>(pJson[pMasqueradingVector[5]].asString());
         }
     }
     if (!pMasqueradingVector[6].empty() && pJson.isMember(pMasqueradingVector[6])) {
         dirtyFlag_[6] = true;
         if (!pJson[pMasqueradingVector[6]].isNull()) {
-            avatarHash_ = std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
+            avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[6]].asInt64());
         }
     }
     if (!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7])) {
         dirtyFlag_[7] = true;
         if (!pJson[pMasqueradingVector[7]].isNull()) {
-            avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson[pMasqueradingVector[7]].asInt64());
+            clan_ = std::make_shared<std::string>(pJson[pMasqueradingVector[7]].asString());
         }
     }
     if (!pMasqueradingVector[8].empty() && pJson.isMember(pMasqueradingVector[8])) {
         dirtyFlag_[8] = true;
         if (!pJson[pMasqueradingVector[8]].isNull()) {
-            clan_ = std::make_shared<std::string>(pJson[pMasqueradingVector[8]].asString());
+            permission_ = std::make_shared<std::string>(pJson[pMasqueradingVector[8]].asString());
         }
     }
     if (!pMasqueradingVector[9].empty() && pJson.isMember(pMasqueradingVector[9])) {
         dirtyFlag_[9] = true;
         if (!pJson[pMasqueradingVector[9]].isNull()) {
-            data_ = std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
+            password_ = std::make_shared<std::string>(pJson[pMasqueradingVector[9]].asString());
         }
     }
     if (!pMasqueradingVector[10].empty() && pJson.isMember(pMasqueradingVector[10])) {
         dirtyFlag_[10] = true;
         if (!pJson[pMasqueradingVector[10]].isNull()) {
-            auto daysStr = pJson[pMasqueradingVector[10]].asString();
-            struct tm stm;
-            memset(&stm, 0, sizeof(stm));
-            strptime(daysStr.c_str(), "%Y-%m-%d", &stm);
-            time_t t = mktime(&stm);
-            timestamp_ = std::make_shared<::trantor::Date>(t * 1000000);
+            email_ = std::make_shared<std::string>(pJson[pMasqueradingVector[10]].asString());
         }
     }
     if (!pMasqueradingVector[11].empty() && pJson.isMember(pMasqueradingVector[11])) {
         dirtyFlag_[11] = true;
         if (!pJson[pMasqueradingVector[11]].isNull()) {
-            recoverable_ = std::make_shared<bool>(pJson[pMasqueradingVector[11]].asBool());
+            data_ = std::make_shared<std::string>(pJson[pMasqueradingVector[11]].asString());
+        }
+    }
+    if (!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12])) {
+        dirtyFlag_[12] = true;
+        if (!pJson[pMasqueradingVector[12]].isNull()) {
+            auto timeStr = pJson[pMasqueradingVector[12]].asString();
+            struct tm stm;
+            memset(&stm, 0, sizeof(stm));
+            auto p = strptime(timeStr.c_str(), "%Y-%m-%d %H:%M:%S", &stm);
+            time_t t = mktime(&stm);
+            size_t decimalNum = 0;
+            if (p) {
+                if (*p == '.') {
+                    std::string decimals(p + 1, &timeStr[timeStr.length()]);
+                    while (decimals.length() < 6) {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t) atol(decimals.c_str());
+                }
+                timestamp_ = std::make_shared<::trantor::Date>(t * 1000000 + decimalNum);
+            }
+        }
+    }
+    if (!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13])) {
+        dirtyFlag_[13] = true;
+        if (!pJson[pMasqueradingVector[13]].isNull()) {
+            recoverable_ = std::make_shared<bool>(pJson[pMasqueradingVector[13]].asBool());
         }
     }
 }
@@ -410,73 +514,95 @@ void Removed::updateByJson(const Json::Value &pJson) noexcept(false) {
             id_ = std::make_shared<int64_t>((int64_t) pJson["id"].asInt64());
         }
     }
-    if (pJson.isMember("email")) {
-        dirtyFlag_[1] = true;
-        if (!pJson["email"].isNull()) {
-            email_ = std::make_shared<std::string>(pJson["email"].asString());
-        }
-    }
     if (pJson.isMember("username")) {
-        dirtyFlag_[2] = true;
+        dirtyFlag_[1] = true;
         if (!pJson["username"].isNull()) {
             username_ = std::make_shared<std::string>(pJson["username"].asString());
         }
     }
     if (pJson.isMember("motto")) {
-        dirtyFlag_[3] = true;
+        dirtyFlag_[2] = true;
         if (!pJson["motto"].isNull()) {
             motto_ = std::make_shared<std::string>(pJson["motto"].asString());
         }
     }
     if (pJson.isMember("region")) {
-        dirtyFlag_[4] = true;
+        dirtyFlag_[3] = true;
         if (!pJson["region"].isNull()) {
             region_ = std::make_shared<int32_t>((int32_t) pJson["region"].asInt64());
         }
     }
     if (pJson.isMember("avatar")) {
-        dirtyFlag_[5] = true;
+        dirtyFlag_[4] = true;
         if (!pJson["avatar"].isNull()) {
             avatar_ = std::make_shared<std::string>(pJson["avatar"].asString());
         }
     }
     if (pJson.isMember("avatar_hash")) {
-        dirtyFlag_[6] = true;
+        dirtyFlag_[5] = true;
         if (!pJson["avatar_hash"].isNull()) {
             avatarHash_ = std::make_shared<std::string>(pJson["avatar_hash"].asString());
         }
     }
     if (pJson.isMember("avatar_frame")) {
-        dirtyFlag_[7] = true;
+        dirtyFlag_[6] = true;
         if (!pJson["avatar_frame"].isNull()) {
             avatarFrame_ = std::make_shared<int32_t>((int32_t) pJson["avatar_frame"].asInt64());
         }
     }
     if (pJson.isMember("clan")) {
-        dirtyFlag_[8] = true;
+        dirtyFlag_[7] = true;
         if (!pJson["clan"].isNull()) {
             clan_ = std::make_shared<std::string>(pJson["clan"].asString());
         }
     }
-    if (pJson.isMember("data")) {
+    if (pJson.isMember("permission")) {
+        dirtyFlag_[8] = true;
+        if (!pJson["permission"].isNull()) {
+            permission_ = std::make_shared<std::string>(pJson["permission"].asString());
+        }
+    }
+    if (pJson.isMember("password")) {
         dirtyFlag_[9] = true;
+        if (!pJson["password"].isNull()) {
+            password_ = std::make_shared<std::string>(pJson["password"].asString());
+        }
+    }
+    if (pJson.isMember("email")) {
+        dirtyFlag_[10] = true;
+        if (!pJson["email"].isNull()) {
+            email_ = std::make_shared<std::string>(pJson["email"].asString());
+        }
+    }
+    if (pJson.isMember("data")) {
+        dirtyFlag_[11] = true;
         if (!pJson["data"].isNull()) {
             data_ = std::make_shared<std::string>(pJson["data"].asString());
         }
     }
     if (pJson.isMember("timestamp")) {
-        dirtyFlag_[10] = true;
+        dirtyFlag_[12] = true;
         if (!pJson["timestamp"].isNull()) {
-            auto daysStr = pJson["timestamp"].asString();
+            auto timeStr = pJson["timestamp"].asString();
             struct tm stm;
             memset(&stm, 0, sizeof(stm));
-            strptime(daysStr.c_str(), "%Y-%m-%d", &stm);
+            auto p = strptime(timeStr.c_str(), "%Y-%m-%d %H:%M:%S", &stm);
             time_t t = mktime(&stm);
-            timestamp_ = std::make_shared<::trantor::Date>(t * 1000000);
+            size_t decimalNum = 0;
+            if (p) {
+                if (*p == '.') {
+                    std::string decimals(p + 1, &timeStr[timeStr.length()]);
+                    while (decimals.length() < 6) {
+                        decimals += "0";
+                    }
+                    decimalNum = (size_t) atol(decimals.c_str());
+                }
+                timestamp_ = std::make_shared<::trantor::Date>(t * 1000000 + decimalNum);
+            }
         }
     }
     if (pJson.isMember("recoverable")) {
-        dirtyFlag_[11] = true;
+        dirtyFlag_[13] = true;
         if (!pJson["recoverable"].isNull()) {
             recoverable_ = std::make_shared<bool>(pJson["recoverable"].asBool());
         }
@@ -504,32 +630,6 @@ const typename Removed::PrimaryKeyType &Removed::getPrimaryKey() const {
     return *id_;
 }
 
-const std::string &Removed::getValueOfEmail() const noexcept {
-    const static std::string defaultValue = std::string();
-    if (email_)
-        return *email_;
-    return defaultValue;
-}
-
-const std::shared_ptr<std::string> &Removed::getEmail() const noexcept {
-    return email_;
-}
-
-void Removed::setEmail(const std::string &pEmail) noexcept {
-    email_ = std::make_shared<std::string>(pEmail);
-    dirtyFlag_[1] = true;
-}
-
-void Removed::setEmail(std::string &&pEmail) noexcept {
-    email_ = std::make_shared<std::string>(std::move(pEmail));
-    dirtyFlag_[1] = true;
-}
-
-void Removed::setEmailToNull() noexcept {
-    email_.reset();
-    dirtyFlag_[1] = true;
-}
-
 const std::string &Removed::getValueOfUsername() const noexcept {
     const static std::string defaultValue = std::string();
     if (username_)
@@ -543,17 +643,17 @@ const std::shared_ptr<std::string> &Removed::getUsername() const noexcept {
 
 void Removed::setUsername(const std::string &pUsername) noexcept {
     username_ = std::make_shared<std::string>(pUsername);
-    dirtyFlag_[2] = true;
+    dirtyFlag_[1] = true;
 }
 
 void Removed::setUsername(std::string &&pUsername) noexcept {
     username_ = std::make_shared<std::string>(std::move(pUsername));
-    dirtyFlag_[2] = true;
+    dirtyFlag_[1] = true;
 }
 
 void Removed::setUsernameToNull() noexcept {
     username_.reset();
-    dirtyFlag_[2] = true;
+    dirtyFlag_[1] = true;
 }
 
 const std::string &Removed::getValueOfMotto() const noexcept {
@@ -569,17 +669,17 @@ const std::shared_ptr<std::string> &Removed::getMotto() const noexcept {
 
 void Removed::setMotto(const std::string &pMotto) noexcept {
     motto_ = std::make_shared<std::string>(pMotto);
-    dirtyFlag_[3] = true;
+    dirtyFlag_[2] = true;
 }
 
 void Removed::setMotto(std::string &&pMotto) noexcept {
     motto_ = std::make_shared<std::string>(std::move(pMotto));
-    dirtyFlag_[3] = true;
+    dirtyFlag_[2] = true;
 }
 
 void Removed::setMottoToNull() noexcept {
     motto_.reset();
-    dirtyFlag_[3] = true;
+    dirtyFlag_[2] = true;
 }
 
 const int32_t &Removed::getValueOfRegion() const noexcept {
@@ -595,12 +695,12 @@ const std::shared_ptr<int32_t> &Removed::getRegion() const noexcept {
 
 void Removed::setRegion(const int32_t &pRegion) noexcept {
     region_ = std::make_shared<int32_t>(pRegion);
-    dirtyFlag_[4] = true;
+    dirtyFlag_[3] = true;
 }
 
 void Removed::setRegionToNull() noexcept {
     region_.reset();
-    dirtyFlag_[4] = true;
+    dirtyFlag_[3] = true;
 }
 
 const std::string &Removed::getValueOfAvatar() const noexcept {
@@ -616,17 +716,17 @@ const std::shared_ptr<std::string> &Removed::getAvatar() const noexcept {
 
 void Removed::setAvatar(const std::string &pAvatar) noexcept {
     avatar_ = std::make_shared<std::string>(pAvatar);
-    dirtyFlag_[5] = true;
+    dirtyFlag_[4] = true;
 }
 
 void Removed::setAvatar(std::string &&pAvatar) noexcept {
     avatar_ = std::make_shared<std::string>(std::move(pAvatar));
-    dirtyFlag_[5] = true;
+    dirtyFlag_[4] = true;
 }
 
 void Removed::setAvatarToNull() noexcept {
     avatar_.reset();
-    dirtyFlag_[5] = true;
+    dirtyFlag_[4] = true;
 }
 
 const std::string &Removed::getValueOfAvatarHash() const noexcept {
@@ -642,17 +742,17 @@ const std::shared_ptr<std::string> &Removed::getAvatarHash() const noexcept {
 
 void Removed::setAvatarHash(const std::string &pAvatarHash) noexcept {
     avatarHash_ = std::make_shared<std::string>(pAvatarHash);
-    dirtyFlag_[6] = true;
+    dirtyFlag_[5] = true;
 }
 
 void Removed::setAvatarHash(std::string &&pAvatarHash) noexcept {
     avatarHash_ = std::make_shared<std::string>(std::move(pAvatarHash));
-    dirtyFlag_[6] = true;
+    dirtyFlag_[5] = true;
 }
 
 void Removed::setAvatarHashToNull() noexcept {
     avatarHash_.reset();
-    dirtyFlag_[6] = true;
+    dirtyFlag_[5] = true;
 }
 
 const int32_t &Removed::getValueOfAvatarFrame() const noexcept {
@@ -668,12 +768,12 @@ const std::shared_ptr<int32_t> &Removed::getAvatarFrame() const noexcept {
 
 void Removed::setAvatarFrame(const int32_t &pAvatarFrame) noexcept {
     avatarFrame_ = std::make_shared<int32_t>(pAvatarFrame);
-    dirtyFlag_[7] = true;
+    dirtyFlag_[6] = true;
 }
 
 void Removed::setAvatarFrameToNull() noexcept {
     avatarFrame_.reset();
-    dirtyFlag_[7] = true;
+    dirtyFlag_[6] = true;
 }
 
 const std::string &Removed::getValueOfClan() const noexcept {
@@ -689,17 +789,95 @@ const std::shared_ptr<std::string> &Removed::getClan() const noexcept {
 
 void Removed::setClan(const std::string &pClan) noexcept {
     clan_ = std::make_shared<std::string>(pClan);
-    dirtyFlag_[8] = true;
+    dirtyFlag_[7] = true;
 }
 
 void Removed::setClan(std::string &&pClan) noexcept {
     clan_ = std::make_shared<std::string>(std::move(pClan));
-    dirtyFlag_[8] = true;
+    dirtyFlag_[7] = true;
 }
 
 void Removed::setClanToNull() noexcept {
     clan_.reset();
+    dirtyFlag_[7] = true;
+}
+
+const std::string &Removed::getValueOfPermission() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (permission_)
+        return *permission_;
+    return defaultValue;
+}
+
+const std::shared_ptr<std::string> &Removed::getPermission() const noexcept {
+    return permission_;
+}
+
+void Removed::setPermission(const std::string &pPermission) noexcept {
+    permission_ = std::make_shared<std::string>(pPermission);
     dirtyFlag_[8] = true;
+}
+
+void Removed::setPermission(std::string &&pPermission) noexcept {
+    permission_ = std::make_shared<std::string>(std::move(pPermission));
+    dirtyFlag_[8] = true;
+}
+
+void Removed::setPermissionToNull() noexcept {
+    permission_.reset();
+    dirtyFlag_[8] = true;
+}
+
+const std::string &Removed::getValueOfPassword() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (password_)
+        return *password_;
+    return defaultValue;
+}
+
+const std::shared_ptr<std::string> &Removed::getPassword() const noexcept {
+    return password_;
+}
+
+void Removed::setPassword(const std::string &pPassword) noexcept {
+    password_ = std::make_shared<std::string>(pPassword);
+    dirtyFlag_[9] = true;
+}
+
+void Removed::setPassword(std::string &&pPassword) noexcept {
+    password_ = std::make_shared<std::string>(std::move(pPassword));
+    dirtyFlag_[9] = true;
+}
+
+void Removed::setPasswordToNull() noexcept {
+    password_.reset();
+    dirtyFlag_[9] = true;
+}
+
+const std::string &Removed::getValueOfEmail() const noexcept {
+    const static std::string defaultValue = std::string();
+    if (email_)
+        return *email_;
+    return defaultValue;
+}
+
+const std::shared_ptr<std::string> &Removed::getEmail() const noexcept {
+    return email_;
+}
+
+void Removed::setEmail(const std::string &pEmail) noexcept {
+    email_ = std::make_shared<std::string>(pEmail);
+    dirtyFlag_[10] = true;
+}
+
+void Removed::setEmail(std::string &&pEmail) noexcept {
+    email_ = std::make_shared<std::string>(std::move(pEmail));
+    dirtyFlag_[10] = true;
+}
+
+void Removed::setEmailToNull() noexcept {
+    email_.reset();
+    dirtyFlag_[10] = true;
 }
 
 const std::string &Removed::getValueOfData() const noexcept {
@@ -715,12 +893,12 @@ const std::shared_ptr<std::string> &Removed::getData() const noexcept {
 
 void Removed::setData(const std::string &pData) noexcept {
     data_ = std::make_shared<std::string>(pData);
-    dirtyFlag_[9] = true;
+    dirtyFlag_[11] = true;
 }
 
 void Removed::setData(std::string &&pData) noexcept {
     data_ = std::make_shared<std::string>(std::move(pData));
-    dirtyFlag_[9] = true;
+    dirtyFlag_[11] = true;
 }
 
 const ::trantor::Date &Removed::getValueOfTimestamp() const noexcept {
@@ -735,8 +913,8 @@ const std::shared_ptr<::trantor::Date> &Removed::getTimestamp() const noexcept {
 }
 
 void Removed::setTimestamp(const ::trantor::Date &pTimestamp) noexcept {
-    timestamp_ = std::make_shared<::trantor::Date>(pTimestamp.roundDay());
-    dirtyFlag_[10] = true;
+    timestamp_ = std::make_shared<::trantor::Date>(pTimestamp);
+    dirtyFlag_[12] = true;
 }
 
 const bool &Removed::getValueOfRecoverable() const noexcept {
@@ -752,7 +930,7 @@ const std::shared_ptr<bool> &Removed::getRecoverable() const noexcept {
 
 void Removed::setRecoverable(const bool &pRecoverable) noexcept {
     recoverable_ = std::make_shared<bool>(pRecoverable);
-    dirtyFlag_[11] = true;
+    dirtyFlag_[13] = true;
 }
 
 void Removed::updateId(const uint64_t id) {
@@ -761,7 +939,6 @@ void Removed::updateId(const uint64_t id) {
 const std::vector<std::string> &Removed::insertColumns() noexcept {
     static const std::vector<std::string> inCols = {
             "id",
-            "email",
             "username",
             "motto",
             "region",
@@ -769,6 +946,9 @@ const std::vector<std::string> &Removed::insertColumns() noexcept {
             "avatar_hash",
             "avatar_frame",
             "clan",
+            "permission",
+            "password",
+            "email",
             "data",
             "timestamp",
             "recoverable"
@@ -785,76 +965,90 @@ void Removed::outputArgs(drogon::orm::internal::SqlBinder &binder) const {
         }
     }
     if (dirtyFlag_[1]) {
-        if (getEmail()) {
-            binder << getValueOfEmail();
-        } else {
-            binder << nullptr;
-        }
-    }
-    if (dirtyFlag_[2]) {
         if (getUsername()) {
             binder << getValueOfUsername();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[3]) {
+    if (dirtyFlag_[2]) {
         if (getMotto()) {
             binder << getValueOfMotto();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[4]) {
+    if (dirtyFlag_[3]) {
         if (getRegion()) {
             binder << getValueOfRegion();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[5]) {
+    if (dirtyFlag_[4]) {
         if (getAvatar()) {
             binder << getValueOfAvatar();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[6]) {
+    if (dirtyFlag_[5]) {
         if (getAvatarHash()) {
             binder << getValueOfAvatarHash();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[7]) {
+    if (dirtyFlag_[6]) {
         if (getAvatarFrame()) {
             binder << getValueOfAvatarFrame();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[8]) {
+    if (dirtyFlag_[7]) {
         if (getClan()) {
             binder << getValueOfClan();
         } else {
             binder << nullptr;
         }
     }
+    if (dirtyFlag_[8]) {
+        if (getPermission()) {
+            binder << getValueOfPermission();
+        } else {
+            binder << nullptr;
+        }
+    }
     if (dirtyFlag_[9]) {
+        if (getPassword()) {
+            binder << getValueOfPassword();
+        } else {
+            binder << nullptr;
+        }
+    }
+    if (dirtyFlag_[10]) {
+        if (getEmail()) {
+            binder << getValueOfEmail();
+        } else {
+            binder << nullptr;
+        }
+    }
+    if (dirtyFlag_[11]) {
         if (getData()) {
             binder << getValueOfData();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[10]) {
+    if (dirtyFlag_[12]) {
         if (getTimestamp()) {
             binder << getValueOfTimestamp();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[11]) {
+    if (dirtyFlag_[13]) {
         if (getRecoverable()) {
             binder << getValueOfRecoverable();
         } else {
@@ -901,6 +1095,12 @@ const std::vector<std::string> Removed::updateColumns() const {
     if (dirtyFlag_[11]) {
         ret.push_back(getColumnName(11));
     }
+    if (dirtyFlag_[12]) {
+        ret.push_back(getColumnName(12));
+    }
+    if (dirtyFlag_[13]) {
+        ret.push_back(getColumnName(13));
+    }
     return ret;
 }
 
@@ -913,76 +1113,90 @@ void Removed::updateArgs(drogon::orm::internal::SqlBinder &binder) const {
         }
     }
     if (dirtyFlag_[1]) {
-        if (getEmail()) {
-            binder << getValueOfEmail();
-        } else {
-            binder << nullptr;
-        }
-    }
-    if (dirtyFlag_[2]) {
         if (getUsername()) {
             binder << getValueOfUsername();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[3]) {
+    if (dirtyFlag_[2]) {
         if (getMotto()) {
             binder << getValueOfMotto();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[4]) {
+    if (dirtyFlag_[3]) {
         if (getRegion()) {
             binder << getValueOfRegion();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[5]) {
+    if (dirtyFlag_[4]) {
         if (getAvatar()) {
             binder << getValueOfAvatar();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[6]) {
+    if (dirtyFlag_[5]) {
         if (getAvatarHash()) {
             binder << getValueOfAvatarHash();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[7]) {
+    if (dirtyFlag_[6]) {
         if (getAvatarFrame()) {
             binder << getValueOfAvatarFrame();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[8]) {
+    if (dirtyFlag_[7]) {
         if (getClan()) {
             binder << getValueOfClan();
         } else {
             binder << nullptr;
         }
     }
+    if (dirtyFlag_[8]) {
+        if (getPermission()) {
+            binder << getValueOfPermission();
+        } else {
+            binder << nullptr;
+        }
+    }
     if (dirtyFlag_[9]) {
+        if (getPassword()) {
+            binder << getValueOfPassword();
+        } else {
+            binder << nullptr;
+        }
+    }
+    if (dirtyFlag_[10]) {
+        if (getEmail()) {
+            binder << getValueOfEmail();
+        } else {
+            binder << nullptr;
+        }
+    }
+    if (dirtyFlag_[11]) {
         if (getData()) {
             binder << getValueOfData();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[10]) {
+    if (dirtyFlag_[12]) {
         if (getTimestamp()) {
             binder << getValueOfTimestamp();
         } else {
             binder << nullptr;
         }
     }
-    if (dirtyFlag_[11]) {
+    if (dirtyFlag_[13]) {
         if (getRecoverable()) {
             binder << getValueOfRecoverable();
         } else {
@@ -997,11 +1211,6 @@ Json::Value Removed::toJson() const {
         ret["id"] = (Json::Int64) getValueOfId();
     } else {
         ret["id"] = Json::Value();
-    }
-    if (getEmail()) {
-        ret["email"] = getValueOfEmail();
-    } else {
-        ret["email"] = Json::Value();
     }
     if (getUsername()) {
         ret["username"] = getValueOfUsername();
@@ -1037,6 +1246,21 @@ Json::Value Removed::toJson() const {
         ret["clan"] = getValueOfClan();
     } else {
         ret["clan"] = Json::Value();
+    }
+    if (getPermission()) {
+        ret["permission"] = getValueOfPermission();
+    } else {
+        ret["permission"] = Json::Value();
+    }
+    if (getPassword()) {
+        ret["password"] = getValueOfPassword();
+    } else {
+        ret["password"] = Json::Value();
+    }
+    if (getEmail()) {
+        ret["email"] = getValueOfEmail();
+    } else {
+        ret["email"] = Json::Value();
     }
     if (getData()) {
         ret["data"] = getValueOfData();
@@ -1059,7 +1283,7 @@ Json::Value Removed::toJson() const {
 Json::Value Removed::toMasqueradedJson(
         const std::vector<std::string> &pMasqueradingVector) const {
     Json::Value ret;
-    if (pMasqueradingVector.size() == 12) {
+    if (pMasqueradingVector.size() == 14) {
         if (!pMasqueradingVector[0].empty()) {
             if (getId()) {
                 ret[pMasqueradingVector[0]] = (Json::Int64) getValueOfId();
@@ -1068,80 +1292,94 @@ Json::Value Removed::toMasqueradedJson(
             }
         }
         if (!pMasqueradingVector[1].empty()) {
-            if (getEmail()) {
-                ret[pMasqueradingVector[1]] = getValueOfEmail();
+            if (getUsername()) {
+                ret[pMasqueradingVector[1]] = getValueOfUsername();
             } else {
                 ret[pMasqueradingVector[1]] = Json::Value();
             }
         }
         if (!pMasqueradingVector[2].empty()) {
-            if (getUsername()) {
-                ret[pMasqueradingVector[2]] = getValueOfUsername();
+            if (getMotto()) {
+                ret[pMasqueradingVector[2]] = getValueOfMotto();
             } else {
                 ret[pMasqueradingVector[2]] = Json::Value();
             }
         }
         if (!pMasqueradingVector[3].empty()) {
-            if (getMotto()) {
-                ret[pMasqueradingVector[3]] = getValueOfMotto();
+            if (getRegion()) {
+                ret[pMasqueradingVector[3]] = getValueOfRegion();
             } else {
                 ret[pMasqueradingVector[3]] = Json::Value();
             }
         }
         if (!pMasqueradingVector[4].empty()) {
-            if (getRegion()) {
-                ret[pMasqueradingVector[4]] = getValueOfRegion();
+            if (getAvatar()) {
+                ret[pMasqueradingVector[4]] = getValueOfAvatar();
             } else {
                 ret[pMasqueradingVector[4]] = Json::Value();
             }
         }
         if (!pMasqueradingVector[5].empty()) {
-            if (getAvatar()) {
-                ret[pMasqueradingVector[5]] = getValueOfAvatar();
+            if (getAvatarHash()) {
+                ret[pMasqueradingVector[5]] = getValueOfAvatarHash();
             } else {
                 ret[pMasqueradingVector[5]] = Json::Value();
             }
         }
         if (!pMasqueradingVector[6].empty()) {
-            if (getAvatarHash()) {
-                ret[pMasqueradingVector[6]] = getValueOfAvatarHash();
+            if (getAvatarFrame()) {
+                ret[pMasqueradingVector[6]] = getValueOfAvatarFrame();
             } else {
                 ret[pMasqueradingVector[6]] = Json::Value();
             }
         }
         if (!pMasqueradingVector[7].empty()) {
-            if (getAvatarFrame()) {
-                ret[pMasqueradingVector[7]] = getValueOfAvatarFrame();
+            if (getClan()) {
+                ret[pMasqueradingVector[7]] = getValueOfClan();
             } else {
                 ret[pMasqueradingVector[7]] = Json::Value();
             }
         }
         if (!pMasqueradingVector[8].empty()) {
-            if (getClan()) {
-                ret[pMasqueradingVector[8]] = getValueOfClan();
+            if (getPermission()) {
+                ret[pMasqueradingVector[8]] = getValueOfPermission();
             } else {
                 ret[pMasqueradingVector[8]] = Json::Value();
             }
         }
         if (!pMasqueradingVector[9].empty()) {
-            if (getData()) {
-                ret[pMasqueradingVector[9]] = getValueOfData();
+            if (getPassword()) {
+                ret[pMasqueradingVector[9]] = getValueOfPassword();
             } else {
                 ret[pMasqueradingVector[9]] = Json::Value();
             }
         }
         if (!pMasqueradingVector[10].empty()) {
-            if (getTimestamp()) {
-                ret[pMasqueradingVector[10]] = getTimestamp()->toDbStringLocal();
+            if (getEmail()) {
+                ret[pMasqueradingVector[10]] = getValueOfEmail();
             } else {
                 ret[pMasqueradingVector[10]] = Json::Value();
             }
         }
         if (!pMasqueradingVector[11].empty()) {
-            if (getRecoverable()) {
-                ret[pMasqueradingVector[11]] = getValueOfRecoverable();
+            if (getData()) {
+                ret[pMasqueradingVector[11]] = getValueOfData();
             } else {
                 ret[pMasqueradingVector[11]] = Json::Value();
+            }
+        }
+        if (!pMasqueradingVector[12].empty()) {
+            if (getTimestamp()) {
+                ret[pMasqueradingVector[12]] = getTimestamp()->toDbStringLocal();
+            } else {
+                ret[pMasqueradingVector[12]] = Json::Value();
+            }
+        }
+        if (!pMasqueradingVector[13].empty()) {
+            if (getRecoverable()) {
+                ret[pMasqueradingVector[13]] = getValueOfRecoverable();
+            } else {
+                ret[pMasqueradingVector[13]] = Json::Value();
             }
         }
         return ret;
@@ -1151,11 +1389,6 @@ Json::Value Removed::toMasqueradedJson(
         ret["id"] = (Json::Int64) getValueOfId();
     } else {
         ret["id"] = Json::Value();
-    }
-    if (getEmail()) {
-        ret["email"] = getValueOfEmail();
-    } else {
-        ret["email"] = Json::Value();
     }
     if (getUsername()) {
         ret["username"] = getValueOfUsername();
@@ -1191,6 +1424,21 @@ Json::Value Removed::toMasqueradedJson(
         ret["clan"] = getValueOfClan();
     } else {
         ret["clan"] = Json::Value();
+    }
+    if (getPermission()) {
+        ret["permission"] = getValueOfPermission();
+    } else {
+        ret["permission"] = Json::Value();
+    }
+    if (getPassword()) {
+        ret["password"] = getValueOfPassword();
+    } else {
+        ret["password"] = Json::Value();
+    }
+    if (getEmail()) {
+        ret["email"] = getValueOfEmail();
+    } else {
+        ret["email"] = Json::Value();
     }
     if (getData()) {
         ret["data"] = getValueOfData();
@@ -1218,48 +1466,56 @@ bool Removed::validateJsonForCreation(const Json::Value &pJson, std::string &err
         err = "The id column cannot be null";
         return false;
     }
-    if (pJson.isMember("email")) {
-        if (!validJsonOfField(1, "email", pJson["email"], err, true))
-            return false;
-    }
     if (pJson.isMember("username")) {
-        if (!validJsonOfField(2, "username", pJson["username"], err, true))
+        if (!validJsonOfField(1, "username", pJson["username"], err, true))
             return false;
     }
     if (pJson.isMember("motto")) {
-        if (!validJsonOfField(3, "motto", pJson["motto"], err, true))
+        if (!validJsonOfField(2, "motto", pJson["motto"], err, true))
             return false;
     }
     if (pJson.isMember("region")) {
-        if (!validJsonOfField(4, "region", pJson["region"], err, true))
+        if (!validJsonOfField(3, "region", pJson["region"], err, true))
             return false;
     }
     if (pJson.isMember("avatar")) {
-        if (!validJsonOfField(5, "avatar", pJson["avatar"], err, true))
+        if (!validJsonOfField(4, "avatar", pJson["avatar"], err, true))
             return false;
     }
     if (pJson.isMember("avatar_hash")) {
-        if (!validJsonOfField(6, "avatar_hash", pJson["avatar_hash"], err, true))
+        if (!validJsonOfField(5, "avatar_hash", pJson["avatar_hash"], err, true))
             return false;
     }
     if (pJson.isMember("avatar_frame")) {
-        if (!validJsonOfField(7, "avatar_frame", pJson["avatar_frame"], err, true))
+        if (!validJsonOfField(6, "avatar_frame", pJson["avatar_frame"], err, true))
             return false;
     }
     if (pJson.isMember("clan")) {
-        if (!validJsonOfField(8, "clan", pJson["clan"], err, true))
+        if (!validJsonOfField(7, "clan", pJson["clan"], err, true))
+            return false;
+    }
+    if (pJson.isMember("permission")) {
+        if (!validJsonOfField(8, "permission", pJson["permission"], err, true))
+            return false;
+    }
+    if (pJson.isMember("password")) {
+        if (!validJsonOfField(9, "password", pJson["password"], err, true))
+            return false;
+    }
+    if (pJson.isMember("email")) {
+        if (!validJsonOfField(10, "email", pJson["email"], err, true))
             return false;
     }
     if (pJson.isMember("data")) {
-        if (!validJsonOfField(9, "data", pJson["data"], err, true))
+        if (!validJsonOfField(11, "data", pJson["data"], err, true))
             return false;
     }
     if (pJson.isMember("timestamp")) {
-        if (!validJsonOfField(10, "timestamp", pJson["timestamp"], err, true))
+        if (!validJsonOfField(12, "timestamp", pJson["timestamp"], err, true))
             return false;
     }
     if (pJson.isMember("recoverable")) {
-        if (!validJsonOfField(11, "recoverable", pJson["recoverable"], err, true))
+        if (!validJsonOfField(13, "recoverable", pJson["recoverable"], err, true))
             return false;
     }
     return true;
@@ -1268,7 +1524,7 @@ bool Removed::validateJsonForCreation(const Json::Value &pJson, std::string &err
 bool Removed::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                                  const std::vector<std::string> &pMasqueradingVector,
                                                  std::string &err) {
-    if (pMasqueradingVector.size() != 12) {
+    if (pMasqueradingVector.size() != 14) {
         err = "Bad masquerading vector";
         return false;
     }
@@ -1348,6 +1604,18 @@ bool Removed::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                     return false;
             }
         }
+        if (!pMasqueradingVector[12].empty()) {
+            if (pJson.isMember(pMasqueradingVector[12])) {
+                if (!validJsonOfField(12, pMasqueradingVector[12], pJson[pMasqueradingVector[12]], err, true))
+                    return false;
+            }
+        }
+        if (!pMasqueradingVector[13].empty()) {
+            if (pJson.isMember(pMasqueradingVector[13])) {
+                if (!validJsonOfField(13, pMasqueradingVector[13], pJson[pMasqueradingVector[13]], err, true))
+                    return false;
+            }
+        }
     }
     catch (const Json::LogicError &e) {
         err = e.what();
@@ -1364,48 +1632,56 @@ bool Removed::validateJsonForUpdate(const Json::Value &pJson, std::string &err) 
         err = "The value of primary key must be set in the json object for update";
         return false;
     }
-    if (pJson.isMember("email")) {
-        if (!validJsonOfField(1, "email", pJson["email"], err, false))
-            return false;
-    }
     if (pJson.isMember("username")) {
-        if (!validJsonOfField(2, "username", pJson["username"], err, false))
+        if (!validJsonOfField(1, "username", pJson["username"], err, false))
             return false;
     }
     if (pJson.isMember("motto")) {
-        if (!validJsonOfField(3, "motto", pJson["motto"], err, false))
+        if (!validJsonOfField(2, "motto", pJson["motto"], err, false))
             return false;
     }
     if (pJson.isMember("region")) {
-        if (!validJsonOfField(4, "region", pJson["region"], err, false))
+        if (!validJsonOfField(3, "region", pJson["region"], err, false))
             return false;
     }
     if (pJson.isMember("avatar")) {
-        if (!validJsonOfField(5, "avatar", pJson["avatar"], err, false))
+        if (!validJsonOfField(4, "avatar", pJson["avatar"], err, false))
             return false;
     }
     if (pJson.isMember("avatar_hash")) {
-        if (!validJsonOfField(6, "avatar_hash", pJson["avatar_hash"], err, false))
+        if (!validJsonOfField(5, "avatar_hash", pJson["avatar_hash"], err, false))
             return false;
     }
     if (pJson.isMember("avatar_frame")) {
-        if (!validJsonOfField(7, "avatar_frame", pJson["avatar_frame"], err, false))
+        if (!validJsonOfField(6, "avatar_frame", pJson["avatar_frame"], err, false))
             return false;
     }
     if (pJson.isMember("clan")) {
-        if (!validJsonOfField(8, "clan", pJson["clan"], err, false))
+        if (!validJsonOfField(7, "clan", pJson["clan"], err, false))
+            return false;
+    }
+    if (pJson.isMember("permission")) {
+        if (!validJsonOfField(8, "permission", pJson["permission"], err, false))
+            return false;
+    }
+    if (pJson.isMember("password")) {
+        if (!validJsonOfField(9, "password", pJson["password"], err, false))
+            return false;
+    }
+    if (pJson.isMember("email")) {
+        if (!validJsonOfField(10, "email", pJson["email"], err, false))
             return false;
     }
     if (pJson.isMember("data")) {
-        if (!validJsonOfField(9, "data", pJson["data"], err, false))
+        if (!validJsonOfField(11, "data", pJson["data"], err, false))
             return false;
     }
     if (pJson.isMember("timestamp")) {
-        if (!validJsonOfField(10, "timestamp", pJson["timestamp"], err, false))
+        if (!validJsonOfField(12, "timestamp", pJson["timestamp"], err, false))
             return false;
     }
     if (pJson.isMember("recoverable")) {
-        if (!validJsonOfField(11, "recoverable", pJson["recoverable"], err, false))
+        if (!validJsonOfField(13, "recoverable", pJson["recoverable"], err, false))
             return false;
     }
     return true;
@@ -1414,7 +1690,7 @@ bool Removed::validateJsonForUpdate(const Json::Value &pJson, std::string &err) 
 bool Removed::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                                const std::vector<std::string> &pMasqueradingVector,
                                                std::string &err) {
-    if (pMasqueradingVector.size() != 12) {
+    if (pMasqueradingVector.size() != 14) {
         err = "Bad masquerading vector";
         return false;
     }
@@ -1470,6 +1746,14 @@ bool Removed::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
             if (!validJsonOfField(11, pMasqueradingVector[11], pJson[pMasqueradingVector[11]], err, false))
                 return false;
         }
+        if (!pMasqueradingVector[12].empty() && pJson.isMember(pMasqueradingVector[12])) {
+            if (!validJsonOfField(12, pMasqueradingVector[12], pJson[pMasqueradingVector[12]], err, false))
+                return false;
+        }
+        if (!pMasqueradingVector[13].empty() && pJson.isMember(pMasqueradingVector[13])) {
+            if (!validJsonOfField(13, pMasqueradingVector[13], pJson[pMasqueradingVector[13]], err, false))
+                return false;
+        }
     }
     catch (const Json::LogicError &e) {
         err = e.what();
@@ -1516,7 +1800,7 @@ bool Removed::validJsonOfField(size_t index,
             if (pJson.isNull()) {
                 return true;
             }
-            if (!pJson.isString()) {
+            if (!pJson.isInt()) {
                 err = "Type error in the " + fieldName + " field";
                 return false;
             }
@@ -1525,7 +1809,7 @@ bool Removed::validJsonOfField(size_t index,
             if (pJson.isNull()) {
                 return true;
             }
-            if (!pJson.isInt()) {
+            if (!pJson.isString()) {
                 err = "Type error in the " + fieldName + " field";
                 return false;
             }
@@ -1543,7 +1827,7 @@ bool Removed::validJsonOfField(size_t index,
             if (pJson.isNull()) {
                 return true;
             }
-            if (!pJson.isString()) {
+            if (!pJson.isInt()) {
                 err = "Type error in the " + fieldName + " field";
                 return false;
             }
@@ -1552,7 +1836,7 @@ bool Removed::validJsonOfField(size_t index,
             if (pJson.isNull()) {
                 return true;
             }
-            if (!pJson.isInt()) {
+            if (!pJson.isString()) {
                 err = "Type error in the " + fieldName + " field";
                 return false;
             }
@@ -1568,8 +1852,7 @@ bool Removed::validJsonOfField(size_t index,
             break;
         case 9:
             if (pJson.isNull()) {
-                err = "The " + fieldName + " column cannot be null";
-                return false;
+                return true;
             }
             if (!pJson.isString()) {
                 err = "Type error in the " + fieldName + " field";
@@ -1577,6 +1860,15 @@ bool Removed::validJsonOfField(size_t index,
             }
             break;
         case 10:
+            if (pJson.isNull()) {
+                return true;
+            }
+            if (!pJson.isString()) {
+                err = "Type error in the " + fieldName + " field";
+                return false;
+            }
+            break;
+        case 11:
             if (pJson.isNull()) {
                 err = "The " + fieldName + " column cannot be null";
                 return false;
@@ -1586,7 +1878,17 @@ bool Removed::validJsonOfField(size_t index,
                 return false;
             }
             break;
-        case 11:
+        case 12:
+            if (pJson.isNull()) {
+                err = "The " + fieldName + " column cannot be null";
+                return false;
+            }
+            if (!pJson.isString()) {
+                err = "Type error in the " + fieldName + " field";
+                return false;
+            }
+            break;
+        case 13:
             if (pJson.isNull()) {
                 err = "The " + fieldName + " column cannot be null";
                 return false;

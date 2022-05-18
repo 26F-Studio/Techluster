@@ -7,10 +7,10 @@
 namespace tech::types {
     enum class Action {
         /// Transmission actions
-        transmissionBroadcast = 2000,
-        transmissionJoin,
-        transmissionLeave,
-        transmissionRemove,
-        transmissionStart,
+        TransmissionBroadcast = 2000,
+        TransmissionJoin,
+        TransmissionLeave,
+        TransmissionRemove,
+        TransmissionStart,
     };
 }

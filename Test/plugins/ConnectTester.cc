@@ -39,7 +39,7 @@ bool ConnectTester::heartbeat(const string &type, const uint32_t &port) {
             {make_pair("nodeType", type)},
             _credentialHeaders,
             body
-    )["code"].asUInt() == enum_integer(ResultCode::completed);
+    )["code"].asUInt() == enum_integer(ResultCode::Completed);
 }
 
 std::string ConnectTester::toHost(const uint32_t &port) {

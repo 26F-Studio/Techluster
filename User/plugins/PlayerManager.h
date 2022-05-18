@@ -15,9 +15,9 @@
 #include <types/DataField.h>
 
 namespace tech::plugins {
-    class DataManager :
-            public drogon::Plugin<DataManager>,
-            public helpers::I18nHelper<DataManager> {
+    class PlayerManager :
+            public drogon::Plugin<PlayerManager>,
+            public helpers::I18nHelper<PlayerManager> {
     public:
         static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
@@ -61,25 +61,13 @@ namespace tech::plugins {
 
         [[nodiscard]] Json::Value searchRemoved(const helpers::RequestJson &request);
 
-        void restoreRemoved(
-                const std::string &email,
-                const std::string &code
-        );
+        void restoreRemoved(const std::string &email, const std::string &code);
 
-        [[nodiscard]] Json::Value getUserInfo(
-                const std::string &accessToken,
-                const int64_t &userId
-        );
+        [[nodiscard]] Json::Value getUserInfo(const std::string &accessToken, int64_t userId);
 
-        void updateUserInfo(
-                const std::string &accessToken,
-                helpers::RequestJson request
-        );
+        void updateUserInfo(const std::string &accessToken, helpers::RequestJson request);
 
-        [[nodiscard]] std::string getAvatar(
-                const std::string &accessToken,
-                const int64_t &userId
-        );
+        [[nodiscard]] std::string getAvatar(const std::string &accessToken, int64_t userId);
 
         [[nodiscard]] Json::Value getUserData(
                 const std::string &accessToken,

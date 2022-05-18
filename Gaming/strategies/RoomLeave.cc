@@ -18,13 +18,13 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomLeave::RoomLeave() : MessageHandlerBase(enum_integer(Action::roomLeave)) {}
+RoomLeave::RoomLeave() : MessageHandlerBase(enum_integer(Action::RoomLeave)) {}
 
 bool RoomLeave::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || player->getRoomId().empty()) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;

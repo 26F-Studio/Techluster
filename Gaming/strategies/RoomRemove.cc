@@ -17,20 +17,20 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-RoomRemove::RoomRemove() : MessageHandlerBase(enum_integer(Action::roomRemove)) {}
+RoomRemove::RoomRemove() : MessageHandlerBase(enum_integer(Action::RoomRemove)) {}
 
 bool RoomRemove::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || player->getRoomId().empty()) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
     }
     if (player->role < Player::Role::admin) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("noPermission"));
         message.sendTo(wsConnPtr);
         return false;

@@ -6,18 +6,18 @@
 
 namespace tech::types {
     enum class TcpState {
-        closed = 1,
-        listen,
-        synSent,
-        synReceived,
+        Closed = 1,
+        Listen,
+        SynSent,
+        SynReceived,
         established,
-        finWait1,
-        finWait2,
-        closeWait,
-        lastAck,
-        closing,
-        timeWait,
-        deleteTcb,
-        reserved = 100,
+        FinWait1,
+        FinWait2,
+        CloseWait,
+        LastAck,
+        Closing,
+        TimeWait,
+        DeleteTcb,
+        Reserved = 100,
     };
 }

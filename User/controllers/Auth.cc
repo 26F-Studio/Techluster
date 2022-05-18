@@ -25,18 +25,18 @@ Auth::Auth() :
                 [this](const orm::DrogonDbException &e, ResponseJson &response) {
                     LOG_ERROR << e.base().what();
                     response.setStatusCode(k500InternalServerError);
-                    response.setResultCode(ResultCode::databaseError);
+                    response.setResultCode(ResultCode::DatabaseError);
                     response.setMessage(i18n("databaseError"));
                 },
                 [this](const exception &e, ResponseJson &response) {
                     LOG_ERROR << e.what();
                     response.setStatusCode(k500InternalServerError);
-                    response.setResultCode(ResultCode::internalError);
+                    response.setResultCode(ResultCode::InternalError);
                     response.setMessage(i18n("internalError"));
                     response.setReason(e);
                 }
         ),
-        _dataManager(app().getPlugin<DataManager>()) {}
+        _dataManager(app().getPlugin<PlayerManager>()) {}
 
 void Auth::check(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     ResponseJson response;
@@ -77,7 +77,7 @@ void Auth::loginEmail(const HttpRequestPtr &req, function<void(const HttpRespons
                     request["email"].asString(),
                     request["code"].asString()
             );
-            if (isNew) { response.setResultCode(ResultCode::continued); }
+            if (isNew) { response.setResultCode(ResultCode::Continued); }
             response.setData(move(tokens.parse()));
         } else {
             const auto &tokens = _dataManager->loginEmailPassword(

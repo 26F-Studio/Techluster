@@ -5,7 +5,7 @@
 #include <filters/EmailThreshold.h>
 #include <helpers/RequestJson.h>
 #include <helpers/ResponseJson.h>
-#include <plugins/DataManager.h>
+#include <plugins/PlayerManager.h>
 #include <structures/Exceptions.h>
 
 using namespace drogon;
@@ -23,10 +23,10 @@ void tech::filters::EmailThreshold::doFilter(
 ) {
     auto requestJson = req->attributes()->get<RequestJson>("requestJson");
     try {
-        if (!app().getPlugin<DataManager>()->emailLimit(requestJson["email"].asString())) {
+        if (!app().getPlugin<PlayerManager>()->emailLimit(requestJson["email"].asString())) {
             ResponseJson response;
             response.setStatusCode(k429TooManyRequests);
-            response.setResultCode(ResultCode::tooFrequent);
+            response.setResultCode(ResultCode::TooFrequent);
             response.setMessage(i18n("tooFrequent"));
             response.httpCallback(failedCb);
             return;
@@ -35,7 +35,7 @@ void tech::filters::EmailThreshold::doFilter(
         LOG_ERROR << e.what();
         ResponseJson response;
         response.setStatusCode(k500InternalServerError);
-        response.setResultCode(ResultCode::internalError);
+        response.setResultCode(ResultCode::InternalError);
         response.setMessage(i18n("internalError"));
         response.httpCallback(failedCb);
         return;

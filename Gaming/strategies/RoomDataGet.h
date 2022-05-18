@@ -8,14 +8,14 @@
 #include <structures/MessageHandlerBase.h>
 
 namespace tech::strategies {
-    class RoomInfo :
+    class RoomDataGet :
             public structures::MessageHandlerBase,
-            public structures::MessageJsonHandler<RoomInfo> {
+            public structures::MessageJsonHandler<RoomDataGet> {
     public:
         static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
     public:
-        RoomInfo();
+        RoomDataGet();
 
         bool filter(const drogon::WebSocketConnectionPtr &wsConnPtr, helpers::RequestJson &request) override;
 

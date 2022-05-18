@@ -19,6 +19,8 @@ namespace tech::plugins {
 
         drogon::HttpStatusCode checkAccessToken(const std::string &accessToken, int64_t &id);
 
+        Json::Value getUserInfo(int64_t userId);
+
         std::tuple<std::string, std::string> getWorkshopItem(const std::string &itemId);
 
         std::chrono::duration<double> _taskMinutes{};

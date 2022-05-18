@@ -19,13 +19,13 @@ using namespace tech::strategies;
 using namespace tech::structures;
 using namespace tech::types;
 
-TransmissionJoin::TransmissionJoin() : MessageHandlerBase(enum_integer(Action::transmissionJoin)) {}
+TransmissionJoin::TransmissionJoin() : MessageHandlerBase(enum_integer(Action::TransmissionJoin)) {}
 
 bool TransmissionJoin::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &transmitter = wsConnPtr->getContext<Transmitter>();
     if (!transmitter || !transmitter->getRoomId().empty()) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -33,7 +33,7 @@ bool TransmissionJoin::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJs
 
     if (!request.check(JsonValue::String)) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidArguments"));
         message.sendTo(wsConnPtr);
         return false;

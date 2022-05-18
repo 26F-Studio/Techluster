@@ -21,7 +21,7 @@ void CheckRefreshToken::doFilter(
     if (refreshToken.empty()) {
         ResponseJson response;
         response.setStatusCode(k400BadRequest);
-        response.setResultCode(ResultCode::invalidArguments);
+        response.setResultCode(ResultCode::InvalidArguments);
         response.setMessage(i18n("invalidArguments"));
         response.httpCallback(failedCb);
         return;
