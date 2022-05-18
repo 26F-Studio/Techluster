@@ -12,6 +12,9 @@
 #include <structures/Exceptions.h>
 
 namespace tech::structures {
+
+#define NO_EXCEPTION(expressions) try{expressions}catch(...){}
+
     template<class T>
     class RequestJsonHandler : public helpers::I18nHelper<T> {
     public:
