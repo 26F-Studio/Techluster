@@ -157,13 +157,11 @@ tuple<RedisToken, bool> PlayerManager::loginEmailCode(
     _checkEmailCode(email, code);
 
     techluster::Player player;
-    bool isNew = false;
     if (_playerMapper->count(orm::Criteria(
             techluster::Player::Cols::_email,
             orm::CompareOperator::EQ,
             email
     )) == 0) {
-        isNew = true;
         player.setEmail(email);
         _playerMapper->insert(player);
         techluster::Data data;
@@ -178,7 +176,7 @@ tuple<RedisToken, bool> PlayerManager::loginEmailCode(
 
     return {
             _userRedis->generateTokens(to_string(player.getValueOfId())),
-            isNew
+            player.getValueOfPassword().empty()
     };
 }
 
