@@ -38,8 +38,6 @@ namespace drogon_model {
         public:
             struct Cols {
                 static const std::string _id;
-                static const std::string _email;
-                static const std::string _password;
                 static const std::string _username;
                 static const std::string _motto;
                 static const std::string _region;
@@ -47,7 +45,9 @@ namespace drogon_model {
                 static const std::string _avatar_hash;
                 static const std::string _avatar_frame;
                 static const std::string _clan;
-                static const std::string _is_new;
+                static const std::string _permission;
+                static const std::string _password;
+                static const std::string _email;
             };
 
             const static int primaryKeyNumber;
@@ -115,32 +115,6 @@ namespace drogon_model {
 
             ///Set the value of the column id
             void setId(const int64_t &pId) noexcept;
-
-            /**  For column email  */
-            ///Get the value of the column email, returns the default value if the column is null
-            const std::string &getValueOfEmail() const noexcept;
-
-            ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr<std::string> &getEmail() const noexcept;
-
-            ///Set the value of the column email
-            void setEmail(const std::string &pEmail) noexcept;
-
-            void setEmail(std::string &&pEmail) noexcept;
-
-            /**  For column password  */
-            ///Get the value of the column password, returns the default value if the column is null
-            const std::string &getValueOfPassword() const noexcept;
-
-            ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr<std::string> &getPassword() const noexcept;
-
-            ///Set the value of the column password
-            void setPassword(const std::string &pPassword) noexcept;
-
-            void setPassword(std::string &&pPassword) noexcept;
-
-            void setPasswordToNull() noexcept;
 
             /**  For column username  */
             ///Get the value of the column username, returns the default value if the column is null
@@ -230,15 +204,45 @@ namespace drogon_model {
 
             void setClanToNull() noexcept;
 
-            /**  For column is_new  */
-            ///Get the value of the column is_new, returns the default value if the column is null
-            const bool &getValueOfIsNew() const noexcept;
+            /**  For column permission  */
+            ///Get the value of the column permission, returns the default value if the column is null
+            const std::string &getValueOfPermission() const noexcept;
 
             ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-            const std::shared_ptr<bool> &getIsNew() const noexcept;
+            const std::shared_ptr<std::string> &getPermission() const noexcept;
 
-            ///Set the value of the column is_new
-            void setIsNew(const bool &pIsNew) noexcept;
+            ///Set the value of the column permission
+            void setPermission(const std::string &pPermission) noexcept;
+
+            void setPermission(std::string &&pPermission) noexcept;
+
+            /**  For column password  */
+            ///Get the value of the column password, returns the default value if the column is null
+            const std::string &getValueOfPassword() const noexcept;
+
+            ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+            const std::shared_ptr<std::string> &getPassword() const noexcept;
+
+            ///Set the value of the column password
+            void setPassword(const std::string &pPassword) noexcept;
+
+            void setPassword(std::string &&pPassword) noexcept;
+
+            void setPasswordToNull() noexcept;
+
+            /**  For column email  */
+            ///Get the value of the column email, returns the default value if the column is null
+            const std::string &getValueOfEmail() const noexcept;
+
+            ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+            const std::shared_ptr<std::string> &getEmail() const noexcept;
+
+            ///Set the value of the column email
+            void setEmail(const std::string &pEmail) noexcept;
+
+            void setEmail(std::string &&pEmail) noexcept;
+
+            void setEmailToNull() noexcept;
 
 
             static size_t getColumnNumber() noexcept { return 11; }
@@ -267,8 +271,6 @@ namespace drogon_model {
             void updateId(const uint64_t id);
 
             std::shared_ptr<int64_t> id_;
-            std::shared_ptr<std::string> email_;
-            std::shared_ptr<std::string> password_;
             std::shared_ptr<std::string> username_;
             std::shared_ptr<std::string> motto_;
             std::shared_ptr<int32_t> region_;
@@ -276,7 +278,9 @@ namespace drogon_model {
             std::shared_ptr<std::string> avatarHash_;
             std::shared_ptr<int32_t> avatarFrame_;
             std::shared_ptr<std::string> clan_;
-            std::shared_ptr<bool> isNew_;
+            std::shared_ptr<std::string> permission_;
+            std::shared_ptr<std::string> password_;
+            std::shared_ptr<std::string> email_;
             struct MetaData {
                 const std::string colName_;
                 const std::string colType_;
@@ -305,49 +309,49 @@ namespace drogon_model {
                 needSelection = false;
                 sql += "id,";
                 ++parametersCount;
-                if (dirtyFlag_[1]) {
-                    sql += "email,";
-                    ++parametersCount;
-                }
-                if (dirtyFlag_[2]) {
-                    sql += "password,";
-                    ++parametersCount;
-                }
                 sql += "username,";
                 ++parametersCount;
-                if (!dirtyFlag_[3]) {
+                if (!dirtyFlag_[1]) {
                     needSelection = true;
                 }
-                if (dirtyFlag_[4]) {
+                if (dirtyFlag_[2]) {
                     sql += "motto,";
                     ++parametersCount;
                 }
                 sql += "region,";
                 ++parametersCount;
-                if (!dirtyFlag_[5]) {
+                if (!dirtyFlag_[3]) {
                     needSelection = true;
                 }
-                if (dirtyFlag_[6]) {
+                if (dirtyFlag_[4]) {
                     sql += "avatar,";
                     ++parametersCount;
                 }
-                if (dirtyFlag_[7]) {
+                if (dirtyFlag_[5]) {
                     sql += "avatar_hash,";
                     ++parametersCount;
                 }
                 sql += "avatar_frame,";
                 ++parametersCount;
+                if (!dirtyFlag_[6]) {
+                    needSelection = true;
+                }
+                if (dirtyFlag_[7]) {
+                    sql += "clan,";
+                    ++parametersCount;
+                }
+                sql += "permission,";
+                ++parametersCount;
                 if (!dirtyFlag_[8]) {
                     needSelection = true;
                 }
                 if (dirtyFlag_[9]) {
-                    sql += "clan,";
+                    sql += "password,";
                     ++parametersCount;
                 }
-                sql += "is_new,";
-                ++parametersCount;
-                if (!dirtyFlag_[10]) {
-                    needSelection = true;
+                if (dirtyFlag_[10]) {
+                    sql += "email,";
+                    ++parametersCount;
                 }
                 needSelection = true;
                 if (parametersCount > 0) {
@@ -363,6 +367,8 @@ namespace drogon_model {
                 if (dirtyFlag_[1]) {
                     n = sprintf(placeholderStr, "$%d,", placeholder++);
                     sql.append(placeholderStr, n);
+                } else {
+                    sql += "default,";
                 }
                 if (dirtyFlag_[2]) {
                     n = sprintf(placeholderStr, "$%d,", placeholder++);
@@ -381,12 +387,12 @@ namespace drogon_model {
                 if (dirtyFlag_[5]) {
                     n = sprintf(placeholderStr, "$%d,", placeholder++);
                     sql.append(placeholderStr, n);
-                } else {
-                    sql += "default,";
                 }
                 if (dirtyFlag_[6]) {
                     n = sprintf(placeholderStr, "$%d,", placeholder++);
                     sql.append(placeholderStr, n);
+                } else {
+                    sql += "default,";
                 }
                 if (dirtyFlag_[7]) {
                     n = sprintf(placeholderStr, "$%d,", placeholder++);
@@ -405,8 +411,6 @@ namespace drogon_model {
                 if (dirtyFlag_[10]) {
                     n = sprintf(placeholderStr, "$%d,", placeholder++);
                     sql.append(placeholderStr, n);
-                } else {
-                    sql += "default,";
                 }
                 if (parametersCount > 0) {
                     sql.resize(sql.length() - 1);
