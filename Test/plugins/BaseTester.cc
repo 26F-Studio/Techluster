@@ -15,7 +15,7 @@ using namespace tech::helpers;
 using namespace tech::plugins;
 using namespace tech::structures;
 
-void WebHelper::colorOut(const std::string &msg, const Color &color) {
+void WebHelper::colorOut(const std::string &msg, Color color) {
     cout << "\x1b[" << enum_integer(color) << "m"
          << string(16, '-')
          << msg
@@ -25,7 +25,7 @@ void WebHelper::colorOut(const std::string &msg, const Color &color) {
 }
 
 Json::Value WebHelper::_httpRequest(
-        const HttpMethod &method,
+        HttpMethod method,
         const string &path,
         const unordered_map<string, string> &parameters,
         const unordered_map<string, string> &headers,

@@ -71,14 +71,14 @@ namespace tech::plugins {
 
         [[nodiscard]] Json::Value getUserData(
                 const std::string &accessToken,
-                const int64_t &userId,
-                const types::DataField &field,
+                int64_t userId,
+                types::DataField field,
                 const helpers::RequestJson &request
         );
 
         void updateUserData(
                 const std::string &accessToken,
-                const types::DataField &field,
+                types::DataField field,
                 const helpers::RequestJson &request
         );
 

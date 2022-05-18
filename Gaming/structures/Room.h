@@ -48,7 +48,7 @@ namespace tech::structures {
         };
 
         explicit Room(
-                const uint64_t &capacity,
+                uint64_t capacity,
                 const std::string &password,
                 Json::Value info,
                 Json::Value data

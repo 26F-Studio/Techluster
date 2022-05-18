@@ -28,7 +28,7 @@ void Authorizer::initAndStart(const Json::Value &config) {
 
 void Authorizer::shutdown() { LOG_INFO << "Authorizer shutdown."; }
 
-bool Authorizer::isSuperusers(const int64_t &uid) const { return _superusers.contains(uid); }
+bool Authorizer::isSuperusers(int64_t uid) const { return _superusers.contains(uid); }
 
 string Authorizer::getCredential() const { return _credential; }
 

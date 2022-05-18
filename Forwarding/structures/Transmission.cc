@@ -59,7 +59,7 @@ void Transmission::leave(int64_t userId) {
 
 void Transmission::publish(const MessageJson &message, int64_t excludedId) const {
     shared_lock<shared_mutex> lock(_transmitterMutex);
-    for (const auto &userId: _transmitterSet) {
+    for (const auto userId: _transmitterSet) {
         if (excludedId != userId) {
             message.sendTo(_connectionManager->getConnPtr(userId));
         }
@@ -77,7 +77,7 @@ Json::Value Transmission::parse() const {
     result["playerSet"] = Json::arrayValue;
 
     shared_lock<shared_mutex> transmitterLock(_transmitterMutex), historyLock(_historyMutex);
-    for (const auto &userId: _transmitterSet) {
+    for (const auto userId: _transmitterSet) {
         Json::Value info(_connectionManager->getConnPtr(userId)->getContext<Transmitter>()->info());
         info["history"] = _history.contains(userId) ? _history.at(userId) : "";
         result["transmitters"].append(move(info));
@@ -86,7 +86,7 @@ Json::Value Transmission::parse() const {
 }
 
 Transmission::~Transmission() {
-    for (const auto &userId: _transmitterSet) {
+    for (const auto userId: _transmitterSet) {
         _connectionManager->getConnPtr(userId)->getContext<Transmitter>()->reset();
     }
 }

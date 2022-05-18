@@ -24,7 +24,7 @@ using namespace tech::utils;
 using namespace trantor;
 
 Room::Room(
-        const uint64_t &capacity,
+        uint64_t capacity,
         const string &password,
         Json::Value info,
         Json::Value data
@@ -111,7 +111,7 @@ void Room::unsubscribe(int64_t userId) {
 uint64_t Room::countGamer() const {
     uint64_t counter{};
     shared_lock<shared_mutex> lock(_sharedMutex);
-    for (const auto &userId: _playerSet) {
+    for (const auto userId: _playerSet) {
         const auto player = _connectionManager->getConnPtr(userId)->getContext<Player>();
         if (player->type == Player::Type::gamer) {
             counter++;
@@ -124,7 +124,7 @@ uint64_t Room::countGroup() const {
     unordered_set<uint64_t> groupCounter;
     {
         shared_lock<shared_mutex> lock(_sharedMutex);
-        for (const auto &userId: _playerSet) {
+        for (const auto userId: _playerSet) {
             const auto player = _connectionManager->getConnPtr(userId)->getContext<Player>();
             if (player->type == Player::Type::gamer &&
                 player->state == Player::State::playing) {
@@ -138,7 +138,7 @@ uint64_t Room::countGroup() const {
 uint64_t Room::countPlaying() const {
     uint64_t counter{};
     shared_lock<shared_mutex> lock(_sharedMutex);
-    for (const auto &userId: _playerSet) {
+    for (const auto userId: _playerSet) {
         const auto player = _connectionManager->getConnPtr(userId)->getContext<Player>();
         if (player->type == Player::Type::gamer &&
             player->state == Player::State::playing) {
@@ -151,7 +151,7 @@ uint64_t Room::countPlaying() const {
 uint64_t Room::countSpectator() const {
     uint64_t counter{};
     shared_lock<shared_mutex> lock(_sharedMutex);
-    for (const auto &userId: _playerSet) {
+    for (const auto userId: _playerSet) {
         const auto player = _connectionManager->getConnPtr(userId)->getContext<Player>();
         if (player->type == Player::Type::spectator) {
             counter++;
@@ -163,7 +163,7 @@ uint64_t Room::countSpectator() const {
 uint64_t Room::countStandby() const {
     uint64_t counter{};
     shared_lock<shared_mutex> lock(_sharedMutex);
-    for (const auto &userId: _playerSet) {
+    for (const auto userId: _playerSet) {
         const auto player = _connectionManager->getConnPtr(userId)->getContext<Player>();
         if (player->type == Player::Type::gamer &&
             player->state == Player::State::standby) {
@@ -190,7 +190,7 @@ Json::Value Room::parse(bool details) const {
     if (details) {
         result["data"] = _data.copy();
         result["players"] = Json::arrayValue;
-        for (const auto &userId: _playerSet) {
+        for (const auto userId: _playerSet) {
             result["players"].append(
                     _connectionManager->getConnPtr(userId)->getContext<Player>()->info()
             );
@@ -201,7 +201,7 @@ Json::Value Room::parse(bool details) const {
 
 void Room::publish(const MessageJson &message, int64_t excludedId) {
     shared_lock<shared_mutex> lock(_sharedMutex);
-    for (const auto &userId: _playerSet) {
+    for (const auto userId: _playerSet) {
         if (excludedId != userId) {
             message.sendTo(_connectionManager->getConnPtr(userId));
         }
@@ -315,7 +315,7 @@ void Room::tryStart() {
 
 Room::~Room() {
     tryCancelStart();
-    for (const auto &userId: _playerSet) {
+    for (const auto userId: _playerSet) {
         const auto &wsConnPtr = _connectionManager->getConnPtr(userId);
         wsConnPtr->getContext<Player>()->reset();
         unsubscribe(userId);
@@ -330,7 +330,7 @@ void Room::_estimateForwardingNode() {
     vector<Json::Value> pingLists;
     {
         shared_lock<shared_mutex> lock(_sharedMutex);
-        for (const auto &userId: _playerSet) {
+        for (const auto userId: _playerSet) {
             const auto player = _connectionManager->getConnPtr(userId)->getContext<Player>();
             // TODO: Kick high delay spectators, replace high delay players with robots
             if (player->type == Player::Type::gamer) {
@@ -357,7 +357,7 @@ void Room::_createTransmission() {
     body["roomId"] = roomId;
     {
         shared_lock<shared_mutex> lock(_sharedMutex);
-        for (const auto &userId: _playerSet) {
+        for (const auto userId: _playerSet) {
             body["players"].append(userId);
         }
     }

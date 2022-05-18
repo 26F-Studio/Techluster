@@ -97,7 +97,7 @@ using namespace std;
 }
 
 
-string crypto::blake2B(const string &source, const unsigned int &divider) {
+string crypto::blake2B(const string &source, unsigned int divider) {
     stringstream tempStringStream;
     HexEncoder encoder(new FileSink(tempStringStream));
     string digest;
@@ -109,7 +109,7 @@ string crypto::blake2B(const string &source, const unsigned int &divider) {
     return tempStringStream.str();
 }
 
-string crypto::keccak(const string &source, const unsigned int &divider) {
+string crypto::keccak(const string &source, unsigned int divider) {
     stringstream tempStringStream;
     HexEncoder encoder(new FileSink(tempStringStream));
     string digest;

@@ -27,9 +27,9 @@ ResponseJson::ResponseJson(const HttpResponsePtr &res) {
     _value = std::move(*object);
 }
 
-void ResponseJson::setResultCode(const ResultCode &code) { setResultCode(enum_integer(code)); }
+void ResponseJson::setResultCode(ResultCode code) { setResultCode(enum_integer(code)); }
 
-void ResponseJson::setResultCode(const uint32_t &code) { _value["code"] = code; }
+void ResponseJson::setResultCode(uint32_t code) { _value["code"] = code; }
 
 void ResponseJson::setStatusCode(drogon::HttpStatusCode code) { _statusCode = code; }
 

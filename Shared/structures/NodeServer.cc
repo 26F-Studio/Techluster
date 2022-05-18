@@ -10,10 +10,10 @@ using namespace tech::types;
 using namespace trantor;
 
 NodeServer::NodeServer(
-        const NodeType &type,
+        NodeType type,
         const string &ip,
-        const uint16_t &port,
-        const double &taskInterval,
+        uint16_t port,
+        double taskInterval,
         string description,
         Json::Value info
 ) : nodeType(type),

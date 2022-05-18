@@ -39,9 +39,9 @@ message EmailHelper::pop3(
     );
     pop3s conn(_server, 995);
     conn.authenticate(_account, _password, pop3s::auth_method_t::LOGIN);
-    const auto &messageCount = conn.statistics().messages_no;
-    const auto &number = (messageNumber == 0 || messageNumber > messageCount) ?
-                         messageCount : messageNumber;
+    const auto messageCount = conn.statistics().messages_no;
+    const auto number = (messageNumber == 0 || messageNumber > messageCount) ?
+                        messageCount : messageNumber;
     conn.fetch(number, msg);
     if (remove) {
         conn.remove(number);

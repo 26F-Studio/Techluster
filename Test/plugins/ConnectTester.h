@@ -17,9 +17,9 @@ namespace tech::plugins {
 
         Json::Value allocator(const std::string &type);
 
-        bool heartbeat(const std::string &type, const uint32_t &port);
+        bool heartbeat(const std::string &type, uint32_t port);
 
-        std::string toHost(const uint32_t &port);
+        std::string toHost(uint32_t port);
 
         helpers::DataJson monitor(const std::string &type);
 

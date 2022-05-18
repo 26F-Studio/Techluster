@@ -19,7 +19,7 @@ namespace tech::internal {
 };
 
 namespace tech::utils::data {
-    std::string randomString(const uint64_t &length);
+    std::string randomString(uint64_t length);
 }
 
 

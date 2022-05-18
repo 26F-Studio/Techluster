@@ -22,12 +22,12 @@ namespace tech::structures {
         const HandlerFactory &operator=(const HandlerFactory &) = delete;
 
         template<class Handler>
-        void registerHandler(const int &action) {
+        void registerHandler(int action) {
             std::unique_lock<std::shared_mutex> lock(_sharedMutex);
             _handlerRegistrarsMap[action] = std::make_unique<Handler>();
         }
 
-        baseHandler &getHandler(const int &action) {
+        baseHandler &getHandler(int action) {
             std::shared_lock<std::shared_mutex> lock(_sharedMutex);
             auto iter = _handlerRegistrarsMap.find(action);
             if (iter != _handlerRegistrarsMap.end()) {

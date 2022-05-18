@@ -12,7 +12,7 @@ string datetime::toString(const Date &date) {
     return date.toDbStringLocal();
 }
 
-std::string datetime::toString(const int64_t &microseconds) {
+std::string datetime::toString(int64_t microseconds) {
     return trantor::Date(microseconds).toDbStringLocal();
 }
 
@@ -23,6 +23,6 @@ Date datetime::toDate(const string &date) {
     return Date::fromDbStringLocal(date);
 }
 
-trantor::Date datetime::toDate(const int64_t &microseconds) {
+trantor::Date datetime::toDate(int64_t microseconds) {
     return trantor::Date(microseconds);
 }

@@ -18,32 +18,32 @@ BaseException::BaseException(string message) : _message(move(message)) {}
 
 char const *BaseException::what() const noexcept { return _message.c_str(); }
 
-CodeException::CodeException(string message, const int &code) :
+CodeException::CodeException(string message, int code) :
         BaseException(move(message)), _code(code) {}
 
-const int &CodeException::code() const noexcept { return _code; }
+int CodeException::code() const noexcept { return _code; }
 
 NetworkException::NetworkException(
         string message,
-        const ReqResult &result
+        ReqResult result
 ) : CodeException(move(message), enum_integer(TypePrefix::request) + enum_integer(result)) {}
 
 ResponseException::ResponseException(
         string message,
-        const ResultCode &code,
-        const drogon::HttpStatusCode &statusCode
+        ResultCode code,
+        HttpStatusCode statusCode
 ) : BaseException(move(message)), _code(code), _statusCode(statusCode) {}
 
 ResponseException::ResponseException(
         string message,
         const exception &e,
-        const ResultCode &code,
-        const HttpStatusCode &statusCode
+        ResultCode code,
+        HttpStatusCode statusCode
 ) : BaseException(move(message)), _code(code), _statusCode(statusCode), _reason(e.what()) {}
 
-const ResultCode &ResponseException::code() const noexcept { return _code; }
+ResultCode ResponseException::code() const noexcept { return _code; }
 
-const drogon::HttpStatusCode &ResponseException::statusCode() const noexcept { return _statusCode; }
+HttpStatusCode ResponseException::statusCode() const noexcept { return _statusCode; }
 
 Json::Value ResponseException::toJson() const noexcept {
     ResponseJson result;
@@ -63,7 +63,7 @@ MessageException::MessageException(
 json_exception::InvalidFormat::InvalidFormat(std::string message) :
         BaseException(move(message)) {}
 
-json_exception::WrongType::WrongType(const JsonValue &valueType) :
+json_exception::WrongType::WrongType(JsonValue valueType) :
         BaseException(string(enum_name(valueType))) {}
 
 sql_exception::EmptyValue::EmptyValue(string message) :

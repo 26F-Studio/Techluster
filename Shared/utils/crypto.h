@@ -17,8 +17,8 @@ namespace tech::utils::crypto {
         [[maybe_unused]] std::string decrypt(std::string source, std::string key, std::string iv);
     }
 
-    std::string blake2B(const std::string &source, const unsigned int &divider = 2);
+    std::string blake2B(const std::string &source, unsigned int divider = 2);
 
-    std::string keccak(const std::string &source, const unsigned int &divider = 2);
+    std::string keccak(const std::string &source, unsigned int divider = 2);
 }
 
