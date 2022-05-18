@@ -11,9 +11,9 @@
 namespace tech::utils::datetime {
     std::string toString(const trantor::Date &date = trantor::Date::date());
 
-    std::string toString(const int64_t &microseconds);
+    std::string toString(int64_t microseconds);
 
     trantor::Date toDate(const std::string &date = std::string());
 
-    trantor::Date toDate(const int64_t &microseconds);
+    trantor::Date toDate(int64_t microseconds);
 }

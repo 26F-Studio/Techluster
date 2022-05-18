@@ -22,7 +22,7 @@ void ConnectionManager::shutdown() { LOG_INFO << "ConnectionManager shutdown."; 
 void ConnectionManager::subscribe(const WebSocketConnectionPtr &wsConnPtr) {
     const auto &player = wsConnPtr->getContext<BasicPlayer>();
     if (wsConnPtr->connected() && player) {
-        const auto &userId = player->userId;
+        const auto userId = player->userId;
         unique_lock<shared_mutex> lock(_sharedMutex);
         if (_connectionMap.contains(userId) &&
             _connectionMap[userId]->connected()) {

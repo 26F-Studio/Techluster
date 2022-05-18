@@ -25,9 +25,9 @@ namespace tech::internal {
 
     class CodeException : public BaseException {
     public:
-        explicit CodeException(std::string message, const int &code = 0);
+        explicit CodeException(std::string message, int code = 0);
 
-        [[nodiscard]] const int &code() const noexcept;
+        [[nodiscard]] int code() const noexcept;
 
     protected:
         const int _code;
@@ -44,7 +44,7 @@ namespace tech::structures {
 
         explicit NetworkException(
                 std::string message,
-                const drogon::ReqResult &result = drogon::ReqResult::NetworkFailure
+                drogon::ReqResult result = drogon::ReqResult::NetworkFailure
         );
     };
 
@@ -52,20 +52,20 @@ namespace tech::structures {
     public:
         explicit ResponseException(
                 std::string message,
-                const types::ResultCode &code = types::ResultCode::InternalError,
-                const drogon::HttpStatusCode &statusCode = drogon::HttpStatusCode::k500InternalServerError
+                types::ResultCode code = types::ResultCode::InternalError,
+                drogon::HttpStatusCode statusCode = drogon::HttpStatusCode::k500InternalServerError
         );
 
         explicit ResponseException(
                 std::string message,
                 const std::exception &e,
-                const types::ResultCode &code = types::ResultCode::InternalError,
-                const drogon::HttpStatusCode &statusCode = drogon::HttpStatusCode::k500InternalServerError
+                types::ResultCode code = types::ResultCode::InternalError,
+                drogon::HttpStatusCode statusCode = drogon::HttpStatusCode::k500InternalServerError
         );
 
-        [[nodiscard]] const types::ResultCode &code() const noexcept;
+        [[nodiscard]]  types::ResultCode code() const noexcept;
 
-        [[nodiscard]] const drogon::HttpStatusCode &statusCode() const noexcept;
+        [[nodiscard]]  drogon::HttpStatusCode statusCode() const noexcept;
 
         [[nodiscard]] Json::Value toJson() const noexcept;
 
@@ -90,7 +90,7 @@ namespace tech::structures {
 
         class WrongType : public internal::BaseException {
         public:
-            explicit WrongType(const types::JsonValue &valueType);
+            explicit WrongType(types::JsonValue valueType);
         };
     }
 

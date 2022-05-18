@@ -541,8 +541,8 @@ string PlayerManager::getAvatar(const string &accessToken, int64_t userId) {
 
 Json::Value PlayerManager::getUserData(
         const string &accessToken,
-        const int64_t &userId,
-        const DataField &field,
+        int64_t userId,
+        DataField field,
         const RequestJson &request
 ) {
     // TODO: Only allow access to other user's protected data if they are friends
@@ -601,7 +601,7 @@ Json::Value PlayerManager::getUserData(
 
 void PlayerManager::updateUserData(
         const string &accessToken,
-        const DataField &field,
+        DataField field,
         const RequestJson &request
 ) {
     try {

@@ -20,9 +20,9 @@ namespace tech::helpers {
 
         explicit ResponseJson(const drogon::HttpResponsePtr &res);
 
-        void setResultCode(const types::ResultCode &code);
+        void setResultCode(types::ResultCode code);
 
-        void setResultCode(const uint32_t &code);
+        void setResultCode(uint32_t code);
 
         void setStatusCode(drogon::HttpStatusCode code);
 

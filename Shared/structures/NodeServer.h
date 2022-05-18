@@ -12,10 +12,10 @@ namespace tech::structures {
     class NodeServer {
     public:
         NodeServer(
-                const types::NodeType &type,
+                types::NodeType type,
                 const std::string &ip,
-                const uint16_t &port,
-                const double &taskInterval,
+                uint16_t port,
+                double taskInterval,
                 std::string description,
                 Json::Value info
         );

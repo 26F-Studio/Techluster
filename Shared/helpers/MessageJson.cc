@@ -19,7 +19,7 @@ MessageJson::MessageJson(const string &raw) : BasicJson(raw) {}
 
 MessageJson::MessageJson(int action) : MessageJson() { setAction(action); }
 
-void MessageJson::setMessageType(const MessageType &type) { _value["type"] = string(enum_name(type)); }
+void MessageJson::setMessageType(MessageType type) { _value["type"] = string(enum_name(type)); }
 
 void MessageJson::setAction(int action) { _value["action"] = action; }
 

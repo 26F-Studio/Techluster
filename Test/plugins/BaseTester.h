@@ -24,7 +24,7 @@ namespace tech::plugins {
 
         static void colorOut(
                 const std::string &msg,
-                const Color &color = Color::none
+                Color color = Color::none
         );
 
     protected:
@@ -33,7 +33,7 @@ namespace tech::plugins {
         std::string _wsBase = "/tech/ws/v2";
 
         Json::Value _httpRequest(
-                const drogon::HttpMethod &method,
+                drogon::HttpMethod method,
                 const std::string &path,
                 const std::unordered_map<std::string, std::string> &parameters = {},
                 const std::unordered_map<std::string, std::string> &headers = {},

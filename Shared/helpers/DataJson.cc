@@ -23,7 +23,7 @@ namespace {
     void keyHandler(
             const variant<string, uint32_t> &key,
             const function<void(const std::string &)> &objectHandler,
-            const function<void(const uint32_t &)> &arrayHandler
+            const function<void(uint32_t)> &arrayHandler
     ) {
         if (holds_alternative<string>(key)) {
             objectHandler(get<string>(key));
@@ -33,9 +33,9 @@ namespace {
     }
 }
 
-void DataJson::canOverwrite(const bool &overwrite) { _overwrite = overwrite; }
+void DataJson::canOverwrite(bool overwrite) { _overwrite = overwrite; }
 
-void DataJson::canSkip(const bool &skip) { _skip = skip; }
+void DataJson::canSkip(bool skip) { _skip = skip; }
 
 Json::Value DataJson::retrieveByPath(const string &path) {
     shared_lock<shared_mutex> lock(_sharedMutex);
@@ -48,7 +48,7 @@ Json::Value DataJson::retrieveByPath(const string &path) {
         stoul(key);
         keyHandler(key, [&resultPtr](const std::string &name) {
             resultPtr = &(*resultPtr)[name];
-        }, [&resultPtr](const uint32_t &index) {
+        }, [&resultPtr](uint32_t index) {
             resultPtr = &(*resultPtr)[index];
         });
     }
@@ -92,7 +92,7 @@ void DataJson::_try_overwrite(
 
 void DataJson::_try_skip(
         Json::Value *&target,
-        const uint32_t &size
+        uint32_t size
 ) const {
     if (_skip) {
         target->resize(size);
@@ -109,14 +109,14 @@ void DataJson::_modifyElement(
     if (value.isNull()) {
         keyHandler(key, [&target](const std::string &name) {
             target->removeMember(name, nullptr);
-        }, [&target](const uint32_t &index) {
+        }, [&target](uint32_t index) {
             target->removeIndex(index, nullptr);
         });
     } else {
         keyHandler(key, [this, &target, &value](const std::string &name) {
             _try_overwrite(target, Json::objectValue);
             (*target)[name] = value;
-        }, [this, &target, &value](const uint32_t &index) {
+        }, [this, &target, &value](uint32_t index) {
             _try_overwrite(target, Json::arrayValue);
             if (target->size() >= index) {
                 (*target)[index] = value;
@@ -135,7 +135,7 @@ void DataJson::_followElement(
     keyHandler(key, [this, &target](const std::string &name) {
         _try_overwrite(target, Json::objectValue);
         target = &(*target)[name];
-    }, [this, &target](const uint32_t &index) {
+    }, [this, &target](uint32_t index) {
         _try_overwrite(target, Json::arrayValue);
         if (target->size() < index + 1) {
             _try_skip(target, index + 1);

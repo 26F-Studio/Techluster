@@ -21,9 +21,9 @@ namespace tech::helpers {
         Json::Value retrieveByPath(const std::string &path);
 
         // Modify the value of the json object
-        void canOverwrite(const bool &overwrite);
+        void canOverwrite(bool overwrite);
 
-        void canSkip(const bool &skip);
+        void canSkip(bool skip);
 
         void modifyByPath(
                 const std::string &path,
@@ -41,7 +41,7 @@ namespace tech::helpers {
 
         void _try_skip(
                 Json::Value *&target,
-                const uint32_t &size
+                uint32_t size
         ) const;
 
         void _modifyElement(

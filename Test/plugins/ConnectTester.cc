@@ -28,7 +28,7 @@ Json::Value ConnectTester::allocator(const string &type) {
     );
 }
 
-bool ConnectTester::heartbeat(const string &type, const uint32_t &port) {
+bool ConnectTester::heartbeat(const string &type, uint32_t port) {
     WebHelper::colorOut("Simulate " + type + " heartbeat at " + to_string(port), WebHelper::Color::cyan);
     Json::Value body(_heartbeatBody);
     body["port"] = port;
@@ -42,7 +42,7 @@ bool ConnectTester::heartbeat(const string &type, const uint32_t &port) {
     )["code"].asUInt() == enum_integer(ResultCode::Completed);
 }
 
-std::string ConnectTester::toHost(const uint32_t &port) {
+std::string ConnectTester::toHost(uint32_t port) {
     return _heartbeatBody["ip"].asString().append(":").append(to_string(port));
 }
 

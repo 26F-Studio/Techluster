@@ -16,7 +16,7 @@ namespace tech::plugins {
 
         void shutdown() override;
 
-        [[nodiscard]] bool isSuperusers(const int64_t &uid) const;
+        [[nodiscard]] bool isSuperusers(int64_t uid) const;
 
         [[nodiscard]] std::string getCredential() const;
 
