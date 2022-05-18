@@ -34,7 +34,7 @@ User::User() :
                     response.setReason(e);
                 }
         ),
-        _dataManager(app().getPlugin<DataManager>()) {}
+        _dataManager(app().getPlugin<PlayerManager>()) {}
 
 void User::getInfo(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     ResponseJson response;

@@ -4,7 +4,7 @@
 
 #include <filters/IpThreshold.h>
 #include <helpers/ResponseJson.h>
-#include <plugins/DataManager.h>
+#include <plugins/PlayerManager.h>
 
 using namespace drogon;
 using namespace std;
@@ -20,7 +20,7 @@ void IpThreshold::doFilter(
         FilterChainCallback &&nextCb
 ) {
     try {
-        if (!app().getPlugin<DataManager>()->ipLimit(req->getPeerAddr().toIp())) {
+        if (!app().getPlugin<PlayerManager>()->ipLimit(req->getPeerAddr().toIp())) {
             ResponseJson response;
             response.setStatusCode(k429TooManyRequests);
             response.setResultCode(ResultCode::tooFrequent);

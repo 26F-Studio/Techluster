@@ -5,7 +5,7 @@
 #pragma once
 
 #include <drogon/HttpController.h>
-#include <plugins/DataManager.h>
+#include <plugins/PlayerManager.h>
 #include <structures/ExceptionHandlers.h>
 
 namespace tech::api::v2 {
@@ -39,7 +39,8 @@ namespace tech::api::v2 {
                     "/avatar",
                     drogon::Get,
                     "tech::filters::CheckAccessToken",
-                    "tech::filters::CheckUserId");
+                    "tech::filters::CheckUserId"
+            );
             METHOD_ADD(
                     User::getData,
                     "/data",
@@ -85,6 +86,6 @@ namespace tech::api::v2 {
         );
 
     private:
-        tech::plugins::DataManager *_dataManager;
+        tech::plugins::PlayerManager *_dataManager;
     };
 }

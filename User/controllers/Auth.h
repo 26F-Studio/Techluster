@@ -5,7 +5,7 @@
 #pragma once
 
 #include <drogon/HttpController.h>
-#include <plugins/DataManager.h>
+#include <plugins/PlayerManager.h>
 #include <structures/ExceptionHandlers.h>
 
 namespace tech::api::v2 {
@@ -76,6 +76,6 @@ namespace tech::api::v2 {
         void restoreRemoved(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
 
     private:
-        plugins::DataManager *_dataManager;
+        plugins::PlayerManager *_dataManager;
     };
 }

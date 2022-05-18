@@ -36,7 +36,7 @@ Auth::Auth() :
                     response.setReason(e);
                 }
         ),
-        _dataManager(app().getPlugin<DataManager>()) {}
+        _dataManager(app().getPlugin<PlayerManager>()) {}
 
 void Auth::check(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     ResponseJson response;
