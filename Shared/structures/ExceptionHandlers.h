@@ -33,7 +33,7 @@ namespace tech::structures {
             } catch (const json_exception::InvalidFormat &e) {
                 ResponseJson response;
                 response.setStatusCode(k400BadRequest);
-                response.setResultCode(ResultCode::invalidFormat);
+                response.setResultCode(ResultCode::InvalidFormat);
                 // message.setMessage(this->i18n(e.what()));
                 response.setMessage(I18nHelper<T>::i18n("invalidFormat"));
                 response.setReason(e);
@@ -41,14 +41,14 @@ namespace tech::structures {
             } catch (const json_exception::WrongType &e) {
                 ResponseJson response;
                 response.setStatusCode(k400BadRequest);
-                response.setResultCode(ResultCode::invalidArguments);
+                response.setResultCode(ResultCode::InvalidArguments);
                 response.setMessage(I18nHelper<T>::i18n("invalidArguments"));
                 response.httpCallback(failedCb);
             } catch (const exception &e) {
                 LOG_ERROR << e.what();
                 ResponseJson response;
                 response.setStatusCode(k500InternalServerError);
-                response.setResultCode(ResultCode::internalError);
+                response.setResultCode(ResultCode::InternalError);
                 response.setMessage(I18nHelper<T>::i18n("internalError"));
                 response.setReason(e);
                 response.httpCallback(failedCb);
@@ -110,23 +110,23 @@ namespace tech::structures {
                 MessageJson message(action);
                 message.setReason(I18nHelper<T>::i18n(e.what()));
                 if (e.error) {
-                    message.setMessageType(MessageType::error);
+                    message.setMessageType(MessageType::Error);
                     wsConnPtr->shutdown(CloseCode::kViolation, message.stringify());
                 } else {
-                    message.setMessageType(MessageType::failed);
+                    message.setMessageType(MessageType::Failed);
                     wsConnPtr->send(message.stringify());
                 }
             } catch (const orm::DrogonDbException &e) {
                 LOG_ERROR << e.base().what();
                 MessageJson message(action);
                 message.setReason(I18nHelper<T>::i18n("databaseError"));
-                message.setMessageType(MessageType::error);
+                message.setMessageType(MessageType::Error);
                 wsConnPtr->shutdown(CloseCode::kViolation, message.stringify());
             } catch (const exception &e) {
                 LOG_ERROR << e.what();
                 MessageJson message(action);
                 message.setReason(I18nHelper<T>::i18n("internalError"));
-                message.setMessageType(MessageType::error);
+                message.setMessageType(MessageType::Error);
                 wsConnPtr->shutdown(CloseCode::kViolation, message.stringify());
             }
         }

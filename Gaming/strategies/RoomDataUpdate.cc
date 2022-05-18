@@ -27,7 +27,7 @@ bool RoomDataUpdate::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson
     /// @note Return false if the player does not exist or is busy.
     if (!player || player->state != Player::State::standby) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -40,7 +40,7 @@ bool RoomDataUpdate::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson
         const auto permission = enum_cast<Permission>(info["permission"].asString()).value();
         if (permission != Permission::Admin) {
             MessageJson message(_action);
-            message.setMessageType(MessageType::failed);
+            message.setMessageType(MessageType::Failed);
             message.setReason(i18n("noPermission"));
             message.sendTo(wsConnPtr);
             return false;
@@ -49,7 +49,7 @@ bool RoomDataUpdate::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson
         /// @note Return false if the player is not a room admin.
         if (player->role < Player::Role::admin) {
             MessageJson message(_action);
-            message.setMessageType(MessageType::failed);
+            message.setMessageType(MessageType::Failed);
             message.setReason(i18n("noPermission"));
             message.sendTo(wsConnPtr);
             return false;
@@ -57,7 +57,7 @@ bool RoomDataUpdate::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson
     } else {
         /// @note Return false if no room is specified.
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("roomNotFound"));
         message.sendTo(wsConnPtr);
         return false;
@@ -65,7 +65,7 @@ bool RoomDataUpdate::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson
     /// @note Return false if the data is not an array.
     if (!request.check("data", JsonValue::Array)) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidArguments"));
         message.sendTo(wsConnPtr);
         return false;

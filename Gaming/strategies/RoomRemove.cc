@@ -23,14 +23,14 @@ bool RoomRemove::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &re
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || player->getRoomId().empty()) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
     }
     if (player->role < Player::Role::admin) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("noPermission"));
         message.sendTo(wsConnPtr);
         return false;

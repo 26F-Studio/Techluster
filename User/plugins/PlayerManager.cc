@@ -114,7 +114,7 @@ int64_t PlayerManager::getUserId(const string &accessToken) {
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(
                 i18n("invalidAccessToken"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k401Unauthorized
         );
     }
@@ -127,7 +127,7 @@ RedisToken PlayerManager::refresh(const string &refreshToken) {
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(
                 i18n("invalidRefreshToken"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k401Unauthorized
         );
     }
@@ -200,7 +200,7 @@ RedisToken PlayerManager::loginEmailPassword(
         if (player.getValueOfPassword().empty()) {
             throw ResponseException(
                     i18n("noPassword"),
-                    ResultCode::nullValue,
+                    ResultCode::NullValue,
                     k403Forbidden
             );
         }
@@ -210,7 +210,7 @@ RedisToken PlayerManager::loginEmailPassword(
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("invalidEmailPass"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k403Forbidden
         );
     }
@@ -235,7 +235,7 @@ void PlayerManager::resetEmail(
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
@@ -264,7 +264,7 @@ void PlayerManager::migrateEmail(
         ))) {
             throw ResponseException(
                     i18n("emailExists"),
-                    ResultCode::conflict,
+                    ResultCode::Conflict,
                     k409Conflict
             );
         }
@@ -274,14 +274,14 @@ void PlayerManager::migrateEmail(
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(
                 i18n("invalidAccessToken"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k401Unauthorized
         );
     } catch (const orm::UnexpectedRows &e) {
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
@@ -329,14 +329,14 @@ void PlayerManager::deactivateEmail(
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(
                 i18n("invalidAccessToken"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k401Unauthorized
         );
     } catch (const orm::UnexpectedRows &e) {
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
@@ -420,7 +420,7 @@ Json::Value PlayerManager::searchRemoved(const RequestJson &request) {
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
@@ -450,7 +450,7 @@ void PlayerManager::restoreRemoved(
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
@@ -477,7 +477,7 @@ Json::Value PlayerManager::getUserInfo(const string &accessToken, int64_t userId
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
@@ -497,7 +497,7 @@ void PlayerManager::updateUserInfo(
             if (!request.check("password", JsonValue::String)) {
                 throw ResponseException(
                         i18n("noPassword"),
-                        ResultCode::nullValue,
+                        ResultCode::NullValue,
                         k403Forbidden
                 );
             }
@@ -513,7 +513,7 @@ void PlayerManager::updateUserInfo(
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
@@ -535,7 +535,7 @@ string PlayerManager::getAvatar(const string &accessToken, int64_t userId) {
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
@@ -554,7 +554,7 @@ Json::Value PlayerManager::getUserData(
         if (userId != tempUserId && field != DataField::Public) {
             throw ResponseException(
                     i18n("noPermission"),
-                    ResultCode::noPermission,
+                    ResultCode::NoPermission,
                     k403Forbidden
             );
         }
@@ -563,7 +563,7 @@ Json::Value PlayerManager::getUserData(
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(
                 i18n("invalidAccessToken"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k401Unauthorized
         );
     }
@@ -595,7 +595,7 @@ Json::Value PlayerManager::getUserData(
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
@@ -650,14 +650,14 @@ void PlayerManager::updateUserData(
         LOG_DEBUG << "Key not found:" << e.what();
         throw ResponseException(
                 i18n("invalidAccessToken"),
-                ResultCode::notAcceptable,
+                ResultCode::NotAcceptable,
                 k401Unauthorized
         );
     } catch (const orm::UnexpectedRows &e) {
         LOG_DEBUG << "Unexpected rows: " << e.what();
         throw ResponseException(
                 i18n("userNotFound"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }
@@ -687,7 +687,7 @@ void PlayerManager::_checkEmailCode(
         if (!_userRedis->checkEmailCode(email, code)) {
             throw ResponseException(
                     i18n("invalidVerifyCode"),
-                    ResultCode::notAcceptable,
+                    ResultCode::NotAcceptable,
                     k401Unauthorized
             );
         }
@@ -696,7 +696,7 @@ void PlayerManager::_checkEmailCode(
         LOG_DEBUG << "Key not found: " << e.what();
         throw ResponseException(
                 i18n("invalidVerifyEmail"),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }

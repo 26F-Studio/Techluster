@@ -71,7 +71,7 @@ bool UserTester::verifyCode() {
             {},
             body
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         WebHelper::colorOut("Wait 5 seconds for email delivery", WebHelper::Color::cyan);
         this_thread::sleep_for(std::chrono::seconds(5));
         WebHelper::colorOut("Receiving verify code...", WebHelper::Color::cyan);
@@ -105,8 +105,8 @@ bool UserTester::loginCode() {
     );
     auto code = response["code"].asUInt();
     if (!(
-            code == enum_integer(ResultCode::completed) ||
-            code == enum_integer(ResultCode::continued)
+            code == enum_integer(ResultCode::Completed) ||
+            code == enum_integer(ResultCode::Continued)
     )) {
         return false;
     }
@@ -128,7 +128,7 @@ bool UserTester::resetPassword() {
             {},
             body
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         _accessToken = response["data"]["accessToken"].asString();
         _refreshToken = response["data"]["refreshToken"].asString();
         return true;
@@ -148,7 +148,7 @@ bool UserTester::loginPassword() {
             {},
             body
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         _accessToken = response["data"]["accessToken"].asString();
         _refreshToken = response["data"]["refreshToken"].asString();
         return true;
@@ -164,7 +164,7 @@ bool UserTester::checkToken() {
             {},
             {make_pair("x-access-token", _accessToken)}
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         _userId = response["data"].asInt64();
         return true;
     }
@@ -179,7 +179,7 @@ bool UserTester::refreshToken() {
             {},
             {make_pair("x-refresh-token", _refreshToken)}
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         _accessToken = response["data"]["accessToken"].asString();
         _refreshToken = response["data"]["refreshToken"].asString();
         return true;
@@ -199,7 +199,7 @@ bool UserTester::migrateEmail() {
             {make_pair("x-access-token", _accessToken)},
             body
     );
-    return response["code"].asUInt() == enum_integer(ResultCode::completed);
+    return response["code"].asUInt() == enum_integer(ResultCode::Completed);
 }
 
 bool UserTester::updateInfo() {
@@ -211,7 +211,7 @@ bool UserTester::updateInfo() {
             {make_pair("x-access-token", _accessToken)},
             _info
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         return _compareJson(_info, _getInfo());
     }
     return false;
@@ -226,7 +226,7 @@ bool UserTester::resetInfo() {
             {make_pair("x-access-token", _accessToken)},
             _emptyInfo
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         return _compareJson(_emptyInfo, _getInfo());
     }
     return false;
@@ -240,7 +240,7 @@ bool UserTester::getAvatar() {
             {make_pair("userId", to_string(_userId))},
             {make_pair("x-access-token", _accessToken)}
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         return _info["avatar"].asString() == response["data"].asString();
     }
     return false;
@@ -257,7 +257,7 @@ bool UserTester::updateFullData() {
             {make_pair("x-access-token", _accessToken)},
             body
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         return _fullData[0]["value"] == _getData()[0];
     }
     return false;
@@ -274,7 +274,7 @@ bool UserTester::updatePartialData() {
             {make_pair("x-access-token", _accessToken)},
             body
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         return _partialData[0]["value"] == _getData(_partialData[0]["path"].asString())[0];
     }
     return false;
@@ -292,7 +292,7 @@ bool UserTester::updateSkipData() {
             {make_pair("x-access-token", _accessToken)},
             body
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         auto highScores = _getData("highScores")[0];
         return _skipData[0]["value"] == highScores[5] &&
                highScores[3] == Json::nullValue &&
@@ -313,7 +313,7 @@ bool UserTester::updateOverwriteData() {
             {make_pair("x-access-token", _accessToken)},
             body
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         return _overwriteData[0]["value"] == _getData(_overwriteData[0]["path"].asString())[0];
     }
     return false;
@@ -327,7 +327,7 @@ Json::Value UserTester::_getInfo() {
             {make_pair("userId", to_string(_userId))},
             {make_pair("x-access-token", _accessToken)}
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         return response["data"];
     }
     return {};
@@ -344,7 +344,7 @@ Json::Value UserTester::_getData(const string &path) {
             {make_pair("x-access-token", _accessToken)},
             body
     );
-    if (response["code"].asUInt() == enum_integer(ResultCode::completed)) {
+    if (response["code"].asUInt() == enum_integer(ResultCode::Completed)) {
         return response["data"];
     }
     return {};

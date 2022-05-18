@@ -25,14 +25,14 @@ bool RoomPassword::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &
     if (!player || player->getRoomId().empty() ||
         player->state != Player::State::standby) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
     }
     if (player->role < Player::Role::admin) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("noPermission"));
         message.sendTo(wsConnPtr);
         return false;
@@ -40,7 +40,7 @@ bool RoomPassword::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &
 
     if (!request.check(JsonValue::String)) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidArguments"));
         message.sendTo(wsConnPtr);
         return false;

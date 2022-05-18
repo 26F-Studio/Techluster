@@ -23,7 +23,7 @@ bool PlayerPing::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &re
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -31,7 +31,7 @@ bool PlayerPing::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &re
 
     if (!request.check(JsonValue::Array)) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidArguments"));
         message.sendTo(wsConnPtr);
         return false;

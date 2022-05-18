@@ -11,7 +11,7 @@ using namespace std;
 using namespace tech::helpers;
 using namespace tech::types;
 
-MessageJson::MessageJson() : BasicJson() { setMessageType(MessageType::client); }
+MessageJson::MessageJson() : BasicJson() { setMessageType(MessageType::Client); }
 
 MessageJson::MessageJson(Json::Value json) : BasicJson(move(json)) {}
 

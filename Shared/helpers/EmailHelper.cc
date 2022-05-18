@@ -79,7 +79,7 @@ void EmailHelper::smtp(
         throw ResponseException(
                 i18n("emailError"),
                 e,
-                ResultCode::emailError,
+                ResultCode::EmailError,
                 k503ServiceUnavailable
         );
     } catch (dialog_error &e) {
@@ -87,7 +87,7 @@ void EmailHelper::smtp(
         throw ResponseException(
                 i18n("emailError"),
                 e,
-                ResultCode::emailError,
+                ResultCode::EmailError,
                 k503ServiceUnavailable
         );
     } catch (message_error &e) {
@@ -95,7 +95,7 @@ void EmailHelper::smtp(
         throw ResponseException(
                 i18n("emailError"),
                 e,
-                ResultCode::emailError,
+                ResultCode::EmailError,
                 k503ServiceUnavailable
         );
     }

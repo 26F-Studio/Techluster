@@ -129,7 +129,7 @@ void NodeMaintainer::_updateUserAddress() {
     auto client = HttpClient::newHttpClient("http://" + connectAddress.load().toIpPort());
     auto req = HttpRequest::newHttpRequest();
     req->setPath("/tech/api/v2/node/allocate");
-    req->setParameter("nodeType", "user");
+    req->setParameter("nodeType", "User");
     client->sendRequest(req, [this](ReqResult result, const HttpResponsePtr &responsePtr) {
         if (result != ReqResult::Ok) {
             LOG_ERROR << "Request failed (" << static_cast<int>(result) << ")";
@@ -161,7 +161,7 @@ void NodeMaintainer::_updateWorkshopAddress() {
     auto client = HttpClient::newHttpClient("http://" + connectAddress.load().toIpPort());
     auto req = HttpRequest::newHttpRequest();
     req->setPath("/tech/api/v2/node/allocate");
-    req->setParameter("nodeType", "workshop");
+    req->setParameter("nodeType", "Workshop");
     client->sendRequest(req, [this](ReqResult result, const HttpResponsePtr &responsePtr) {
         if (result != ReqResult::Ok) {
             LOG_ERROR << "Request failed (" << static_cast<int>(result) << ")";

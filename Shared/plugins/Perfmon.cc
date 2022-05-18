@@ -273,7 +273,7 @@ void Perfmon::_updateInfo() {
                                             static_cast<USHORT>(tcpTablePtr->table[i].dwRemotePort),
                                             {.S_un={.S_addr=static_cast<ULONG>(tcpTablePtr->table[i].dwRemoteAddr)}}
                                     }},
-                        tcpStateOpt ? tcpStateOpt.value() : TcpState::reserved
+                        tcpStateOpt ? tcpStateOpt.value() : TcpState::Reserved
                 };
             }
             _netConn = counter;

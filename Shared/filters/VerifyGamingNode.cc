@@ -24,10 +24,10 @@ void VerifyGamingNode::doFilter(
 ) {
     auto address = req->peerAddr().toIpPort();
     try {
-        if (!app().getPlugin<NodeMaintainer>()->checkNode(NodeType::gaming, address)) {
+        if (!app().getPlugin<NodeMaintainer>()->checkNode(NodeType::Gaming, address)) {
             ResponseJson response;
             response.setStatusCode(k401Unauthorized);
-            response.setResultCode(ResultCode::notAcceptable);
+            response.setResultCode(ResultCode::NotAcceptable);
             response.setMessage(i18n("invalidNode"));
             response.httpCallback(failedCb);
             return;
@@ -35,7 +35,7 @@ void VerifyGamingNode::doFilter(
     } catch (const NetworkException &e) {
         ResponseJson response;
         response.setStatusCode(k503ServiceUnavailable);
-        response.setResultCode(ResultCode::notAvailable);
+        response.setResultCode(ResultCode::NotAvailable);
         response.setMessage(i18n("notAvailable"));
         response.setReason(e);
         response.httpCallback(failedCb);

@@ -27,7 +27,7 @@ bool RoomList::filter(
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;

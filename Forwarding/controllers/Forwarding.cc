@@ -36,7 +36,7 @@ void Forwarding::handleConnectionClosed(const WebSocketConnectionPtr &wsConnPtr)
         if (!transmitter->getRoomId().empty()) {
             try {
                 _transmissionManager->transmissionLeave(
-                        enum_integer(Action::transmissionLeave),
+                        enum_integer(Action::TransmissionLeave),
                         wsConnPtr
                 );
             } catch (const internal::BaseException &e) {

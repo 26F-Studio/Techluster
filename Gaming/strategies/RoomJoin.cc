@@ -24,7 +24,7 @@ bool RoomJoin::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &requ
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || !player->getRoomId().empty()) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -32,7 +32,7 @@ bool RoomJoin::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &requ
 
     if (!request.check("roomId", JsonValue::String)) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidArguments"));
         message.sendTo(wsConnPtr);
         return false;

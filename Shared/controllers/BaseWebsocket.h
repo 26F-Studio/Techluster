@@ -64,7 +64,7 @@ namespace tech::ws::v2 {
 
             if (!request["action"].isInt()) {
                 MessageJson message;
-                message.setMessageType(MessageType::failed);
+                message.setMessageType(MessageType::Failed);
                 message.setReason(reason("invalidAction"));
                 message.sendTo(wsConnPtr);
             }

@@ -27,7 +27,7 @@ void IdentifyUser::doFilter(
     if (accessToken.empty()) {
         ResponseJson response;
         response.setStatusCode(k400BadRequest);
-        response.setResultCode(ResultCode::invalidArguments);
+        response.setResultCode(ResultCode::InvalidArguments);
         response.setMessage(i18n("invalidArguments"));
         response.httpCallback(failedCb);
         return;
@@ -37,7 +37,7 @@ void IdentifyUser::doFilter(
         if (app().getPlugin<NodeMaintainer>()->checkAccessToken(accessToken, id) != k200OK) {
             ResponseJson response;
             response.setStatusCode(k401Unauthorized);
-            response.setResultCode(ResultCode::notAcceptable);
+            response.setResultCode(ResultCode::NotAcceptable);
             response.setMessage(i18n("invalidAccessToken"));
             response.httpCallback(failedCb);
             return;
@@ -46,7 +46,7 @@ void IdentifyUser::doFilter(
     } catch (const NetworkException &e) {
         ResponseJson response;
         response.setStatusCode(k503ServiceUnavailable);
-        response.setResultCode(ResultCode::notAvailable);
+        response.setResultCode(ResultCode::NotAvailable);
         response.setMessage(i18n("notAvailable"));
         response.setReason(e);
         response.httpCallback(failedCb);

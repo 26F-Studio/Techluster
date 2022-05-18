@@ -27,7 +27,7 @@ bool RoomDataGet::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &r
     /// @note Return false if the player does not exist.
     if (!player) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -40,7 +40,7 @@ bool RoomDataGet::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &r
         const auto permission = enum_cast<Permission>(info["permission"].asString()).value();
         if (permission != Permission::Admin) {
             MessageJson message(_action);
-            message.setMessageType(MessageType::failed);
+            message.setMessageType(MessageType::Failed);
             message.setReason(i18n("noPermission"));
             message.sendTo(wsConnPtr);
             return false;
@@ -48,7 +48,7 @@ bool RoomDataGet::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &r
     } else if (player->getRoomId().empty()) {
         /// @note Return false if no room is specified.
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("roomNotFound"));
         message.sendTo(wsConnPtr);
         return false;

@@ -26,13 +26,13 @@ Node::Node() :
                 [this](const orm::DrogonDbException &e, ResponseJson &response) {
                     LOG_ERROR << e.base().what();
                     response.setStatusCode(k500InternalServerError);
-                    response.setResultCode(ResultCode::databaseError);
+                    response.setResultCode(ResultCode::DatabaseError);
                     response.setMessage(i18n("databaseError"));
                 },
                 [this](const exception &e, ResponseJson &response) {
                     LOG_ERROR << e.what();
                     response.setStatusCode(k500InternalServerError);
-                    response.setResultCode(ResultCode::internalError);
+                    response.setResultCode(ResultCode::InternalError);
                     response.setMessage(i18n("internalError"));
                     response.setReason(e);
                 }
@@ -46,7 +46,7 @@ void Node::allocate(
     ResponseJson response;
     handleExceptions([&]() {
         auto nodeType = req->attributes()->get<NodeType>("nodeType");
-        if (nodeType == NodeType::forwarding) {
+        if (nodeType == NodeType::Forwarding) {
             response.setData(_nodeManager->getAllNodes(nodeType));
         } else {
             response.setData(_nodeManager->getBestNode(nodeType));

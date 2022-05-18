@@ -13,7 +13,7 @@ using namespace tech::helpers;
 using namespace tech::structures;
 using namespace tech::types;
 
-ResponseJson::ResponseJson() : BasicJson() { setResultCode(types::ResultCode::completed); }
+ResponseJson::ResponseJson() : BasicJson() { setResultCode(types::ResultCode::Completed); }
 
 ResponseJson::ResponseJson(Json::Value json) : BasicJson(std::move(json)) {}
 

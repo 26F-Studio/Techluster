@@ -278,7 +278,7 @@ void Room::tryEnd(bool force) {
     }
 
     MessageJson message;
-    message.setMessageType(MessageType::server);
+    message.setMessageType(MessageType::Server);
     message.setAction(enum_integer(Action::GameEnd));
     publish(message);
 
@@ -293,7 +293,7 @@ void Room::tryStart() {
     state = State::ready;
 
     MessageJson message;
-    message.setMessageType(MessageType::server);
+    message.setMessageType(MessageType::Server);
     message.setAction(enum_integer(Action::GameReady));
     publish(message);
 
@@ -306,7 +306,7 @@ void Room::tryStart() {
         data["transferNode"] = forwardingNode.load().toIpPort();
 
         MessageJson message;
-        message.setMessageType(MessageType::server);
+        message.setMessageType(MessageType::Server);
         message.setAction(enum_integer(Action::GameStart));
         message.setData(data);
         publish(message);
@@ -321,7 +321,7 @@ Room::~Room() {
         unsubscribe(userId);
 
         MessageJson successMessage(enum_integer(Action::RoomRemove));
-        successMessage.setMessageType(MessageType::server);
+        successMessage.setMessageType(MessageType::Server);
         successMessage.sendTo(wsConnPtr);
     }
 }

@@ -52,14 +52,14 @@ namespace tech::structures {
     public:
         explicit ResponseException(
                 std::string message,
-                const types::ResultCode &code = types::ResultCode::internalError,
+                const types::ResultCode &code = types::ResultCode::InternalError,
                 const drogon::HttpStatusCode &statusCode = drogon::HttpStatusCode::k500InternalServerError
         );
 
         explicit ResponseException(
                 std::string message,
                 const std::exception &e,
-                const types::ResultCode &code = types::ResultCode::internalError,
+                const types::ResultCode &code = types::ResultCode::InternalError,
                 const drogon::HttpStatusCode &statusCode = drogon::HttpStatusCode::k500InternalServerError
         );
 

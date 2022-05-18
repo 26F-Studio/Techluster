@@ -24,7 +24,7 @@ bool RoomLeave::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &req
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || player->getRoomId().empty()) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;

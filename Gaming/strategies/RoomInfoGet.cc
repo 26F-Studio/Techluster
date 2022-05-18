@@ -25,7 +25,7 @@ bool RoomInfoGet::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &r
     /// @note Return false if the player does not exist.
     if (!player) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -33,7 +33,7 @@ bool RoomInfoGet::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &r
     if (request.check("roomId", JsonValue::String) && player->getRoomId().empty()) {
         /// @note Return false if no room is specified.
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("roomNotFound"));
         message.sendTo(wsConnPtr);
         return false;

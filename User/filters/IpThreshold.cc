@@ -23,7 +23,7 @@ void IpThreshold::doFilter(
         if (!app().getPlugin<PlayerManager>()->ipLimit(req->getPeerAddr().toIp())) {
             ResponseJson response;
             response.setStatusCode(k429TooManyRequests);
-            response.setResultCode(ResultCode::tooFrequent);
+            response.setResultCode(ResultCode::TooFrequent);
             response.setMessage(i18n("tooFrequent"));
             response.httpCallback(failedCb);
             return;
@@ -32,7 +32,7 @@ void IpThreshold::doFilter(
         LOG_ERROR << e.what();
         ResponseJson response;
         response.setStatusCode(k500InternalServerError);
-        response.setResultCode(ResultCode::internalError);
+        response.setResultCode(ResultCode::InternalError);
         response.setMessage(i18n("internalError"));
         response.httpCallback(failedCb);
         return;

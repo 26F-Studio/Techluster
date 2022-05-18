@@ -51,7 +51,7 @@ Json::Value NodeManager::getAllNodes(const NodeType &nodeType) const {
     } catch (const out_of_range &) {
         throw ResponseException(
                 i18n("notAvailable."s.append(enum_name(nodeType))),
-                ResultCode::notAvailable,
+                ResultCode::NotAvailable,
                 k503ServiceUnavailable
         );
     }
@@ -66,7 +66,7 @@ string NodeManager::getBestNode(const NodeType &nodeType) const {
     } catch (const out_of_range &) {
         throw ResponseException(
                 i18n("notAvailable."s.append(enum_name(nodeType))),
-                ResultCode::notAvailable,
+                ResultCode::NotAvailable,
                 k503ServiceUnavailable
         );
     }
@@ -78,14 +78,14 @@ void NodeManager::checkNode(NodeType nodeType, trantor::InetAddress address) con
         if (!_nodeMap.at(nodeType).contains(NetEndian(address).netEndian)) {
             throw ResponseException(
                     i18n("notFound."s.append(enum_name(nodeType))),
-                    ResultCode::notFound,
+                    ResultCode::NotFound,
                     k404NotFound
             );
         }
     } catch (const out_of_range &) {
         throw ResponseException(
                 i18n("notFound."s.append(enum_name(nodeType))),
-                ResultCode::notFound,
+                ResultCode::NotFound,
                 k404NotFound
         );
     }

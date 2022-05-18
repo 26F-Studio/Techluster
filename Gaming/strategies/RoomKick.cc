@@ -25,7 +25,7 @@ bool RoomKick::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &requ
     if (!player || player->getRoomId().empty() ||
         player->state != Player::State::standby) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -33,7 +33,7 @@ bool RoomKick::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &requ
 
     if (!request.check(JsonValue::Int64)) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidArguments"));
         message.sendTo(wsConnPtr);
         return false;
@@ -46,14 +46,14 @@ bool RoomKick::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &requ
         player->userId == targetPlayer->userId ||
         player->getRoomId() != targetPlayer->getRoomId()) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidTarget"));
         message.sendTo(wsConnPtr);
         return false;
     }
     if (player->role < targetPlayer->role) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("noPermission"));
         message.sendTo(wsConnPtr);
         return false;

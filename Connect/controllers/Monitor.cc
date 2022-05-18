@@ -25,13 +25,13 @@ Monitor::Monitor() :
                 [this](const orm::DrogonDbException &e, ResponseJson &response) {
                     LOG_ERROR << e.base().what();
                     response.setStatusCode(k500InternalServerError);
-                    response.setResultCode(ResultCode::databaseError);
+                    response.setResultCode(ResultCode::DatabaseError);
                     response.setMessage(i18n("databaseError"));
                 },
                 [this](const exception &e, ResponseJson &response) {
                     LOG_ERROR << e.what();
                     response.setStatusCode(k500InternalServerError);
-                    response.setResultCode(ResultCode::internalError);
+                    response.setResultCode(ResultCode::InternalError);
                     response.setMessage(i18n("internalError"));
                     response.setReason(e);
                 }
@@ -43,9 +43,9 @@ void Monitor::getInfo(const HttpRequestPtr &req, function<void(const HttpRespons
     ResponseJson response;
     handleExceptions([&]() {
         auto nodeType = req->attributes()->get<NodeType>("nodeType");
-        if (nodeType == NodeType::connect) {
+        if (nodeType == NodeType::Connect) {
             response.setData(_perfmon->parseInfo());
-        } else if (nodeType == NodeType::all) {
+        } else if (nodeType == NodeType::All) {
             response.setData(_nodeManager->parseInfo());
         } else {
             response.setData(_nodeManager->parseInfo(nodeType));

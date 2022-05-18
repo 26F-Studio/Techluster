@@ -148,7 +148,7 @@ void RoomManager::playerType(
         auto &room = _roomMap.at(player->getRoomId());
         if (type == Player::Type::gamer && room.full()) {
             MessageJson failedMessage(action);
-            failedMessage.setMessageType(MessageType::failed);
+            failedMessage.setMessageType(MessageType::Failed);
             failedMessage.setReason(i18n("roomFull"));
             failedMessage.sendTo(wsConnPtr);
         } else {
@@ -287,7 +287,7 @@ void RoomManager::roomJoin(
             }
 
             MessageJson successMessage(action);
-            successMessage.setMessageType(MessageType::server);
+            successMessage.setMessageType(MessageType::Server);
             successMessage.setData(room.parse(true));
             successMessage.sendTo(wsConnPtr);
 
@@ -338,7 +338,7 @@ void RoomManager::roomLeave(int action, const WebSocketConnectionPtr &wsConnPtr)
     }
 
     MessageJson successMessage(action);
-    successMessage.setMessageType(MessageType::server);
+    successMessage.setMessageType(MessageType::Server);
     successMessage.sendTo(wsConnPtr);
 
     if (empty) {
@@ -394,7 +394,7 @@ void RoomManager::roomPassword(
         throw MessageException("roomNotFound");
     }
     MessageJson successMessage(action);
-    successMessage.setMessageType(MessageType::server);
+    successMessage.setMessageType(MessageType::Server);
     successMessage.sendTo(wsConnPtr);
 }
 

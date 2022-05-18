@@ -27,7 +27,7 @@ void ConnectionManager::subscribe(const WebSocketConnectionPtr &wsConnPtr) {
         if (_connectionMap.contains(userId) &&
             _connectionMap[userId]->connected()) {
             MessageJson message;
-            message.setMessageType(MessageType::error);
+            message.setMessageType(MessageType::Error);
             message.setReason(i18n("connectionReplaced"));
             message.closeWith(_connectionMap[userId]);
         }

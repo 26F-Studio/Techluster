@@ -26,7 +26,7 @@ bool PlayerType::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &re
     if (!player || player->getRoomId().empty() ||
         player->state != Player::State::standby) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -34,14 +34,14 @@ bool PlayerType::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &re
 
     if (!request.check(JsonValue::String)) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidArguments"));
         message.sendTo(wsConnPtr);
         return false;
     }
     if (!enum_cast<Player::Type>(request.ref().asString()).has_value()) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidType"));
         message.sendTo(wsConnPtr);
         return false;

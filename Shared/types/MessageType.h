@@ -8,9 +8,9 @@
 
 namespace tech::types {
     enum class MessageType {
-        error,
-        failed,
-        client,
-        server,
+        Error,
+        Failed,
+        Client,
+        Server,
     };
 }

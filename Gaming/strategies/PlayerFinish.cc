@@ -27,7 +27,7 @@ bool PlayerFinish::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &
         player->type == Player::Type::spectator ||
         player->state != Player::State::playing) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
@@ -35,7 +35,7 @@ bool PlayerFinish::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &
 
     if (!request.check(JsonValue::Object)) {
         MessageJson message(_action);
-        message.setMessageType(MessageType::failed);
+        message.setMessageType(MessageType::Failed);
         message.setReason(i18n("invalidArguments"));
         message.sendTo(wsConnPtr);
         return false;
