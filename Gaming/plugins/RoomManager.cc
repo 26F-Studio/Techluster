@@ -223,6 +223,7 @@ void RoomManager::roomDataUpdate(
         shared_lock<shared_mutex> lock(_sharedMutex);
         auto &room = _roomMap.at(roomId);
         MessageJson publishMessage(action);
+        publishMessage.setMessageType(MessageType::Server);
         publishMessage.setData(room.updateData(data));
         room.publish(publishMessage);
     } catch (const out_of_range &) {
@@ -257,6 +258,7 @@ void RoomManager::roomInfoUpdate(
         shared_lock<shared_mutex> lock(_sharedMutex);
         auto &room = _roomMap.at(player->getRoomId());
         MessageJson publishMessage(action);
+        publishMessage.setMessageType(MessageType::Server);
         publishMessage.setData(room.updateInfo(data));
         room.publish(publishMessage);
     } catch (const out_of_range &) {
@@ -274,7 +276,7 @@ void RoomManager::roomJoin(
     const auto &userId = player->userId;
     try {
         shared_lock<shared_mutex> lock(_sharedMutex);
-        auto &room = _roomMap.at(player->getRoomId());
+        auto &room = _roomMap.at(roomId);
         if (room.checkPassword(password)) {
             room.subscribe(userId);
             player->setRoomId(roomId);
