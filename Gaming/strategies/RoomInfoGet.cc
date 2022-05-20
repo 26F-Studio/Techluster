@@ -30,7 +30,7 @@ bool RoomInfoGet::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &r
         message.sendTo(wsConnPtr);
         return false;
     }
-    if (request.check("roomId", JsonValue::String) && player->getRoomId().empty()) {
+    if (!request.check("roomId", JsonValue::String) && player->getRoomId().empty()) {
         /// @note Return false if no room is specified.
         MessageJson message(_action);
         message.setMessageType(MessageType::Failed);
