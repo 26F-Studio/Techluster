@@ -20,14 +20,16 @@ namespace tech::api::v2 {
         Node();
 
         METHOD_LIST_BEGIN
-            METHOD_ADD(Node::allocate, "allocate", drogon::Get, "tech::filters::CheckNodeType");
-            METHOD_ADD(Node::check, "check", drogon::Get, "tech::filters::CheckNodeType", "tech::filters::NodeCheck");
+            METHOD_ADD(Node::allocate, "/allocate", drogon::Get, "tech::filters::CheckNodeType");
+            METHOD_ADD(Node::check, "/check", drogon::Get, "tech::filters::CheckNodeType", "tech::filters::NodeCheck");
+            METHOD_ADD(Node::report, "/report", drogon::Post, "tech::filters::CheckNodeType", "tech::filters::NodeReport");
         METHOD_LIST_END
 
         void allocate(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
 
         void check(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
 
+        void report(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
     private:
         plugins::NodeManager *_nodeManager;
     };

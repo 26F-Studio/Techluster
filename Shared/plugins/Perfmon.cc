@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <drogon/drogon.h>
+#include <helpers/ResponseJson.h>
 #include <magic_enum.hpp>
 #include <plugins/Authorizer.h>
 #include <plugins/Perfmon.h>
@@ -156,7 +157,7 @@ void Perfmon::_report() {
     auto client = HttpClient::newHttpClient("http://" + _connectAddress);
     auto req = HttpRequest::newHttpJsonRequest(_heartbeatBody);
     req->setMethod(Post);
-    req->setPath("/tech/api/v2/heartbeat/report");
+    req->setPath("/tech/api/v2/node/report");
     req->addHeader("x-credential", app().getPlugin<Authorizer>()->getCredential());
     req->setParameter("nodeType", _nodeType);
     client->sendRequest(req, [](ReqResult result, const HttpResponsePtr &responsePtr) {
@@ -166,7 +167,9 @@ void Perfmon::_report() {
         }
         try {
             if (responsePtr->statusCode() != k200OK) {
-                LOG_WARN << "Request failed (" << responsePtr->statusCode() << "): \n";
+                ResponseJson responseJson(responsePtr);
+                LOG_WARN << "Request failed (" << responsePtr->statusCode() << "): \n"
+                         << responseJson.stringify();
             }
         } catch (const json_exception::InvalidFormat &e) {
             LOG_WARN << "Invalid response body (" << responsePtr->statusCode() << "): \n"

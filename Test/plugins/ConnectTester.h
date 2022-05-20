@@ -15,9 +15,9 @@ namespace tech::plugins {
 
         void processConfig(const Json::Value &config) override;
 
-        Json::Value allocator(const std::string &type);
+        Json::Value allocate(const std::string &type);
 
-        bool heartbeat(const std::string &type, uint32_t port);
+        bool report(const std::string &type, uint32_t port);
 
         std::string toHost(uint32_t port);
 

@@ -122,15 +122,15 @@ Json::Value NodeManager::parseInfo(const NodeType &nodeType) const {
 
 void NodeManager::_updateTimer(NodeServer &nodeServer) {
     if (_waitTimes == 0) {
-        // Disable heartbeat timeout
+        // Disable report timeout
         return;
     }
-    // Invalidate old heartbeat timeout
+    // Invalidate old report timeout
     app().getLoop()->invalidateTimer(nodeServer.removalTimerId);
 
     const auto &nodeType = nodeServer.nodeType;
     const auto &netEndian = NetEndian(nodeServer.address).netEndian;
-    // Set new heartbeat timeout
+    // Set new report timeout
     nodeServer.removalTimerId = app().getLoop()->runAfter(
             nodeServer.taskInterval * _waitTimes,
             [this, nodeType, netEndian]() {

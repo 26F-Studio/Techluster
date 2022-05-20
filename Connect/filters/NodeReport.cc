@@ -2,7 +2,7 @@
 // Created by particleg on 2021/9/27.
 //
 
-#include <filters/HeartBeatReport.h>
+#include <filters/NodeReport.h>
 #include <helpers/RequestJson.h>
 #include <structures/Exceptions.h>
 
@@ -13,7 +13,7 @@ using namespace tech::helpers;
 using namespace tech::structures;
 using namespace tech::types;
 
-void HeartBeatReport::doFilter(
+void NodeReport::doFilter(
         const HttpRequestPtr &req,
         FilterCallback &&failedCb,
         FilterChainCallback &&nextCb

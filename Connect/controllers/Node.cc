@@ -39,10 +39,7 @@ Node::Node() :
         ),
         _nodeManager(app().getPlugin<NodeManager>()) {}
 
-void Node::allocate(
-        const HttpRequestPtr &req,
-        function<void(const HttpResponsePtr &)> &&callback
-) {
+void Node::allocate(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     ResponseJson response;
     handleExceptions([&]() {
         auto nodeType = req->attributes()->get<NodeType>("nodeType");
@@ -55,16 +52,29 @@ void Node::allocate(
     response.httpCallback(callback);
 }
 
-void Node::check(
-        const HttpRequestPtr &req,
-        function<void(const HttpResponsePtr &)> &&callback
-) {
+void Node::check(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
     ResponseJson response;
     handleExceptions([&]() {
         _nodeManager->checkNode(
                 req->attributes()->get<NodeType>("nodeType"),
                 req->attributes()->get<InetAddress>("address")
         );
+    }, response);
+    response.httpCallback(callback);
+}
+
+void Node::report(const HttpRequestPtr &req, function<void(const HttpResponsePtr &)> &&callback) {
+    ResponseJson response;
+    handleExceptions([&]() {
+        const auto &requestJson = req->attributes()->get<RequestJson>("requestJson");
+        _nodeManager->updateNode(NodeServer{
+                req->attributes()->get<NodeType>("nodeType"),
+                requestJson["ip"].asString(),
+                static_cast<uint16_t>(requestJson["port"].asUInt()),
+                requestJson["taskInterval"].asDouble(),
+                requestJson["description"].asString(),
+                requestJson["info"]
+        });
     }, response);
     response.httpCallback(callback);
 }

@@ -15,11 +15,11 @@ using namespace tech::plugins;
 using namespace tech::types;
 
 void ConnectTester::processConfig(const Json::Value &config) {
-    _heartbeatBody = config["heartbeat"];
+    _heartbeatBody = config["report"];
     _credentialHeaders["x-credential"] = config["credential"].asString();
 }
 
-Json::Value ConnectTester::allocator(const string &type) {
+Json::Value ConnectTester::allocate(const string &type) {
     WebHelper::colorOut("Retrieve node type: " + type, WebHelper::Color::cyan);
     return _httpRequest(
             Get,
@@ -28,14 +28,14 @@ Json::Value ConnectTester::allocator(const string &type) {
     );
 }
 
-bool ConnectTester::heartbeat(const string &type, uint32_t port) {
-    WebHelper::colorOut("Simulate " + type + " heartbeat at " + to_string(port), WebHelper::Color::cyan);
+bool ConnectTester::report(const string &type, uint32_t port) {
+    WebHelper::colorOut("Simulate " + type + " report at " + to_string(port), WebHelper::Color::cyan);
     Json::Value body(_heartbeatBody);
     body["port"] = port;
     body["info"] = app().getPlugin<Perfmon>()->parseInfo();
     return _httpRequest(
             Post,
-            "/heartbeat/report",
+            "/node/report",
             {make_pair("nodeType", type)},
             _credentialHeaders,
             body
