@@ -22,30 +22,30 @@ DROGON_TEST(Connect) {
     WebHelper::colorOut("Wait 1 second to generate hardware info", WebHelper::Color::cyan);
     this_thread::sleep_for(std::chrono::seconds(1));
 
-    WebHelper::colorOut("Start testing 'heartbeat'", WebHelper::Color::blue);
-    REQUIRE(connectTester->heartbeat("bot", gamingPort));
-    REQUIRE(connectTester->heartbeat("forwarding", forwardingPort));
-    REQUIRE(connectTester->heartbeat("gaming", gamingPort));
-    REQUIRE(connectTester->heartbeat("message", messagePort));
-    WebHelper::colorOut("End testing 'heartbeat'", WebHelper::Color::green);
+    WebHelper::colorOut("Start testing 'report'", WebHelper::Color::blue);
+    REQUIRE(connectTester->report("Bot", gamingPort));
+    REQUIRE(connectTester->report("Forwarding", forwardingPort));
+    REQUIRE(connectTester->report("Gaming", gamingPort));
+    REQUIRE(connectTester->report("Message", messagePort));
+    WebHelper::colorOut("End testing 'report'", WebHelper::Color::green);
 
-    WebHelper::colorOut("Start testing 'allocator'", WebHelper::Color::blue);
-    CHECK(connectTester->allocator("all")["code"] == 402);
-    CHECK(connectTester->allocator("bot")["data"].asString() == connectTester->toHost(gamingPort));
-    CHECK(connectTester->allocator("connect")["code"] == 402);
-    CHECK(connectTester->allocator("forwarding")["data"][0].asString() == connectTester->toHost(forwardingPort));
-    CHECK(connectTester->allocator("gaming")["data"].asString() == connectTester->toHost(gamingPort));
-    CHECK(connectTester->allocator("message")["data"].asString() == connectTester->toHost(messagePort));
-    CHECK(connectTester->allocator("user")["data"].asString() == connectTester->toHost(userPort));
-    WebHelper::colorOut("End testing 'allocator'", WebHelper::Color::green);
+    WebHelper::colorOut("Start testing 'allocate'", WebHelper::Color::blue);
+    CHECK(connectTester->allocate("All")["code"] == 402);
+    CHECK(connectTester->allocate("Bot")["data"].asString() == connectTester->toHost(gamingPort));
+    CHECK(connectTester->allocate("Connect")["code"] == 402);
+    CHECK(connectTester->allocate("Forwarding")["data"][0].asString() == connectTester->toHost(forwardingPort));
+    CHECK(connectTester->allocate("Gaming")["data"].asString() == connectTester->toHost(gamingPort));
+    CHECK(connectTester->allocate("Message")["data"].asString() == connectTester->toHost(messagePort));
+    CHECK(connectTester->allocate("User")["data"].asString() == connectTester->toHost(userPort));
+    WebHelper::colorOut("End testing 'allocate'", WebHelper::Color::green);
 
     WebHelper::colorOut("Start testing 'Monitor'", WebHelper::Color::blue);
-    CHECK(connectTester->monitor("bot").retrieveByPath("data.0.info.cpu").isDouble());
-    CHECK(connectTester->monitor("connect").retrieveByPath("data.cpu").isDouble());
-    CHECK(connectTester->monitor("forwarding").retrieveByPath("data.0.info.cpu").isDouble());
-    CHECK(connectTester->monitor("gaming").retrieveByPath("data.0.info.cpu").isDouble());
-    CHECK(connectTester->monitor("message").retrieveByPath("data.0.info.cpu").isDouble());
-    CHECK(connectTester->monitor("user").retrieveByPath("data.0.info.cpu").isDouble());
+    CHECK(connectTester->monitor("Bot").retrieveByPath("data.0.info.cpu").isDouble());
+    CHECK(connectTester->monitor("Connect").retrieveByPath("data.cpu").isDouble());
+    CHECK(connectTester->monitor("Forwarding").retrieveByPath("data.0.info.cpu").isDouble());
+    CHECK(connectTester->monitor("Gaming").retrieveByPath("data.0.info.cpu").isDouble());
+    CHECK(connectTester->monitor("Message").retrieveByPath("data.0.info.cpu").isDouble());
+    CHECK(connectTester->monitor("User").retrieveByPath("data.0.info.cpu").isDouble());
     WebHelper::colorOut("End testing 'Monitor'", WebHelper::Color::green);
 
     WebHelper::colorOut("End testing Connect node", WebHelper::Color::magenta);
