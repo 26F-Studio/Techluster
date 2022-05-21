@@ -24,8 +24,8 @@ PlayerFinish::PlayerFinish() : MessageHandlerBase(enum_integer(Action::PlayerFin
 bool PlayerFinish::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || player->getRoomId().empty() ||
-        player->type == Player::Type::spectator ||
-        player->state != Player::State::playing) {
+        player->type == Player::Type::Spectator ||
+        player->state != Player::State::Playing) {
         MessageJson message(_action);
         message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
@@ -45,7 +45,7 @@ bool PlayerFinish::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &
 
 void PlayerFinish::process(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     handleExceptions([&]() {
-        wsConnPtr->getContext<Player>()->state = Player::State::finished;
+        wsConnPtr->getContext<Player>()->state = Player::State::Finished;
         app().getPlugin<RoomManager>()->playerFinish(_action, wsConnPtr, move(request.ref()));
     }, _action, wsConnPtr);
 }

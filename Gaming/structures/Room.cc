@@ -43,24 +43,24 @@ Room::Room(
     }
 
     switch (endCondition) {
-        case EndCondition::groupLeft:
+        case EndCondition::GroupLeft:
             if (_data["leftLimit"].isUInt64()) {
                 leftLimit = _data["leftLimit"].asUInt64() < capacity
                             ? _data["leftLimit"].asUInt64()
                             : capacity;
             }
             break;
-        case EndCondition::custom:
+        case EndCondition::Custom:
             LOG_ERROR << "Not implemented yet";
             [[fallthrough]];
-        case EndCondition::playerLeft:
+        case EndCondition::PlayerLeft:
             if (_data["leftLimit"].isUInt64()) {
                 leftLimit = _data["leftLimit"].asUInt64() < capacity
                             ? _data["leftLimit"].asUInt64()
                             : capacity;
             }
             break;
-        case EndCondition::timesUp: {
+        case EndCondition::TimesUp: {
             uint64_t timeLimit = _data["timeLimit"].isUInt64()
                                  ? _data["timeLimit"].asUInt64()
                                  : 120;
@@ -113,7 +113,7 @@ uint64_t Room::countGamer() const {
     shared_lock<shared_mutex> lock(_sharedMutex);
     for (const auto userId: _playerSet) {
         const auto player = _connectionManager->getConnPtr(userId)->getContext<Player>();
-        if (player->type == Player::Type::gamer) {
+        if (player->type == Player::Type::Gamer) {
             counter++;
         }
     }
@@ -126,8 +126,8 @@ uint64_t Room::countGroup() const {
         shared_lock<shared_mutex> lock(_sharedMutex);
         for (const auto userId: _playerSet) {
             const auto player = _connectionManager->getConnPtr(userId)->getContext<Player>();
-            if (player->type == Player::Type::gamer &&
-                player->state == Player::State::playing) {
+            if (player->type == Player::Type::Gamer &&
+                player->state == Player::State::Playing) {
                 groupCounter.insert(player->group);
             }
         }
@@ -140,8 +140,8 @@ uint64_t Room::countPlaying() const {
     shared_lock<shared_mutex> lock(_sharedMutex);
     for (const auto userId: _playerSet) {
         const auto player = _connectionManager->getConnPtr(userId)->getContext<Player>();
-        if (player->type == Player::Type::gamer &&
-            player->state == Player::State::playing) {
+        if (player->type == Player::Type::Gamer &&
+            player->state == Player::State::Playing) {
             counter++;
         }
     }
@@ -153,7 +153,7 @@ uint64_t Room::countSpectator() const {
     shared_lock<shared_mutex> lock(_sharedMutex);
     for (const auto userId: _playerSet) {
         const auto player = _connectionManager->getConnPtr(userId)->getContext<Player>();
-        if (player->type == Player::Type::spectator) {
+        if (player->type == Player::Type::Spectator) {
             counter++;
         }
     }
@@ -165,8 +165,8 @@ uint64_t Room::countStandby() const {
     shared_lock<shared_mutex> lock(_sharedMutex);
     for (const auto userId: _playerSet) {
         const auto player = _connectionManager->getConnPtr(userId)->getContext<Player>();
-        if (player->type == Player::Type::gamer &&
-            player->state == Player::State::standby) {
+        if (player->type == Player::Type::Gamer &&
+            player->state == Player::State::Standby) {
             counter++;
         }
     }
@@ -235,45 +235,45 @@ Json::Value Room::updateInfo(const Json::Value &data) {
 }
 
 bool Room::tryCancelStart() {
-    if (state == State::ready) {
+    if (state == State::Ready) {
         app().getLoop()->invalidateTimer(startTimerId.load());
-        state = State::standby;
+        state = State::Standby;
         return true;
     }
     return false;
 }
 
 void Room::tryEnd(bool force) {
-    if (state != State::playing) {
+    if (state != State::Playing) {
         return;
     }
     switch (endCondition) {
-        case EndCondition::groupLeft:
+        case EndCondition::GroupLeft:
             if (countGroup() > leftLimit) {
                 return;
             }
             break;
-        case EndCondition::custom:
+        case EndCondition::Custom:
             // TODO: Implement custom condition
             [[fallthrough]];
-        case EndCondition::playerLeft:
+        case EndCondition::PlayerLeft:
             if (countPlaying() > leftLimit) {
                 return;
             }
             break;
-        case EndCondition::timesUp:
+        case EndCondition::TimesUp:
             if (!force && countPlaying() > 1) {
                 return;
             }
             break;
     }
-    state = State::standby;
+    state = State::Standby;
     {
         shared_lock<shared_mutex> lock(_sharedMutex);
         for (auto &userId: _playerSet) {
             _connectionManager->getConnPtr(
                     userId
-            )->getContext<Player>()->state = Player::State::standby;
+            )->getContext<Player>()->state = Player::State::Standby;
         }
     }
 
@@ -286,11 +286,11 @@ void Room::tryEnd(bool force) {
 }
 
 void Room::tryStart() {
-    if (state != State::standby || countStandby() > 0) {
+    if (state != State::Standby || countStandby() > 0) {
         return;
     }
 
-    state = State::ready;
+    state = State::Ready;
 
     MessageJson message;
     message.setMessageType(MessageType::Server);
@@ -298,7 +298,7 @@ void Room::tryStart() {
     publish(message);
 
     startTimerId = app().getLoop()->runAfter(3, [this]() {
-        state = State::playing;
+        state = State::Playing;
         _estimateForwardingNode();
         _createTransmission();
 
@@ -333,7 +333,7 @@ void Room::_estimateForwardingNode() {
         for (const auto userId: _playerSet) {
             const auto player = _connectionManager->getConnPtr(userId)->getContext<Player>();
             // TODO: Kick high delay spectators, replace high delay players with robots
-            if (player->type == Player::Type::gamer) {
+            if (player->type == Player::Type::Gamer) {
                 const auto &wsConnPtr = _connectionManager->getConnPtr(userId);
                 pingLists.emplace_back(wsConnPtr->getContext<Player>()->getPingList());
             }

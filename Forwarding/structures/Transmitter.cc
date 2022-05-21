@@ -37,7 +37,7 @@ Json::Value Transmitter::info() const {
 }
 
 void Transmitter::reset() {
-    type = Type::spectator;
+    type = Type::Spectator;
     shared_lock<shared_mutex> lock(_sharedMutex);
     _roomId.clear();
 }

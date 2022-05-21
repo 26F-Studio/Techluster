@@ -26,7 +26,7 @@ int CodeException::code() const noexcept { return _code; }
 NetworkException::NetworkException(
         string message,
         ReqResult result
-) : CodeException(move(message), enum_integer(TypePrefix::request) + enum_integer(result)) {}
+) : CodeException(move(message), enum_integer(TypePrefix::Request) + enum_integer(result)) {}
 
 ResponseException::ResponseException(
         string message,

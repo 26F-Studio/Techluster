@@ -23,14 +23,14 @@ RoomPassword::RoomPassword() : MessageHandlerBase(enum_integer(Action::RoomPassw
 bool RoomPassword::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || player->getRoomId().empty() ||
-        player->state != Player::State::standby) {
+        player->state != Player::State::Standby) {
         MessageJson message(_action);
         message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
         message.sendTo(wsConnPtr);
         return false;
     }
-    if (player->role < Player::Role::admin) {
+    if (player->role < Player::Role::Admin) {
         MessageJson message(_action);
         message.setMessageType(MessageType::Failed);
         message.setReason(i18n("noPermission"));

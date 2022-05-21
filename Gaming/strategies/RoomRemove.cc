@@ -28,7 +28,7 @@ bool RoomRemove::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &re
         message.sendTo(wsConnPtr);
         return false;
     }
-    if (player->role < Player::Role::admin) {
+    if (player->role < Player::Role::Admin) {
         MessageJson message(_action);
         message.setMessageType(MessageType::Failed);
         message.setReason(i18n("noPermission"));

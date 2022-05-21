@@ -18,8 +18,8 @@ namespace tech::structures {
     class Transmitter : public BasicPlayer {
     public:
         enum class Type {
-            gamer,
-            spectator,
+            Gamer,
+            Spectator,
         };
 
         explicit Transmitter(int64_t userId);
@@ -35,7 +35,7 @@ namespace tech::structures {
         void reset();
 
     public:
-        std::atomic<Type> type{Type::spectator};
+        std::atomic<Type> type{Type::Spectator};
 
     private:
         mutable std::shared_mutex _sharedMutex;

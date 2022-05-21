@@ -81,7 +81,7 @@ Json::Value Player::info() const {
     result["config"] = getConfig();
 
     shared_lock<shared_mutex> lock(_sharedMutex);
-    if (state == State::playing) {
+    if (state == State::Playing) {
         result["state"] = _customState;
     } else {
         result["state"] = string(enum_name(state.load()));
@@ -91,9 +91,9 @@ Json::Value Player::info() const {
 
 void Player::reset() {
     group = 0;
-    role = Role::normal;
-    state = State::standby;
-    type = Type::spectator;
+    role = Role::Normal;
+    state = State::Standby;
+    type = Type::Spectator;
     unique_lock<shared_mutex> lock(_sharedMutex);
     _roomId.clear();
     _customState.clear();

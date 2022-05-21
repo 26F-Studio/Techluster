@@ -31,7 +31,7 @@ Transmission::Transmission(Transmission &&transmission) noexcept:
 void Transmission::join(int64_t userId) {
     const auto &transmitter = _connectionManager->getConnPtr(userId)->getContext<Transmitter>();
     if (playerSet.contains(userId)) {
-        transmitter->type = Transmitter::Type::gamer;
+        transmitter->type = Transmitter::Type::Gamer;
     }
     {
         unique_lock<shared_mutex> lock(_transmitterMutex);

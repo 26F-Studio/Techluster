@@ -38,8 +38,8 @@ namespace tech::structures {
     class NetworkException : public internal::CodeException {
     public:
         enum class TypePrefix {
-            request = 600,
-            websocket = 700,
+            Request = 600,
+            Websocket = 700,
         };
 
         explicit NetworkException(

@@ -25,26 +25,26 @@ namespace tech::structures {
     class Player : public BasicPlayer {
     public:
         enum class Role {
-            normal = 1,
-            admin,
-            super,
+            Normal = 1,
+            Admin,
+            Super,
         };
         enum class State {
-            standby,
-            ready,
-            playing,
-            finished,
+            Standby,
+            Ready,
+            Playing,
+            Finished,
         };
         enum class Type {
-            gamer,
-            spectator,
+            Gamer,
+            Spectator,
         };
 
         explicit Player(
                 int64_t userId,
-                Role role = Role::normal,
-                State state = State::standby,
-                Type type = Type::spectator
+                Role role = Role::Normal,
+                State state = State::Standby,
+                Type type = Type::Spectator
         );
 
         Player(Player &&player) noexcept;

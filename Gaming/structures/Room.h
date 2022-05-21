@@ -34,17 +34,17 @@ namespace tech::structures {
 
     public:
         enum class State {
-            playing,
-            ready,
-            standby,
+            Playing,
+            Ready,
+            Standby,
         };
 
         // TODO: Support custom end conditions
         enum class EndCondition {
-            custom,
-            groupLeft,
-            playerLeft,
-            timesUp,
+            Custom,
+            GroupLeft,
+            PlayerLeft,
+            TimesUp,
         };
 
         explicit Room(
@@ -100,8 +100,8 @@ namespace tech::structures {
 
     public:
         const std::string roomId{drogon::utils::getUuid()};
-        std::atomic<State> state{State::standby};
-        std::atomic<EndCondition> endCondition{EndCondition::playerLeft};
+        std::atomic<State> state{State::Standby};
+        std::atomic<EndCondition> endCondition{EndCondition::PlayerLeft};
         std::atomic<uint64_t> leftLimit{1};
         std::atomic<uint64_t> capacity;
         std::atomic<uint64_t> startTimerId, endTimerId;

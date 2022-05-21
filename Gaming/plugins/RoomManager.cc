@@ -84,7 +84,7 @@ void RoomManager::playerGroup(int action, const WebSocketConnectionPtr &wsConnPt
 
 void RoomManager::playerReady(int action, const WebSocketConnectionPtr &wsConnPtr) {
     const auto &player = wsConnPtr->getContext<Player>();
-    auto ready = player->state == Player::State::ready;
+    auto ready = player->state == Player::State::Ready;
 
     Json::Value data;
     data["userId"] = player->userId;
@@ -146,7 +146,7 @@ void RoomManager::playerType(
     try {
         shared_lock<shared_mutex> lock(_sharedMutex);
         auto &room = _roomMap.at(player->getRoomId());
-        if (type == Player::Type::gamer && room.full()) {
+        if (type == Player::Type::Gamer && room.full()) {
             MessageJson failedMessage(action);
             failedMessage.setMessageType(MessageType::Failed);
             failedMessage.setReason(i18n("roomFull"));
@@ -185,7 +185,8 @@ void RoomManager::roomCreate(
     const auto &roomId = room.roomId;
     room.subscribe(player->userId);
     player->setRoomId(roomId);
-    player->role = Player::Role::admin;
+    player->role = Player::Role::Admin;
+    player->type = Player::Type::Gamer;
     {
         unique_lock<shared_mutex> lock(_sharedMutex);
         _roomMap.emplace(roomId, move(room));
@@ -282,10 +283,10 @@ void RoomManager::roomJoin(
             player->setRoomId(roomId);
 
             bool spectate = false;
-            if (room.state == Room::State::playing) {
+            if (room.state == Room::State::Playing) {
                 spectate = true;
             } else if (!room.full() && room.tryCancelStart()) {
-                player->type = Player::Type::gamer;
+                player->type = Player::Type::Gamer;
             }
 
             MessageJson successMessage(action);

@@ -24,8 +24,8 @@ PlayerState::PlayerState() : MessageHandlerBase(enum_integer(Action::PlayerState
 bool PlayerState::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || player->getRoomId().empty() ||
-        player->type == Player::Type::spectator ||
-        player->state != Player::State::playing) {
+        player->type == Player::Type::Spectator ||
+        player->state != Player::State::Playing) {
         MessageJson message(_action);
         message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));

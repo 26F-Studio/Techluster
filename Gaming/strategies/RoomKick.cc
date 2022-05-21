@@ -23,7 +23,7 @@ RoomKick::RoomKick() : MessageHandlerBase(enum_integer(Action::RoomKick)) {}
 bool RoomKick::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
     if (!player || player->getRoomId().empty() ||
-        player->state != Player::State::standby) {
+        player->state != Player::State::Standby) {
         MessageJson message(_action);
         message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));

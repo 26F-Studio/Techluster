@@ -25,7 +25,7 @@ RoomDataUpdate::RoomDataUpdate() : MessageHandlerBase(enum_integer(Action::RoomD
 bool RoomDataUpdate::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &player = wsConnPtr->getContext<Player>();
     /// @note Return false if the player does not exist or is busy.
-    if (!player || player->state != Player::State::standby) {
+    if (!player || player->state != Player::State::Standby) {
         MessageJson message(_action);
         message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
@@ -47,7 +47,7 @@ bool RoomDataUpdate::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson
         }
     } else if (!player->getRoomId().empty()) {
         /// @note Return false if the player is not a room admin.
-        if (player->role < Player::Role::admin) {
+        if (player->role < Player::Role::Admin) {
             MessageJson message(_action);
             message.setMessageType(MessageType::Failed);
             message.setReason(i18n("noPermission"));

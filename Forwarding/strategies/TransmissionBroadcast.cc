@@ -24,7 +24,7 @@ TransmissionBroadcast::TransmissionBroadcast() : MessageHandlerBase(enum_integer
 bool TransmissionBroadcast::filter(const WebSocketConnectionPtr &wsConnPtr, RequestJson &request) {
     const auto &transmitter = wsConnPtr->getContext<Transmitter>();
     if (!transmitter || transmitter->getRoomId().empty() ||
-        transmitter->type != Transmitter::Type::gamer) {
+        transmitter->type != Transmitter::Type::Gamer) {
         MessageJson message(_action);
         message.setMessageType(MessageType::Failed);
         message.setReason(i18n("notAvailable"));
