@@ -16,8 +16,6 @@ using namespace tech::plugins;
 using namespace tech::structures;
 using namespace tech::types;
 
-IdentifyUser::IdentifyUser() {}
-
 void IdentifyUser::doFilter(
         const HttpRequestPtr &req,
         FilterCallback &&failedCb,

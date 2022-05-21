@@ -19,8 +19,6 @@ namespace tech::filters {
         static constexpr char projectName[] = CMAKE_PROJECT_NAME;
 
     public:
-        CheckCredential();
-
         void doFilter(
                 const drogon::HttpRequestPtr &req,
                 drogon::FilterCallback &&failedCb,
