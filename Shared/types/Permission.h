@@ -11,6 +11,7 @@ namespace tech::types {
         Banned,
         Restricted,
         Normal,
+        Superior,
         Admin
     };
 }
