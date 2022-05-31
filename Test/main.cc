@@ -3,6 +3,7 @@
 #include <drogon/drogon.h>
 #include <drogon/drogon_test.h>
 #include <plugins/ConnectTester.h>
+#include <plugins/GamingTester.h>
 #include <plugins/UserTester.h>
 
 using namespace drogon;
@@ -49,6 +50,20 @@ DROGON_TEST(Connect) {
     WebHelper::colorOut("End testing 'Monitor'", WebHelper::Color::green);
 
     WebHelper::colorOut("End testing Connect node", WebHelper::Color::magenta);
+    WebHelper::colorOut("");
+}
+
+DROGON_TEST(Gaming) {
+    WebHelper::colorOut("Start testing Gaming node", WebHelper::Color::magenta);
+    auto gamingTester = app().getPlugin<GamingTester>();
+
+    WebHelper::colorOut("Wait for all players to connect", WebHelper::Color::cyan);
+    CHECK_NOTHROW(gamingTester->connect());
+
+    WebHelper::colorOut("Wait for all players to close", WebHelper::Color::cyan);
+    gamingTester->disconnect();
+
+    WebHelper::colorOut("End testing Gaming node", WebHelper::Color::magenta);
     WebHelper::colorOut("");
 }
 

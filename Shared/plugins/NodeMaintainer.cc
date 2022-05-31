@@ -71,11 +71,14 @@ HttpStatusCode NodeMaintainer::checkAccessToken(const string &accessToken, int64
     }
     try {
         RequestJson response(responsePtr);
+        LOG_DEBUG << response.stringify();
         response.require("data", JsonValue::Int64);
         id = response["data"].asInt64();
         return responsePtr->statusCode();
     } catch (const json_exception::InvalidFormat &e) {
         throw NetworkException("Invalid Json: "s + e.what(), ReqResult::BadResponse);
+    } catch (const json_exception::WrongType &e) {
+        throw NetworkException("Wrong Json node type: "s + e.what(), ReqResult::BadResponse);
     }
 }
 
@@ -91,10 +94,13 @@ Json::Value NodeMaintainer::getUserInfo(int64_t userId) {
     }
     try {
         RequestJson response(responsePtr);
+        LOG_DEBUG << response.stringify();
         response.require("data", JsonValue::Object);
         return response["data"];
     } catch (const json_exception::InvalidFormat &e) {
         throw NetworkException("Invalid Json: "s + e.what(), ReqResult::BadResponse);
+    } catch (const json_exception::WrongType &e) {
+        throw NetworkException("Wrong Json node type: "s + e.what(), ReqResult::BadResponse);
     }
 }
 
@@ -110,6 +116,7 @@ tuple<string, string> NodeMaintainer::getWorkshopItem(const std::string &itemId)
     }
     try {
         RequestJson response(responsePtr);
+        LOG_DEBUG << response.stringify();
         response.require("data", JsonValue::Object);
 
         RequestJson data(move(response.ref()["data"]));
@@ -122,7 +129,9 @@ tuple<string, string> NodeMaintainer::getWorkshopItem(const std::string &itemId)
         };
     } catch (const json_exception::InvalidFormat &e) {
         throw NetworkException("Invalid Json: "s + e.what(), ReqResult::BadResponse);
-    };
+    } catch (const json_exception::WrongType &e) {
+        throw NetworkException("Wrong Json node type: "s + e.what(), ReqResult::BadResponse);
+    }
 }
 
 void NodeMaintainer::_updateUserAddress() {
@@ -137,6 +146,7 @@ void NodeMaintainer::_updateUserAddress() {
         }
         try {
             RequestJson response(responsePtr);
+            LOG_DEBUG << response.stringify();
             if (responsePtr->getStatusCode() != k200OK) {
                 LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
                          << response.stringify();
@@ -169,6 +179,7 @@ void NodeMaintainer::_updateWorkshopAddress() {
         }
         try {
             RequestJson response(responsePtr);
+            LOG_DEBUG << response.stringify();
             if (responsePtr->getStatusCode() != k200OK) {
                 LOG_WARN << "Request failed (" << responsePtr->getStatusCode() << "): \n"
                          << response.stringify();

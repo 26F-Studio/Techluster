@@ -5,12 +5,19 @@
 #pragma once
 
 #include <drogon/drogon.h>
+#include <drogon/WebSocketClient.h>
 
 namespace tech::plugins {
     class WebHelper {
     public:
+        using WebSocketMessageHandler = std::function<void(
+                std::string &&message,
+                const drogon::WebSocketClientPtr &,
+                const drogon::WebSocketMessageType &
+        )>;
+
         enum class Color {
-            none = 0,
+            None = 0,
             red = 31,
             green = 32,
             yellow = 33,
@@ -24,7 +31,7 @@ namespace tech::plugins {
 
         static void colorOut(
                 const std::string &msg,
-                Color color = Color::none
+                Color color = Color::None
         );
 
     protected:
@@ -40,6 +47,22 @@ namespace tech::plugins {
                 const Json::Value &body = Json::Value(Json::nullValue)
         );
 
+        Json::Value _httpRequest(
+                const std::string &host,
+                drogon::HttpMethod method,
+                const std::string &path,
+                const std::unordered_map<std::string, std::string> &parameters = {},
+                const std::unordered_map<std::string, std::string> &headers = {},
+                const Json::Value &body = Json::Value(Json::nullValue)
+        );
+
+        drogon::WebSocketClientPtr _websocketClient(
+                const std::string &reqResult,
+                const std::string &path,
+                const std::unordered_map<std::string, std::string> &headers,
+                const drogon::WebSocketRequestCallback &connectCallback,
+                const WebSocketMessageHandler &handler
+        );
     };
 
     template<class T>
